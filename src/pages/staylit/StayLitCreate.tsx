@@ -63,7 +63,7 @@ export default function StayLitCreate() {
         <div className="card-center" style={{ textAlign: "center", gap: 8 }}>
           <div className="badge" style={{ width: "fit-content" }}>Custom Builder</div>
           <div style={{ fontWeight: 950, fontSize: 18 }}>{summary}</div>
-          <div className="badge" style={{ width: "fit-content", fontWeight: 950 }}>
+          <div className="badge rate-bright" style={{ width: "fit-content", fontWeight: 950 }}>
             Estimated Price: {money(selected.price)}
           </div>
           <div className="muted" style={{ fontWeight: 850 }}>

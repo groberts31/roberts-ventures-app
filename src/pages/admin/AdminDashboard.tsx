@@ -431,8 +431,8 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-                        <span className="badge" style={{ justifyContent: "center" }}>Subtotal: {money(totals.subtotal)}</span>
-                        <span className="badge" style={{ justifyContent: "center" }}>Total: {money(totals.total)}</span>
+                        <span className="badge rate-bright" style={{ justifyContent: "center" }}>Subtotal: {money(totals.subtotal)}</span>
+                        <span className="badge rate-bright" style={{ justifyContent: "center" }}>Total: {money(totals.total)}</span>
                       </div>
                     </div>
 

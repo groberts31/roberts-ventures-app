@@ -51,7 +51,9 @@ export default function StayLitSplash() {
         style={{
           width: "100%",
           maxWidth: 1100,
+          margin: "0 auto",
           gap: 26,
+          justifyItems: "center",
         }}
       >
         {/* HERO */}
@@ -173,6 +175,7 @@ export default function StayLitSplash() {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: 20,
+            justifyItems: "center",
           }}
         >
           {/* PREMADE */}
@@ -183,6 +186,8 @@ export default function StayLitSplash() {
               gap: 14,
               textAlign: "center",
               padding: 24,
+              width: "100%",
+              maxWidth: 520,
               background: "rgba(15,23,42,0.7)",
               border: "1px solid rgba(148,163,184,0.15)",
               boxShadow: "0 0 18px rgba(59,130,246,0.2)",
@@ -224,6 +229,8 @@ export default function StayLitSplash() {
               gap: 14,
               textAlign: "center",
               padding: 24,
+              width: "100%",
+              maxWidth: 520,
               background: "rgba(15,23,42,0.7)",
               border: "1px solid rgba(148,163,184,0.15)",
               boxShadow: "0 0 18px rgba(59,130,246,0.2)",

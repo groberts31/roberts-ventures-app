@@ -202,7 +202,7 @@ export default function EstimatePreview() {
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12 }}>
         <div style={{ display: "grid", gap: 6, justifyItems: "center" }}>
           <div className="badge" style={{ width: "fit-content" }}>Estimate Preview</div>
-          <div style={{ fontWeight: 950, color: "#0f172a", fontSize: 18 }}>
+          <div className="rate-bright" style={{ fontWeight: 950, fontSize: 18 }}>
             Estimated minimum: {money(calc.minTotal)}
           </div>
           <div className="muted" style={{ fontWeight: 850, maxWidth: 820 }}>
@@ -223,7 +223,7 @@ export default function EstimatePreview() {
               width: "100%",
             }}
           >
-            <div style={{ fontWeight: 950, color: "#0f172a" }}>Quote required</div>
+            <div className="rate-bright" style={{ fontWeight: 950 }}>Quote required</div>
             <div className="muted" style={{ marginTop: 6, fontWeight: 850 }}>
               {calc.quotes.slice(0, 6).join(", ")}
               {calc.quotes.length > 6 ? "…" : ""}
@@ -242,7 +242,7 @@ export default function EstimatePreview() {
               alignSelf: "center",
             }}
           >
-            <div style={{ fontWeight: 950, color: "#0f172a" }}>No quotes needed</div>
+            <div className="rate-bright" style={{ fontWeight: 950 }}>No quotes needed</div>
             <div className="muted" style={{ marginTop: 6, fontWeight: 850 }}>
               All selected items have listed pricing.
             </div>
@@ -254,8 +254,8 @@ export default function EstimatePreview() {
         {calc.lines.map((ln, i) => (
           <div key={i} className="panel" style={{ padding: 10, borderRadius: 14 }}>
             <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", textAlign: "center" }}>
-              <div style={{ fontWeight: 950, color: "#0f172a" }}>{ln.label}</div>
-              <div className="badge" style={{ width: "fit-content" }}>
+              <div style={{ fontWeight: 950 }}>{ln.label}</div>
+              <div className="badge rate-bright" style={{ width: "fit-content" }}>
                 {ln.amount === undefined ? ln.note : money(ln.amount)}
               </div>
             </div>
