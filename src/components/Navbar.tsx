@@ -68,15 +68,7 @@ export default function Navbar() {
             justifyContent: "center",
           }}
         >
-        <a
-          href="/customer"
-          className="btn btn-ghost"
-          style={{ fontWeight: 800 }}
-        >
-          Customer Portal
-        </a>
-
-          <NavLink to="/" style={linkStyle} end>
+<NavLink to="/" style={linkStyle} end>
             Home
           </NavLink>
           <NavLink to="/services" style={linkStyle}>
@@ -91,8 +83,13 @@ export default function Navbar() {
           <NavLink to="/contact" style={linkStyle}>
             Contact
           </NavLink>
-        
-            <a href="/admin/login" className="btn btn-ghost" style={{ fontWeight: 900, padding: "8px 14px" }}>Admin</a></nav>
+          <NavLink to="/customer" style={linkStyle}>
+            Customer Portal
+          </NavLink>
+          <NavLink to="/admin" style={linkStyle}>
+            Admin
+          </NavLink>
+</nav>
 
         {/* Cart */}
         <div
