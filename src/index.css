@@ -14,22 +14,54 @@ html, body, #root {
 /* ================= THEME ================= */
 
 :root {
-  --text-main: #020617;     /* near-black */
+  /* LIGHT (default) */
+  --text-main: #050b18;      /* strong readable slate */
   --text-strong: #020617;
-  --text-soft: #0f172a;     /* dark slate */
-  --text-muted: #334155;
+  --text-soft: #0f172a;
+  --text-muted: #1f2937;
 
-  --border: rgba(15, 23, 42, 0.15);
+  --border: rgba(15, 23, 42, 0.14);
 
   --accent: #1d4ed8;
   --accent2: #60a5fa;
 
-  --shadow-soft: 0 8px 22px rgba(0,0,0,0.1);
-  --shadow-hover: 0 14px 34px rgba(29,78,216,0.25);
+  --shadow-soft: 0 10px 26px rgba(0,0,0,0.10);
+  --shadow-hover: 0 16px 42px rgba(29,78,216,0.22);
 
   --radius-lg: 16px;
   --radius-md: 12px;
+
+  /* Surfaces */
+  --panel-bg: rgba(255,255,255,0.97);
+  --panel-bg-2: rgba(255,255,255,0.94);
+  --field-bg: rgba(255,255,255,0.98);
+  --badge-bg: rgba(255,255,255,0.96);
+  --btn-bg: rgba(255,255,255,0.98);
 }
+
+/* DARK (Stay Lit or when enabled) */
+html[data-theme="dark"] {
+  --text-main: #f8fafc;      /* near-white */
+  --text-strong: #ffffff;
+  --text-soft: #f1f5f9;
+  --text-muted: rgba(226,232,240,0.88);
+
+  --border: rgba(148,163,184,0.20);
+
+  --accent: #60a5fa;
+  --accent2: #22d3ee;
+
+  --shadow-soft: 0 12px 32px rgba(0,0,0,0.45);
+  --shadow-hover: 0 18px 52px rgba(34,211,238,0.20);
+
+  /* Surfaces */
+  --panel-bg: rgba(2,6,23,0.84);
+  --panel-bg-2: rgba(2,6,23,0.78);
+  --field-bg: rgba(2,6,23,0.72);
+  --badge-bg: rgba(2,6,23,0.72);
+  --btn-bg: rgba(2,6,23,0.72);
+}
+
 
 /* ================= BASE ================= */
 
@@ -107,7 +139,8 @@ body {
 /* ================= CARDS ================= */
 
 .panel {
-  background: rgba(255,255,255,0.82);
+  color: var(--text-main);
+  background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
@@ -133,7 +166,7 @@ body {
   padding: 10px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: rgba(255,255,255,0.96);
+  background: var(--btn-bg);
   color: var(--text-main);
   font-weight: 900;
   cursor: pointer;
@@ -153,7 +186,7 @@ body {
 }
 
 .btn-ghost {
-  background: rgba(255,255,255,.7);
+  background: color-mix(in srgb, var(--btn-bg) 82%, transparent);
 }
 
 /* ================= INPUTS ================= */
@@ -163,7 +196,7 @@ body {
   padding: 10px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: rgba(255,255,255,.95);
+  background: var(--field-bg);
   color: var(--text-main);
   font-weight: 600;
 }
@@ -180,7 +213,7 @@ body {
   padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255,255,255,.9);
+  background: var(--badge-bg);
   font-size: 12px;
   font-weight: 900;
   color: var(--text-soft);
@@ -205,6 +238,7 @@ body {
 
 /* Card hover lift (desktop) + tap feedback (mobile) */
 .panel {
+  color: var(--text-main);
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -283,6 +317,7 @@ body {
 
 /* Stronger neon edge and glow */
 .panel {
+  color: var(--text-main);
   position: relative;
   overflow: hidden;
   transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
@@ -334,3 +369,172 @@ body {
     0 0 0 1px rgba(96,165,250,0.22),
     0 0 28px rgba(96,165,250,0.22);
 }
+
+/* ================================
+   SMART AUTO THEME SYSTEM
+================================ */
+
+/* Default = dark mode (image backgrounds) */
+:root {
+  --text-primary: #e5e7eb;
+  --text-muted: #cbd5f5;
+  --card-bg: rgba(10,10,15,0.85);
+  --card-border: rgba(148,163,184,0.18);
+}
+
+/* Light mode override */
+body.light-mode {
+  --text-primary: #0f172a;
+  --text-muted: #475569;
+  --card-bg: rgba(255,255,255,0.9);
+  --card-border: rgba(2,6,23,0.12);
+}
+
+/* Apply globally */
+body {
+  color: var(--text-primary);
+}
+
+/* Muted text */
+.muted {
+  color: var(--text-muted) !important;
+}
+
+/* Cards / panels */
+.panel.card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Headings pop */
+h1, h2, h3, h4 {
+  color: var(--text-primary);
+  text-shadow: 0 0 12px rgba(0,0,0,0.15);
+}
+
+
+
+html[data-theme="dark"] .muted {
+  color: rgba(226,232,240,0.90);
+}
+
+html[data-theme="dark"] .badge {
+  color: rgba(241,245,249,0.95);
+}
+
+
+
+/* ================= MAX CONTRAST OVERRIDES ================= */
+/* These are placed at the END of the file so they win. */
+
+html[data-theme="light"] {
+  --text-main: #020617;          /* near-black */
+  --text-strong: #020617;
+  --text-soft: #0f172a;          /* deep slate */
+  --text-muted: #111827;         /* darker muted (still readable) */
+
+  --border: rgba(2, 6, 23, 0.22);
+  --panel-bg: rgba(255,255,255,0.995);   /* almost pure white */
+  --panel-bg-2: rgba(255,255,255,0.98);
+  --field-bg: rgba(255,255,255,0.995);
+  --badge-bg: rgba(255,255,255,0.995);
+  --btn-bg: rgba(255,255,255,0.995);
+}
+
+html[data-theme="dark"] {
+  --text-main: #ffffff;           /* pure white */
+  --text-strong: #ffffff;
+  --text-soft: rgba(255,255,255,0.92);
+  --text-muted: rgba(255,255,255,0.78);
+
+  --border: rgba(255,255,255,0.22);
+  --panel-bg: rgba(0,0,0,0.88);   /* near-black */
+  --panel-bg-2: rgba(0,0,0,0.80);
+  --field-bg: rgba(0,0,0,0.72);
+  --badge-bg: rgba(0,0,0,0.72);
+  --btn-bg: rgba(0,0,0,0.72);
+}
+
+/* Force panels to clearly separate from background */
+.panel {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.22) !important;
+}
+
+/* Make ALL common text inside cards obey theme variables */
+.panel, .card, .stack, .page {
+  color: var(--text-main) !important;
+}
+
+.h1, .h2, .h3 {
+  color: var(--text-strong) !important;
+}
+
+.body, .lead {
+  color: var(--text-soft) !important;
+}
+
+.muted, .label {
+  color: var(--text-muted) !important;
+}
+
+/* Inputs / buttons / badges must not fade */
+.field, input, textarea, select {
+  background: var(--field-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border) !important;
+}
+
+.badge {
+  background: var(--badge-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border) !important;
+}
+
+.btn {
+  background: var(--btn-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border) !important;
+}
+
+/* Dark mode: add inner highlight + stronger shadow so text pops */
+html[data-theme="dark"] .panel {
+  box-shadow:
+    0 18px 48px rgba(0,0,0,0.70),
+    0 0 0 1px rgba(255,255,255,0.10) inset !important;
+}
+
+/* Light mode: crisp edges */
+html[data-theme="light"] .panel {
+  box-shadow:
+    0 14px 34px rgba(2,6,23,0.10),
+    0 0 0 1px rgba(2,6,23,0.06) inset !important;
+}
+
+
+/* ================= CARD HEADER NEON ACCENT ================= */
+/* Bright header text across the entire site */
+:root {
+  --header-neon: #22d3ee; /* cyan neon */
+  --header-glow: rgba(34, 211, 238, 0.45);
+}
+
+html[data-theme="dark"] {
+  --header-neon: #38bdf8; /* brighter in dark mode */
+  --header-glow: rgba(56, 189, 248, 0.55);
+}
+
+.h1, .h2, .h3 {
+  color: var(--header-neon) !important;
+  text-shadow:
+    0 0 10px var(--header-glow),
+    0 0 18px rgba(59,130,246,0.22) !important;
+}
+
+/* Keep non-header body text readable */
+.body, .lead {
+  text-shadow: none !important;
+}
+

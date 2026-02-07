@@ -61,13 +61,17 @@ export default function StayLitSplash() {
             width: "100%",
             padding: 32,
             textAlign: "center",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            display: "flex",
             background: "rgba(10,10,15,0.75)",
             backdropFilter: "blur(6px)",
             border: "1px solid rgba(148,163,184,0.15)",
             boxShadow: "0 0 30px rgba(59,130,246,0.25)",
           }}
         >
-          <div className="card-center" style={{ gap: 16 }}>
+          <div className="card-center" style={{ gap: 16, width: "100%", justifyContent: "center", alignItems: "center" }}>
             {/* LOGO */}
             <img
               src={logo}
