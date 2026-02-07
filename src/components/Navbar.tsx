@@ -68,6 +68,14 @@ export default function Navbar() {
             justifyContent: "center",
           }}
         >
+        <a
+          href="/customer"
+          className="btn btn-ghost"
+          style={{ fontWeight: 800 }}
+        >
+          Customer Portal
+        </a>
+
           <NavLink to="/" style={linkStyle} end>
             Home
           </NavLink>
