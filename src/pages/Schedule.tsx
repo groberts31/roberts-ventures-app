@@ -15,7 +15,7 @@ import {
 type PhotoAttachment = {
   name: string;
   type: string;
-  dataUrl: string; // base64
+  dataUrl: string;
 };
 
 type ContactInfo = {
@@ -26,8 +26,8 @@ type ContactInfo = {
   photos: PhotoAttachment[];
 };
 
-const MAX_PHOTOS = 6;              // keep storage reasonable
-const MAX_BYTES_PER_PHOTO = 1_200_000; // ~1.2MB each (prevents blowing localStorage)
+const MAX_PHOTOS = 6;
+const MAX_BYTES_PER_PHOTO = 1_200_000;
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -41,20 +41,18 @@ function fileToDataUrl(file: File): Promise<string> {
 export default function Schedule() {
   const cart = useCart();
 
-  const ALL_SERVICES = [...SERVICES, ...ADD_ONS];
+  const ALL_SERVICES = useMemo(() => [...SERVICES, ...ADD_ONS], []);
 
   const itemsDetailed = useMemo(() => {
     return cart.items.map((i) => {
       const service = ALL_SERVICES.find((s) => s.id === i.serviceId);
       return { ...i, service };
     });
-  }, [cart.items]);
+  }, [cart.items, ALL_SERVICES]);
 
-  // date limits
   const today = clampToMidnight(new Date());
   const maxDate = addDays(today, AVAILABILITY.maxDaysAhead);
 
-  // pick next valid open day as default
   const defaultDate = useMemo(() => {
     let d = new Date(today);
     for (let i = 0; i <= 14; i++) {
@@ -91,7 +89,6 @@ export default function Schedule() {
 
     const selected = Array.from(files).slice(0, remaining);
 
-    // basic size guard (before reading)
     const tooBig = selected.find((f) => f.size > MAX_BYTES_PER_PHOTO);
     if (tooBig) {
       alert(
@@ -149,14 +146,14 @@ export default function Schedule() {
         notes: contact.notes,
       },
       items: cart.items,
-      photos: contact.photos, // <-- stored locally for now
+      photos: contact.photos,
       status: "new" as const,
     };
 
     const existing = JSON.parse(localStorage.getItem("rv_requests") ?? "[]");
     localStorage.setItem("rv_requests", JSON.stringify([request, ...existing]));
 
-    alert("Request submitted! (Saved locally with photos for now.)");
+    alert("Request submitted! (Saved locally for now.)");
 
     cart.clear();
     setSelectedSlotISO("");
@@ -168,7 +165,7 @@ export default function Schedule() {
       <section className="panel card card-center">
         <h1 className="h2">Schedule Your Service</h1>
         <p className="lead" style={{ maxWidth: 720 }}>
-          Review your request cart, pick a date & time, attach photos (optional), and submit your info.
+          Review your request, pick a date & time, attach photos (optional), and submit.
         </p>
 
         <div className="row">
@@ -177,11 +174,10 @@ export default function Schedule() {
             Hours: {AVAILABILITY.startHour}:00–{AVAILABILITY.endHour}:00
           </span>
           <span className="badge">Slots: {AVAILABILITY.slotMinutes} min</span>
-          <span className="badge">Photos: {contact.photos.length}/{MAX_PHOTOS}</span>
+          <span className="badge">Request photos: {contact.photos.length}/{MAX_PHOTOS}</span>
         </div>
       </section>
 
-      {/* Cart */}
       {cart.items.length === 0 ? (
         <section className="panel card card-center">
           <h3 className="h3">Your request cart is empty</h3>
@@ -195,27 +191,72 @@ export default function Schedule() {
       ) : (
         <section className="stack">
           {itemsDetailed.map((i) => (
-            <article key={i.serviceId} className="panel card card-center">
-              <h3 className="h3">{i.service?.name ?? "Service"}</h3>
-              <div className="muted">{i.service?.category ?? "—"}</div>
-
-              <div className="row">
-                <span className="badge">Qty: {i.qty}</span>
-                <button className="btn btn-ghost" onClick={() => cart.remove(i.serviceId)}>
-                  Remove
-                </button>
+            <article
+              key={i.serviceId}
+              className="panel card"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "96px 1fr",
+                gap: 14,
+                alignItems: "center",
+              }}
+            >
+              {/* LEFT: image for service or add-on */}
+              <div
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  border: "1px solid rgba(2,6,23,0.16)",
+                  background: "rgba(255,255,255,0.85)",
+                  boxShadow: "0 10px 22px rgba(29,78,216,0.10)",
+                }}
+              >
+                {i.service?.image ? (
+                  <img
+                    src={i.service.image}
+                    alt={i.service?.name ?? "Service"}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                ) : (
+                  <div className="card-center" style={{ width: "100%", height: "100%", padding: 10 }}>
+                    <div className="label">No Image</div>
+                  </div>
+                )}
               </div>
 
-              <label style={{ width: "100%", maxWidth: 640, display: "grid", gap: 6 }}>
-                <span className="label">Notes for this service</span>
-                <textarea
-                  className="field"
-                  rows={3}
-                  value={i.note}
-                  onChange={(e) => cart.setNote(i.serviceId, e.target.value)}
-                  placeholder="Add helpful details (sizes, location, photos below, etc.)"
-                />
-              </label>
+              {/* RIGHT: content */}
+              <div className="card-center" style={{ alignItems: "stretch", gap: 10 }}>
+                <div className="row" style={{ justifyContent: "space-between" }}>
+                  <div>
+                    <h3 className="h3" style={{ margin: 0 }}>
+                      {i.service?.name ?? "Service"}
+                    </h3>
+                    <div className="muted" style={{ fontWeight: 900 }}>
+                      {i.service?.category ?? "—"}
+                    </div>
+                  </div>
+
+                  <div className="row">
+                    <span className="badge">Qty: {i.qty}</span>
+                    <button className="btn btn-ghost" onClick={() => cart.remove(i.serviceId)}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                <label style={{ width: "100%", display: "grid", gap: 6 }}>
+                  <span className="label">Notes for this item</span>
+                  <textarea
+                    className="field"
+                    rows={3}
+                    value={i.note}
+                    onChange={(e) => cart.setNote(i.serviceId, e.target.value)}
+                    placeholder="Add helpful details"
+                  />
+                </label>
+              </div>
             </article>
           ))}
 
@@ -227,7 +268,6 @@ export default function Schedule() {
         </section>
       )}
 
-      {/* Date & time */}
       {cart.items.length > 0 && (
         <section className="panel card card-center">
           <h2 className="h2">Pick a Date</h2>
@@ -252,7 +292,9 @@ export default function Schedule() {
             )}
           </div>
 
-          <h2 className="h2" style={{ marginTop: 18 }}>Pick a Time</h2>
+          <h2 className="h2" style={{ marginTop: 18 }}>
+            Pick a Time
+          </h2>
 
           <div
             style={{
@@ -289,7 +331,6 @@ export default function Schedule() {
         </section>
       )}
 
-      {/* Contact + Photos + submit */}
       {cart.items.length > 0 && (
         <section className="panel card card-center">
           <h2 className="h2">Your Info</h2>
@@ -322,18 +363,13 @@ export default function Schedule() {
             />
 
             <div className="panel card" style={{ width: "100%", padding: 14 }}>
-              <div className="label">Photos (optional)</div>
+              <div className="label">Request Photos (optional)</div>
               <div className="body" style={{ marginTop: 6 }}>
-                Add photos to help with quote-required work. Max {MAX_PHOTOS} photos, ~{Math.round(MAX_BYTES_PER_PHOTO/1024)}KB each.
+                Add photos to help with quote-required work. Max {MAX_PHOTOS} photos, ~{Math.round(MAX_BYTES_PER_PHOTO / 1024)}KB each.
               </div>
 
               <div className="row" style={{ marginTop: 10, justifyContent: "center" }}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => onAddPhotos(e.target.files)}
-                />
+                <input type="file" accept="image/*" multiple onChange={(e) => onAddPhotos(e.target.files)} />
               </div>
 
               {contact.photos.length > 0 && (
@@ -374,12 +410,20 @@ export default function Schedule() {
           <button className="btn btn-primary" onClick={onSubmit} style={{ marginTop: 12 }}>
             Submit Request
           </button>
-
-          <div className="muted" style={{ fontSize: 12, fontWeight: 800, maxWidth: 760 }}>
-            Photos are stored locally for now. Next we can move photos to online storage when you’re ready.
-          </div>
         </section>
       )}
+
+      <style>{`
+        @media (max-width: 620px) {
+          article.panel.card {
+            grid-template-columns: 1fr !important;
+          }
+          article.panel.card > div:first-child {
+            width: 100% !important;
+            height: 190px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
