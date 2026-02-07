@@ -2,6 +2,8 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import StayLitSplash from "./staylit/StayLitSplash";
 import StayLitShop from "./staylit/StayLitShop";
 import StayLitCreate from "./staylit/StayLitCreate";
+import StayLitAbout from "./staylit/StayLitAbout";
+import StayLitPolicies from "./staylit/StayLitPolicies";
 
 export default function StayLit() {
   const location = useLocation();
@@ -43,6 +45,8 @@ export default function StayLit() {
           <Route path="/" element={<StayLitSplash />} />
           <Route path="/shop" element={<StayLitShop />} />
           <Route path="/create" element={<StayLitCreate />} />
+          <Route path="/about" element={<StayLitAbout />} />
+          <Route path="/policies" element={<StayLitPolicies />} />
           <Route path="*" element={<Navigate to="/staylit" replace />} />
         </Routes>
       </div>

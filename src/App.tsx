@@ -1,5 +1,12 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Policies from "./pages/Policies";
+import ServiceArea from "./pages/ServiceArea";
+import FAQ from "./pages/FAQ";
+import Reviews from "./pages/Reviews";
+import Portfolio from "./pages/Portfolio";
+import About from "./pages/About";
 
 import Home from "./pages/Home";
 import Services from "./pages/Services";
@@ -12,6 +19,7 @@ import ServiceDetail from "./pages/ServiceDetail";
 import CustomerPortal from "./pages/CustomerPortal";
 import CustomerRequestDetail from "./pages/CustomerRequestDetail";
 import bg from "./assets/handyman-bg.png";
+import staylitBg from "./assets/staylit-bg.png";
 import ToastHost from "./components/ToastHost";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -20,6 +28,7 @@ import RequestConfirmed from "./pages/RequestConfirmed";
 
 export default function App() {
   const location = useLocation();
+  const isStayLit = location.pathname.startsWith('/staylit');
 return (
     <div
       style={{
@@ -31,7 +40,7 @@ return (
             rgba(255,255,255,0.75),
             rgba(255,255,255,0.82)
           ),
-          url(${bg})
+          url(${isStayLit ? staylitBg : bg})
         `,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -56,6 +65,13 @@ return (
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/staylit/*" element={<StayLit />} />
           <Route path="/contact" element={<Contact />} />
+
+          <Route path="/about" element={<About />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/service-area" element={<ServiceArea />} />
+          <Route path="/policies" element={<Policies />} />
           <Route path="/requests" element={<Requests />} />
         
           <Route path="/customer" element={<CustomerPortal />} />
@@ -86,6 +102,8 @@ return (
                   <Route path="/request-confirmed/:id" element={<RequestConfirmed />} />
         </Routes>
       </main>
+
+      <Footer />
       <ToastHost />
 
     </div>
