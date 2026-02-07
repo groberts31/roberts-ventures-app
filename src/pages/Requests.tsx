@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { SERVICES } from "../data/services";
 
+type PhotoAttachment = {
+  name: string;
+  type: string;
+  dataUrl: string;
+};
+
 type SavedRequest = {
   createdAt: string;
   appointmentStart: string;
@@ -11,6 +17,7 @@ type SavedRequest = {
     notes: string;
   };
   items: { serviceId: string; qty: number; note: string }[];
+  photos?: PhotoAttachment[];
   status?: "new" | "confirmed" | "completed";
 };
 
@@ -64,8 +71,7 @@ export default function Requests() {
       <section className="panel card card-center">
         <h1 className="h2">Requests</h1>
         <p className="lead" style={{ maxWidth: 720 }}>
-          This is your local “mini admin” view. Requests are stored on this device for now.
-          Later we’ll sync to Firebase and add email/SMS.
+          Local “mini admin” view. Requests (and photos) are stored on this device for now.
         </p>
 
         <div className="row">
@@ -92,6 +98,7 @@ export default function Requests() {
             const status = r.status ?? "new";
             const created = new Date(r.createdAt).toLocaleString();
             const appt = r.appointmentStart ? new Date(r.appointmentStart).toLocaleString() : "(none)";
+            const photoCount = r.photos?.length ?? 0;
 
             return (
               <article
@@ -103,10 +110,10 @@ export default function Requests() {
                 <div className="row" style={{ justifyContent: "space-between" }}>
                   <div style={{ display: "grid", gap: 6 }}>
                     <div className="h3">{r.customer?.name || "(no name)"}</div>
-                    <div className="muted" style={{ fontWeight: 800, fontSize: 13 }}>
+                    <div className="muted" style={{ fontWeight: 900, fontSize: 13 }}>
                       Created: {created}
                     </div>
-                    <div className="muted" style={{ fontWeight: 800, fontSize: 13 }}>
+                    <div className="muted" style={{ fontWeight: 900, fontSize: 13 }}>
                       Appointment: {appt}
                     </div>
                   </div>
@@ -114,6 +121,7 @@ export default function Requests() {
                   <div className="row">
                     <span className="badge">Status: {status}</span>
                     <span className="badge">Items: {r.items?.length ?? 0}</span>
+                    <span className="badge">Photos: {photoCount}</span>
                   </div>
                 </div>
 
@@ -134,7 +142,7 @@ export default function Requests() {
         </section>
       )}
 
-      {/* Simple modal */}
+      {/* Detail modal */}
       {selected && (
         <div
           role="dialog"
@@ -143,7 +151,7 @@ export default function Requests() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(2, 6, 23, 0.55)",
+            background: "rgba(2, 6, 23, 0.6)",
             display: "grid",
             placeItems: "center",
             padding: 16,
@@ -153,12 +161,12 @@ export default function Requests() {
           <div
             className="panel card"
             onClick={(e) => e.stopPropagation()}
-            style={{ width: "100%", maxWidth: 820 }}
+            style={{ width: "100%", maxWidth: 920 }}
           >
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
                 <div className="h3">{selected.customer?.name || "(no name)"}</div>
-                <div className="muted" style={{ fontWeight: 800, fontSize: 13 }}>
+                <div className="muted" style={{ fontWeight: 900, fontSize: 13 }}>
                   {selected.customer?.phone || "(no phone)"} • {selected.customer?.address || "(no address)"}
                 </div>
               </div>
@@ -178,13 +186,58 @@ export default function Requests() {
                 <div className="body">{selected.customer?.notes || "(none)"}</div>
               </div>
 
+              {/* Photos */}
+              <div>
+                <div className="label">Photos</div>
+                {(!selected.photos || selected.photos.length === 0) ? (
+                  <div className="body">(none)</div>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                      gap: 10,
+                    }}
+                  >
+                    {selected.photos.map((p, idx) => (
+                      <a
+                        key={idx}
+                        href={p.dataUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="panel"
+                        style={{ padding: 10, borderRadius: 12 }}
+                        title="Open full image"
+                      >
+                        <img
+                          src={p.dataUrl}
+                          alt={p.name}
+                          style={{
+                            width: "100%",
+                            height: 130,
+                            objectFit: "cover",
+                            borderRadius: 10,
+                            border: "1px solid rgba(15,23,42,0.15)",
+                          }}
+                        />
+                        <div className="muted" style={{ fontSize: 11, fontWeight: 900, marginTop: 6, wordBreak: "break-word" }}>
+                          {p.name}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Items */}
               <div>
                 <div className="label">Items</div>
-                <div className="stack">
+                <div className="stack" style={{ marginTop: 8 }}>
                   {(selected.items || []).map((it, i) => (
                     <div key={i} className="panel card" style={{ padding: 12 }}>
                       <div className="row" style={{ justifyContent: "space-between" }}>
-                        <div style={{ fontWeight: 900 }}>{serviceName(it.serviceId)}</div>
+                        <div style={{ fontWeight: 950 }}>{serviceName(it.serviceId)}</div>
                         <span className="badge">Qty: {it.qty}</span>
                       </div>
                       {it.note ? <div className="body" style={{ marginTop: 6 }}>{it.note}</div> : null}

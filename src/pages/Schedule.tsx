@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../data/firebase";
 import { useCart } from "../data/requestCart";
 import { SERVICES } from "../data/services";
 import { AVAILABILITY } from "../data/availability";
@@ -13,12 +11,31 @@ import {
   isOpenDay,
 } from "../data/timeSlots";
 
+type PhotoAttachment = {
+  name: string;
+  type: string;
+  dataUrl: string; // base64
+};
+
 type ContactInfo = {
   name: string;
   phone: string;
   address: string;
   notes: string;
+  photos: PhotoAttachment[];
 };
+
+const MAX_PHOTOS = 6;              // keep storage reasonable
+const MAX_BYTES_PER_PHOTO = 1_200_000; // ~1.2MB each (prevents blowing localStorage)
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("Failed to read image"));
+    r.readAsDataURL(file);
+  });
+}
 
 export default function Schedule() {
   const cart = useCart();
@@ -48,7 +65,6 @@ export default function Schedule() {
   const chosenDate = useMemo(() => new Date(dateStr + "T00:00:00"), [dateStr]);
 
   const slots = useMemo(() => buildSlotsForDate(chosenDate), [chosenDate]);
-
   const [selectedSlotISO, setSelectedSlotISO] = useState<string>("");
 
   const [contact, setContact] = useState<ContactInfo>({
@@ -56,9 +72,57 @@ export default function Schedule() {
     phone: "",
     address: "",
     notes: "",
+    photos: [],
   });
 
-  async function onSubmit() {
+  async function onAddPhotos(files: FileList | null) {
+    if (!files || files.length === 0) return;
+
+    const existing = contact.photos.length;
+    const remaining = Math.max(0, MAX_PHOTOS - existing);
+
+    if (remaining === 0) {
+      alert(`Photo limit reached (${MAX_PHOTOS}). Remove one to add more.`);
+      return;
+    }
+
+    const selected = Array.from(files).slice(0, remaining);
+
+    // basic size guard (before reading)
+    const tooBig = selected.find((f) => f.size > MAX_BYTES_PER_PHOTO);
+    if (tooBig) {
+      alert(
+        `One of your photos is too large (${Math.round(tooBig.size / 1024)} KB). ` +
+          `Please choose images under ~${Math.round(MAX_BYTES_PER_PHOTO / 1024)} KB each.`
+      );
+      return;
+    }
+
+    try {
+      const attachments: PhotoAttachment[] = [];
+      for (const f of selected) {
+        const dataUrl = await fileToDataUrl(f);
+        attachments.push({ name: f.name, type: f.type, dataUrl });
+      }
+
+      setContact((c) => ({
+        ...c,
+        photos: [...c.photos, ...attachments],
+      }));
+    } catch (e) {
+      console.error(e);
+      alert("Could not read one of the images. Please try again.");
+    }
+  }
+
+  function removePhoto(index: number) {
+    setContact((c) => ({
+      ...c,
+      photos: c.photos.filter((_, i) => i !== index),
+    }));
+  }
+
+  function onSubmit() {
     if (cart.items.length === 0) {
       alert("Your request cart is empty. Please add services first.");
       return;
@@ -72,28 +136,28 @@ export default function Schedule() {
       return;
     }
 
-    
-    
-try {
-    await addDoc(collection(db, "requests"), {
-      createdAt: serverTimestamp(),
+    const request = {
+      createdAt: new Date().toISOString(),
       appointmentStart: selectedSlotISO,
-      customer: contact,
+      customer: {
+        name: contact.name,
+        phone: contact.phone,
+        address: contact.address,
+        notes: contact.notes,
+      },
       items: cart.items,
-      status: "new",
-      source: "web-app",
-    });
+      photos: contact.photos, // <-- stored locally for now
+      status: "new" as const,
+    };
 
-    alert("Request submitted! We’ll contact you shortly.");
+    const existing = JSON.parse(localStorage.getItem("rv_requests") ?? "[]");
+    localStorage.setItem("rv_requests", JSON.stringify([request, ...existing]));
+
+    alert("Request submitted! (Saved locally with photos for now.)");
 
     cart.clear();
     setSelectedSlotISO("");
-    setContact({ name: "", phone: "", address: "", notes: "" });
-} catch (err) {
-    console.error(err);
-    alert("Submission failed. Please try again.");
-}
-
+    setContact({ name: "", phone: "", address: "", notes: "", photos: [] });
   }
 
   return (
@@ -101,7 +165,7 @@ try {
       <section className="panel card card-center">
         <h1 className="h2">Schedule Your Service</h1>
         <p className="lead" style={{ maxWidth: 720 }}>
-          Review your request cart, pick a date & time, and submit your info. We’ll follow up to confirm details.
+          Review your request cart, pick a date & time, attach photos (optional), and submit your info.
         </p>
 
         <div className="row">
@@ -110,10 +174,11 @@ try {
             Hours: {AVAILABILITY.startHour}:00–{AVAILABILITY.endHour}:00
           </span>
           <span className="badge">Slots: {AVAILABILITY.slotMinutes} min</span>
+          <span className="badge">Photos: {contact.photos.length}/{MAX_PHOTOS}</span>
         </div>
       </section>
 
-      {/* Cart editor */}
+      {/* Cart */}
       {cart.items.length === 0 ? (
         <section className="panel card card-center">
           <h3 className="h3">Your request cart is empty</h3>
@@ -138,14 +203,14 @@ try {
                 </button>
               </div>
 
-              <label style={{ width: "100%", maxWidth: 620, display: "grid", gap: 6 }}>
+              <label style={{ width: "100%", maxWidth: 640, display: "grid", gap: 6 }}>
                 <span className="label">Notes for this service</span>
                 <textarea
                   className="field"
                   rows={3}
                   value={i.note}
                   onChange={(e) => cart.setNote(i.serviceId, e.target.value)}
-                  placeholder="Add helpful details (sizes, location, photos later, etc.)"
+                  placeholder="Add helpful details (sizes, location, photos below, etc.)"
                 />
               </label>
             </article>
@@ -221,7 +286,7 @@ try {
         </section>
       )}
 
-      {/* Contact + submit */}
+      {/* Contact + Photos + submit */}
       {cart.items.length > 0 && (
         <section className="panel card card-center">
           <h2 className="h2">Your Info</h2>
@@ -252,14 +317,63 @@ try {
               value={contact.notes}
               onChange={(e) => setContact({ ...contact, notes: e.target.value })}
             />
+
+            <div className="panel card" style={{ width: "100%", padding: 14 }}>
+              <div className="label">Photos (optional)</div>
+              <div className="body" style={{ marginTop: 6 }}>
+                Add photos to help with quote-required work. Max {MAX_PHOTOS} photos, ~{Math.round(MAX_BYTES_PER_PHOTO/1024)}KB each.
+              </div>
+
+              <div className="row" style={{ marginTop: 10, justifyContent: "center" }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => onAddPhotos(e.target.files)}
+                />
+              </div>
+
+              {contact.photos.length > 0 && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                    gap: 10,
+                  }}
+                >
+                  {contact.photos.map((p, idx) => (
+                    <div key={idx} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+                      <img
+                        src={p.dataUrl}
+                        alt={p.name}
+                        style={{
+                          width: "100%",
+                          height: 110,
+                          objectFit: "cover",
+                          borderRadius: 10,
+                          border: "1px solid rgba(15,23,42,0.15)",
+                        }}
+                      />
+                      <div className="muted" style={{ fontSize: 11, fontWeight: 900, marginTop: 6, wordBreak: "break-word" }}>
+                        {p.name}
+                      </div>
+                      <button className="btn btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => removePhoto(idx)}>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <button className="btn btn-primary" onClick={onSubmit} style={{ marginTop: 12 }}>
             Submit Request
           </button>
 
-          <div className="muted" style={{ fontSize: 12, fontWeight: 700, maxWidth: 760 }}>
-            Next upgrade: we’ll save requests to Firebase and notify you automatically.
+          <div className="muted" style={{ fontSize: 12, fontWeight: 800, maxWidth: 760 }}>
+            Photos are stored locally for now. Next we can move photos to online storage when you’re ready.
           </div>
         </section>
       )}
