@@ -268,3 +268,69 @@ body {
     left: 120%;
   }
 }
+
+/* ================= FUTURISTIC BOOST ================= */
+
+/* Slower, smoother page transition */
+.page {
+  animation: pageFade 0.55s cubic-bezier(.2,.9,.2,1) both;
+}
+
+@keyframes pageFade {
+  from { opacity: 0; transform: translateY(10px); filter: blur(1px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* Stronger neon edge and glow */
+.panel {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+/* Subtle moving highlight (gives “future glass” feel) */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle at 20% 20%, rgba(96,165,250,0.16), rgba(255,255,255,0) 55%);
+  transform: translate3d(-18%, -12%, 0);
+  pointer-events: none;
+  opacity: 0.55;
+  animation: panelGlowDrift 10s ease-in-out infinite;
+}
+
+@keyframes panelGlowDrift {
+  0%   { transform: translate3d(-18%, -12%, 0); opacity: 0.45; }
+  50%  { transform: translate3d(8%, 6%, 0);    opacity: 0.7; }
+  100% { transform: translate3d(-18%, -12%, 0); opacity: 0.45; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel:hover {
+    transform: translateY(-4px);
+    border-color: rgba(96,165,250,0.55);
+    box-shadow:
+      0 18px 46px rgba(29,78,216,0.22),
+      0 0 0 1px rgba(96,165,250,0.22),
+      0 0 32px rgba(96,165,250,0.18);
+  }
+}
+
+/* Buttons: slightly stronger sheen + glow */
+.btn:hover {
+  box-shadow:
+    0 16px 36px rgba(29,78,216,0.22),
+    0 0 0 1px rgba(96,165,250,0.18);
+}
+
+.btn-primary::after {
+  transition: left 0.75s ease;
+}
+
+/* Optional: apply to any element to add “neon ring” */
+.neon {
+  box-shadow:
+    0 0 0 1px rgba(96,165,250,0.22),
+    0 0 28px rgba(96,165,250,0.22);
+}
