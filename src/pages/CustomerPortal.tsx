@@ -20,6 +20,31 @@ function statusLabel(s: string) {
 }
 
 export default function CustomerPortal() {
+
+  async function copyText(text: string) {
+    const v = String(text || "").trim();
+    if (!v) return;
+    try {
+      await navigator.clipboard.writeText(v);
+      alert(`Copied: ${v}`);
+    } catch {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = v;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand("copy");
+        alert(`Copied: ${v}`);
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+  }
+
   const [phone, setPhone] = useState("");
   const [showRetrieve, setShowRetrieve] = useState(false);
   const [retrieveName, setRetrieveName] = useState("");
@@ -132,9 +157,19 @@ export default function CustomerPortal() {
                             <div style={{ fontWeight: 950, color: "#0f172a" }}>
                               Request: {String(r.id)}
                             </div>
-                            <div className="badge" style={{ justifyContent: "center" }}>
+                            <button
+                              type="button"
+                              className="badge"
+                              onClick={() => copyText(String((r as any).accessCode || ""))}
+                              title="Click to copy"
+                              style={{
+                                cursor: "pointer",
+                                justifyContent: "center",
+                                border: "1px solid rgba(2,6,23,0.14)",
+                              }}
+                            >
                               Code: {String((r as any).accessCode || "—")}
-                            </div>
+                            </button>
                           </div>
                           <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
                             Created: {String(r.createdAt || "—")}
