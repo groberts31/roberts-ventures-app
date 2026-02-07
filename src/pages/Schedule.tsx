@@ -13,121 +13,97 @@ export default function Schedule() {
   }, [cart.items]);
 
   return (
-    <div style={{ display: "grid", gap: 14 }}>
-      <div>
-        <h1 style={{ marginBottom: 6 }}>Schedule / Request</h1>
-        <p style={{ marginTop: 0, opacity: 0.75 }}>
-          Review your selected services, adjust quantity, add notes, then we’ll choose a date/time next.
+    <div className="stack">
+      <section className="panel card">
+        <div className="label">Request Builder</div>
+        <h1 className="h2" style={{ marginTop: 6 }}>Schedule / Request</h1>
+        <p className="lead" style={{ marginTop: 6 }}>
+          Review your selected services, adjust quantity, and add notes. Next we’ll choose date & time.
         </p>
-      </div>
+
+        <div className="row" style={{ marginTop: 12 }}>
+          <div className="badge">Items: {cart.count}</div>
+          {cart.items.length > 0 && (
+            <button className="btn btn-ghost" onClick={cart.clear}>
+              Clear All
+            </button>
+          )}
+        </div>
+      </section>
 
       {cart.items.length === 0 ? (
-        <div style={{ padding: 14, border: "1px dashed #ccc", borderRadius: 12, opacity: 0.8 }}>
-          Your request cart is empty. Go to <strong>Services</strong> and add items.
-        </div>
+        <section className="panel card">
+          <div className="h3">Your request cart is empty</div>
+          <p className="body">Go to Services and add items to get started.</p>
+        </section>
       ) : (
         <>
-          <section style={{ display: "grid", gap: 12 }}>
+          <section className="stack">
             {itemsDetailed.map((i) => (
-              <article
-                key={i.serviceId}
-                style={{
-                  border: "1px solid #e3e3e3",
-                  borderRadius: 12,
-                  padding: 14,
-                  display: "grid",
-                  gap: 10,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                  <div style={{ display: "grid", gap: 4 }}>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>
-                      {i.service?.name ?? "Service"}
-                    </div>
-                    <div style={{ fontSize: 13, opacity: 0.75 }}>
+              <article key={i.serviceId} className="panel card">
+                <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div className="h3">{i.service?.name ?? "Service"}</div>
+                    <div className="muted" style={{ fontSize: 13, fontWeight: 700 }}>
                       {i.service?.category ?? "—"}
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => cart.remove(i.serviceId)}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: 10,
-                      border: "1px solid #ddd",
-                      background: "#fff",
-                      fontWeight: 900,
-                      cursor: "pointer",
-                    }}
-                  >
+                  <button className="btn" onClick={() => cart.remove(i.serviceId)}>
                     Remove
                   </button>
                 </div>
 
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-                  <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span style={{ fontWeight: 900 }}>Qty</span>
+                <div className="row" style={{ marginTop: 10 }}>
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <span className="label">Quantity</span>
                     <input
+                      className="field"
                       type="number"
                       min={1}
                       max={99}
                       value={i.qty}
                       onChange={(e) => cart.setQty(i.serviceId, Number(e.target.value))}
-                      style={{ width: 90, padding: "8px 10px", borderRadius: 8, border: "1px solid #ddd" }}
+                      style={{ width: 140 }}
                     />
                   </label>
 
-                  <div style={{ fontSize: 13, opacity: 0.8 }}>
-                    Tip: add specifics below (sizes, locations, how many, deadline).
+                  <div className="badge">
+                    Tip: add sizes, locations, and special requests in notes.
                   </div>
                 </div>
 
-                <label style={{ display: "grid", gap: 6 }}>
-                  <span style={{ fontWeight: 900 }}>Notes for this service</span>
+                <label style={{ display: "grid", gap: 6, marginTop: 10 }}>
+                  <span className="label">Notes for this service</span>
                   <textarea
+                    className="field"
                     value={i.note}
                     onChange={(e) => cart.setNote(i.serviceId, e.target.value)}
-                    placeholder='Example: "2 TVs (55&quot; and 65&quot;). Mount on living room wall. Hide cables if possible."'
+                    placeholder='Example: "2 TVs (55&quot; and 65&quot;). Living room wall. Hide cables if possible."'
                     rows={3}
-                    style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #ddd" }}
                   />
                 </label>
               </article>
             ))}
           </section>
 
-          <section style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <button
-              type="button"
-              onClick={cart.clear}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid #ddd",
-                background: "#fff",
-                fontWeight: 900,
-                cursor: "pointer",
-              }}
-            >
-              Clear All
-            </button>
+          <section className="panel card">
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <div>
+                <div className="label">Next step</div>
+                <div className="h3" style={{ marginTop: 6 }}>Pick Date & Time</div>
+                <p className="body" style={{ margin: "6px 0 0 0" }}>
+                  Next we’ll generate time slots based on your hours and allow customers to submit.
+                </p>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => alert("Next: Date/time picker + submit request (we’ll build this next).")}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid #ddd",
-                background: "#f0f0f0",
-                fontWeight: 900,
-                cursor: "pointer",
-                marginLeft: "auto",
-              }}
-            >
-              Continue to Date & Time →
-            </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => alert("Next: Date/time picker + submit request")}
+              >
+                Continue →
+              </button>
+            </div>
           </section>
         </>
       )}
