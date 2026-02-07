@@ -17,117 +17,218 @@ export default function StayLitSplash() {
         style={{
           width: "100%",
           maxWidth: 1100,
-          gap: 22,
+          gap: 26,
         }}
       >
-        {/* HERO / SPLASH */}
+        {/* HERO */}
         <section
           className="panel card"
           style={{
             width: "100%",
-            padding: 28,
+            padding: 32,
             textAlign: "center",
+            background: "rgba(10,10,15,0.75)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(148,163,184,0.15)",
+            boxShadow: "0 0 30px rgba(59,130,246,0.25)",
           }}
         >
-          <div className="card-center" style={{ gap: 14 }}>
+          <div className="card-center" style={{ gap: 16 }}>
 
             {/* LOGO */}
             <img
               src={logo}
               alt="Stay Lit Logo"
               style={{
-                width: 90,
-                height: 90,
+                width: 92,
+                height: 92,
                 objectFit: "contain",
                 marginBottom: 6,
-                filter: "drop-shadow(0 0 14px rgba(255,255,255,0.35))",
+                filter: "drop-shadow(0 0 16px rgba(59,130,246,0.6))",
               }}
             />
 
-            <div className="badge" style={{ width: "fit-content" }}>
+            {/* BRAND TAG */}
+            <div
+              style={{
+                fontWeight: 900,
+                letterSpacing: "0.22em",
+                fontSize: 12,
+                color: "#60a5fa",
+                textTransform: "uppercase",
+              }}
+            >
               Stay Lit Candle Co.
             </div>
 
-            <h1 className="h2" style={{ margin: 0 }}>
-              🔥 Stay Lit Candle Co.
+            {/* MAIN TITLE */}
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "clamp(2.2rem, 5vw, 3.2rem)",
+                fontWeight: 950,
+                letterSpacing: "0.04em",
+                background: "linear-gradient(90deg,#ffffff,#93c5fd,#ffffff)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                textShadow: "0 0 20px rgba(147,197,253,0.4)",
+              }}
+            >
+              🔥 STAY LIT
             </h1>
 
-            <div className="muted" style={{ fontWeight: 850, maxWidth: 820 }}>
-              Hand-poured candles made for atmosphere, focus, and relaxation.
-              Choose a ready-to-ship candle — or create your own by selecting scent, jar, and wick.
+            {/* SUBTITLE */}
+            <div
+              style={{
+                fontWeight: 900,
+                fontSize: 18,
+                letterSpacing: "0.08em",
+                color: "#e5e7eb",
+              }}
+            >
+              Urban • Luxury • Hand-Poured
             </div>
 
-            <div style={{ fontWeight: 900 }}>
-              Clean burn • Premium wax • Long lasting
+            {/* DESCRIPTION */}
+            <div
+              style={{
+                fontWeight: 800,
+                maxWidth: 820,
+                color: "#cbd5f5",
+                lineHeight: 1.6,
+                fontSize: 15,
+              }}
+            >
+              Hand-poured candles built for atmosphere, focus, and relaxation.
+              Choose a ready-to-ship candle — or design your own with custom scent,
+              jar, and wick.
+            </div>
+
+            {/* FEATURES */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: 14,
+                fontWeight: 850,
+                color: "#93c5fd",
+                letterSpacing: "0.05em",
+                marginTop: 4,
+              }}
+            >
+              <span>Clean Burn</span>
+              <span>•</span>
+              <span>Premium Wax</span>
+              <span>•</span>
+              <span>Long Lasting</span>
             </div>
           </div>
         </section>
 
-        {/* TWO PATHS */}
+        {/* OPTIONS */}
         <section
           style={{
             width: "100%",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 18,
+            gap: 20,
           }}
         >
-          {/* Pre-made */}
+          {/* PREMADE */}
           <article
             className="panel card"
             style={{
               display: "grid",
-              gap: 12,
+              gap: 14,
               textAlign: "center",
-              padding: 22,
+              padding: 24,
+              background: "rgba(15,23,42,0.7)",
+              border: "1px solid rgba(148,163,184,0.15)",
+              boxShadow: "0 0 18px rgba(59,130,246,0.2)",
             }}
           >
-            <div style={{ fontSize: 44 }}>🕯️</div>
+            <div style={{ fontSize: 46 }}>🕯️</div>
 
-            <h2 className="h3" style={{ margin: 0 }}>
-              Shop Pre-Made Candles
+            <h2
+              style={{
+                margin: 0,
+                fontWeight: 900,
+                letterSpacing: "0.06em",
+                color: "#f8fafc",
+              }}
+            >
+              PRE-MADE CANDLES
             </h2>
 
-            <div className="muted" style={{ fontWeight: 850 }}>
-              Ready now. Pick your scent and we’ll get it shipped or ready for pickup.
+            <div
+              style={{
+                fontWeight: 800,
+                color: "#c7d2fe",
+                lineHeight: 1.5,
+              }}
+            >
+              Ready now. Pick your scent and we’ll handle the rest.
             </div>
 
             <a className="btn btn-primary" href="/staylit/shop">
-              Browse Candles
+              Browse Collection
             </a>
           </article>
 
-          {/* Build your own */}
+          {/* CUSTOM */}
           <article
             className="panel card"
             style={{
               display: "grid",
-              gap: 12,
+              gap: 14,
               textAlign: "center",
-              padding: 22,
+              padding: 24,
+              background: "rgba(15,23,42,0.7)",
+              border: "1px solid rgba(148,163,184,0.15)",
+              boxShadow: "0 0 18px rgba(59,130,246,0.2)",
             }}
           >
-            <div style={{ fontSize: 44 }}>🧪</div>
+            <div style={{ fontSize: 46 }}>🧪</div>
 
-            <h2 className="h3" style={{ margin: 0 }}>
-              Create Your Own Candle
+            <h2
+              style={{
+                margin: 0,
+                fontWeight: 900,
+                letterSpacing: "0.06em",
+                color: "#f8fafc",
+              }}
+            >
+              CUSTOM BUILD
             </h2>
 
-            <div className="muted" style={{ fontWeight: 850 }}>
-              Choose your Scent + Jar Type + Wick Type. See your price instantly.
+            <div
+              style={{
+                fontWeight: 800,
+                color: "#c7d2fe",
+                lineHeight: 1.5,
+              }}
+            >
+              Design your own candle. Scent. Jar. Wick. Your style.
             </div>
 
             <a className="btn btn-primary" href="/staylit/create">
-              Build Your Candle
+              Build Yours
             </a>
           </article>
         </section>
 
-        {/* FOOTER NOTE */}
+        {/* FOOTER */}
         <section className="card-center">
-          <div className="muted" style={{ fontWeight: 850, maxWidth: 900 }}>
-            Tip: Custom candles are great for gifts, events, and brand scents.
-            Bulk and corporate orders available.
+          <div
+            style={{
+              fontWeight: 850,
+              maxWidth: 900,
+              color: "#94a3b8",
+              letterSpacing: "0.04em",
+            }}
+          >
+            Perfect for gifts, events, and branded scents. Bulk orders available.
           </div>
         </section>
       </div>
