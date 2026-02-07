@@ -5,7 +5,7 @@ export default function Home() {
     <div className="stack page page-enter" style={{ gap: 18 }}>
       {/* HERO / SPLASH */}
       <section
-        className="panel card"
+        className="panel card glow-panel"
         style={{
           padding: 22,
           borderRadius: 18,
@@ -38,7 +38,7 @@ export default function Home() {
               fontWeight: 950,
               letterSpacing: -0.6,
               lineHeight: 1.05,
-              color: "#0f172a",
+              color: "var(--head-accent)",
             }}
           >
             Modern home services,
@@ -52,7 +52,7 @@ export default function Home() {
               margin: 0,
               maxWidth: 860,
               fontWeight: 800,
-              color: "#0f172a",
+              color: "var(--head-accent)",
               opacity: 0.82,
               lineHeight: 1.35,
             }}
@@ -116,29 +116,29 @@ export default function Home() {
             }}
           >
             <div className="panel" style={{ padding: 12, borderRadius: 14 }}>
-              <div style={{ fontWeight: 950, color: "#0f172a" }}>Clear pricing</div>
-              <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+              <div style={{ fontWeight: 950, color: "var(--head-accent)" }}>Clear pricing</div>
+              <div className="sub-accent" style={{ fontWeight: 850, marginTop: 6 }}>
                 Prices shown when fixed/starting — quotes when needed.
               </div>
             </div>
 
             <div className="panel" style={{ padding: 12, borderRadius: 14 }}>
-              <div style={{ fontWeight: 950, color: "#0f172a" }}>Fast scheduling</div>
-              <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+              <div style={{ fontWeight: 950, color: "var(--head-accent)" }}>Fast scheduling</div>
+              <div className="sub-accent" style={{ fontWeight: 850, marginTop: 6 }}>
                 Select services + add-ons and send your request quickly.
               </div>
             </div>
 
             <div className="panel" style={{ padding: 12, borderRadius: 14 }}>
-              <div style={{ fontWeight: 950, color: "#0f172a" }}>Quality work</div>
-              <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+              <div style={{ fontWeight: 950, color: "var(--head-accent)" }}>Quality work</div>
+              <div className="sub-accent" style={{ fontWeight: 850, marginTop: 6 }}>
                 Clean finish, professional approach, and communication.
               </div>
             </div>
 
             <div className="panel" style={{ padding: 12, borderRadius: 14 }}>
-              <div style={{ fontWeight: 950, color: "#0f172a" }}>Stay Lit inside</div>
-              <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+              <div style={{ fontWeight: 950, color: "var(--head-accent)" }}>Stay Lit inside</div>
+              <div className="sub-accent" style={{ fontWeight: 850, marginTop: 6 }}>
                 Candle business lives inside the Roberts Ventures site.
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function Home() {
         }}
       >
         {/* Left: Roberts Ventures */}
-        <div className="panel card card-center" style={{ padding: 18, borderRadius: 18, textAlign: "center" }}>
+        <div className="panel card card-center glow-panel" style={{ boxShadow: "0 0 22px rgba(59,130,246,0.25), 0 0 40px rgba(59,130,246,0.12)", padding: 18, borderRadius: 18, textAlign: "center" }}>
           <div className="badge" style={{ width: "fit-content" }}>
             Home Services • Outdoor • Woodworking
           </div>
@@ -183,7 +183,7 @@ export default function Home() {
         </div>
 
         {/* Right: Stay Lit */}
-        <div className="panel card card-center" style={{ padding: 18, borderRadius: 18, textAlign: "center" }}>
+        <div className="panel card card-center glow-panel" style={{ boxShadow: "0 0 22px rgba(59,130,246,0.25), 0 0 40px rgba(59,130,246,0.12)", padding: 18, borderRadius: 18, textAlign: "center" }}>
           <div className="badge" style={{ width: "fit-content" }}>
             Stay Lit Candle Co.
           </div>
@@ -207,8 +207,8 @@ export default function Home() {
           </div>
 
           <div className="panel" style={{ marginTop: 14, padding: 12, borderRadius: 14 }}>
-            <div style={{ fontWeight: 950, color: "#0f172a" }}>Coming soon</div>
-            <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+            <div style={{ fontWeight: 950, color: "var(--head-accent)" }}>Coming soon</div>
+            <div className="sub-accent" style={{ fontWeight: 850, marginTop: 6 }}>
               Product grid, scent filters, bundles, gift notes, and checkout.
             </div>
           </div>

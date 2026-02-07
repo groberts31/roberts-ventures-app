@@ -25,6 +25,8 @@ html, body, #root {
   --accent: #1d4ed8;
   --accent2: #60a5fa;
 
+  --head-accent: #0ea5e9;    /* bright cyan header accent (light) */
+  --sub-accent:  #7c3aed;    /* bright violet subtext (light) */
   --shadow-soft: 0 10px 26px rgba(0,0,0,0.10);
   --shadow-hover: 0 16px 42px rgba(29,78,216,0.22);
 
@@ -51,6 +53,9 @@ html[data-theme="dark"] {
   --accent: #60a5fa;
   --accent2: #22d3ee;
 
+
+  --head-accent: #22d3ee;    /* bright cyan header accent (dark) */
+  --sub-accent:  #a78bfa;    /* bright violet subtext (dark) */
   --shadow-soft: 0 12px 32px rgba(0,0,0,0.45);
   --shadow-hover: 0 18px 52px rgba(34,211,238,0.20);
 
@@ -119,7 +124,7 @@ body {
 
 /* Bright subtext accent (used under card headers) */
 .sub-accent{
-  color: var(--sub-accent, #a78bfa);
+  color: var(--sub-accent);
   font-weight: 850;
 }
 /* ================= LAYOUT ================= */
@@ -151,6 +156,44 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(16px);
+}
+
+
+
+/* ================= GLOW VARIANT ================= */
+
+.glow-panel {
+  box-shadow:
+    var(--shadow-soft),
+    0 0 22px rgba(34,211,238,0.22),
+    0 0 44px rgba(59,130,246,0.14);
+  border-color: rgba(34,211,238,0.20);
+}
+
+html[data-theme="dark"] .glow-panel {
+  box-shadow:
+    var(--shadow-soft),
+    0 0 22px rgba(34,211,238,0.28),
+    0 0 52px rgba(59,130,246,0.16);
+  border-color: rgba(34,211,238,0.28);
+}
+
+/* ================= GLOW VARIANT ================= */
+
+.glow-panel {
+  box-shadow:
+    var(--shadow-soft),
+    0 0 22px rgba(34,211,238,0.22),
+    0 0 44px rgba(59,130,246,0.14);
+  border-color: rgba(34,211,238,0.20);
+}
+
+html[data-theme="dark"] .glow-panel {
+  box-shadow:
+    var(--shadow-soft),
+    0 0 22px rgba(34,211,238,0.28),
+    0 0 52px rgba(59,130,246,0.16);
+  border-color: rgba(34,211,238,0.28);
 }
 
 .card {
@@ -717,3 +760,32 @@ html[data-theme="dark"]{
   padding: 6px 10px;
 }
 
+
+/* ================= RATES / PRICES ================= */
+
+/* Prices, totals, amounts, estimates */
+.price,
+.rate,
+.amount,
+.total,
+.money,
+.estimate,
+.cart-price,
+.schedule-price {
+  color: var(--card-subtext) !important;
+  font-weight: 800;
+}
+
+/* Any strong text inside cards that looks like pricing */
+.panel strong,
+.panel b {
+  color: var(--card-subtext);
+}
+
+/* ===== Bright subtext (used for card descriptions + rates) ===== */
+.subtext-bright,
+.rate-bright {
+  color: var(--subtext-bright, #a7f3d0) !important; /* fallback */
+  font-weight: 800;
+  text-shadow: 0 0 14px rgba(34,197,94,0.20);
+}
