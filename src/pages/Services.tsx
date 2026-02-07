@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { CATEGORIES, SERVICES, type Service } from "../data/services";
+import { useCart } from "../data/requestCart";
 
 function formatPrice(s: Service) {
   if (s.priceType === "quote") return "Quote required";
@@ -8,24 +9,8 @@ function formatPrice(s: Service) {
   return `${s.unitLabel ?? "Starting at"} ${money}`;
 }
 
-function badgeStyle(priceType: Service["priceType"]) {
-  const common = {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "3px 8px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 700,
-    border: "1px solid #ddd",
-    background: "#f7f7f7",
-  } as const;
-
-  if (priceType === "fixed") return { ...common };
-  if (priceType === "starting_at") return { ...common };
-  return { ...common };
-}
-
 export default function Services() {
+  const cart = useCart();
   const [category, setCategory] = useState<string>("All");
   const [q, setQ] = useState("");
 
@@ -46,13 +31,13 @@ export default function Services() {
       <div>
         <h1 style={{ marginBottom: 6 }}>Services</h1>
         <p style={{ marginTop: 0, opacity: 0.75 }}>
-          Select a category, search, and view pricing. Items marked “Quote required” need details/photos.
+          Select services to build a request. Pricing shows fixed / starting at / quote required.
         </p>
       </div>
 
       <section style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontWeight: 700 }}>Category</span>
+          <span style={{ fontWeight: 800 }}>Category</span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -66,7 +51,7 @@ export default function Services() {
         </label>
 
         <label style={{ display: "flex", gap: 8, alignItems: "center", flex: 1, minWidth: 240 }}>
-          <span style={{ fontWeight: 700 }}>Search</span>
+          <span style={{ fontWeight: 800 }}>Search</span>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -76,7 +61,7 @@ export default function Services() {
         </label>
 
         <div style={{ marginLeft: "auto", opacity: 0.7, fontSize: 14 }}>
-          Showing <strong>{filtered.length}</strong> service{filtered.length === 1 ? "" : "s"}
+          In Cart: <strong>{cart.count}</strong>
         </div>
       </section>
 
@@ -94,12 +79,23 @@ export default function Services() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>{s.name}</div>
+                <div style={{ fontSize: 18, fontWeight: 900 }}>{s.name}</div>
                 <div style={{ fontSize: 13, opacity: 0.75 }}>{s.category}</div>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                <span style={badgeStyle(s.priceType)}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "3px 8px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 900,
+                    border: "1px solid #ddd",
+                    background: s.priceType === "quote" ? "#fff3f3" : "#f7f7f7",
+                  }}
+                >
                   {s.priceType === "fixed" ? "Fixed price" : s.priceType === "starting_at" ? "Starting at" : "Quote required"}
                 </span>
                 <div style={{ fontWeight: 900 }}>{formatPrice(s)}</div>
@@ -108,7 +104,7 @@ export default function Services() {
 
             <p style={{ margin: 0, opacity: 0.85 }}>{s.shortDesc}</p>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <button
                 type="button"
                 style={{
@@ -116,28 +112,19 @@ export default function Services() {
                   borderRadius: 10,
                   border: "1px solid #ddd",
                   background: "#fff",
-                  fontWeight: 800,
+                  fontWeight: 900,
                   cursor: "pointer",
                 }}
-                onClick={() => alert(`Next: add "${s.name}" to your request cart (we’ll build this next).`)}
+                onClick={() => cart.add(s)}
               >
                 Add to Request
               </button>
 
-              <button
-                type="button"
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  border: "1px solid #ddd",
-                  background: "#f7f7f7",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-                onClick={() => alert(`Next: open "${s.name}" detail page (we’ll add this next).`)}
-              >
-                View Details
-              </button>
+              {cart.has(s.id) && (
+                <span style={{ fontSize: 13, fontWeight: 800, opacity: 0.75 }}>
+                  Added ✓ (check Schedule to edit quantity/notes)
+                </span>
+              )}
             </div>
           </article>
         ))}
