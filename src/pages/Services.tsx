@@ -138,7 +138,7 @@ export default function ServicesPage() {
                   <div className="badge" style={{ justifyContent: "center" }}>
                     {s.priceType === "fixed" ? "Fixed" : s.priceType === "starting_at" ? "Starting" : "Quote"}
                   </div>
-                  <div style={{ fontWeight: 950, marginTop: 8 }}>{formatPrice(s)}</div>
+                  <div className="subtext" style={{ fontWeight: 950, marginTop: 8 }}>{formatPrice(s)}</div>
                 </div>
               </div>
 
