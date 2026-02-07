@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="stack">
+    <div className="stack page">
 
       <section className="panel card card-center">
         <h1 className="h1 h1-accent">Roberts Ventures LLC</h1>

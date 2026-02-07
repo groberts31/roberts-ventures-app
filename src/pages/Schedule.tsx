@@ -13,7 +13,7 @@ export default function Schedule() {
   }, [cart.items]);
 
   return (
-    <div className="stack">
+    <div className="stack page">
       <section className="panel card">
         <div className="label">Request Builder</div>
         <h1 className="h2" style={{ marginTop: 6 }}>Schedule / Request</h1>

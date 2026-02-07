@@ -33,7 +33,7 @@ export default function Services() {
   }, [category, q]);
 
   return (
-    <div className="stack">
+    <div className="stack page">
 
       <section className="panel card card-center">
         <h1 className="h2">Services Catalog</h1>
