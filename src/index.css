@@ -122,10 +122,29 @@ body {
 .muted { color: var(--text-muted); }
 
 
-/* Bright subtext accent (used under card headers) */
+
+/* Helpers: bright text you can reuse everywhere */
+.title-accent{
+  color: var(--head-accent);
+  text-shadow: 0 0 18px rgba(34,211,238,0.18);
+  font-weight: 950;
+}
+
 .sub-accent{
   color: var(--sub-accent);
   font-weight: 850;
+}
+
+/* Use for rates/prices that should match card description subtext */
+.price-accent{
+  color: var(--sub-accent);
+  font-weight: 950;
+}
+
+/* Use for 2nd navbar brand + links when you want them to match subtext color */
+.nav-sub-accent{
+  color: var(--sub-accent);
+  font-weight: 900;
 }
 /* ================= LAYOUT ================= */
 
@@ -149,6 +168,25 @@ body {
 
 /* ================= CARDS ================= */
 
+/* ================= GLOW VARIANT ================= */
+
+.glow-panel{
+  box-shadow:
+    var(--shadow-soft),
+    0 0 28px rgba(34,211,238,0.45),
+    0 0 72px rgba(59,130,246,0.28),
+    0 0 120px rgba(167,139,250,0.18);
+  border-color: rgba(34,211,238,0.34);
+}
+
+html[data-theme="dark"] .glow-panel{
+  box-shadow:
+    var(--shadow-soft),
+    0 0 32px rgba(34,211,238,0.55),
+    0 0 86px rgba(59,130,246,0.34),
+    0 0 140px rgba(167,139,250,0.22);
+  border-color: rgba(34,211,238,0.44);
+}
 .panel {
   color: var(--text-main);
   background: var(--panel-bg);
@@ -159,42 +197,6 @@ body {
 }
 
 
-
-/* ================= GLOW VARIANT ================= */
-
-.glow-panel {
-  box-shadow:
-    var(--shadow-soft),
-    0 0 22px rgba(34,211,238,0.22),
-    0 0 44px rgba(59,130,246,0.14);
-  border-color: rgba(34,211,238,0.20);
-}
-
-html[data-theme="dark"] .glow-panel {
-  box-shadow:
-    var(--shadow-soft),
-    0 0 22px rgba(34,211,238,0.28),
-    0 0 52px rgba(59,130,246,0.16);
-  border-color: rgba(34,211,238,0.28);
-}
-
-/* ================= GLOW VARIANT ================= */
-
-.glow-panel {
-  box-shadow:
-    var(--shadow-soft),
-    0 0 22px rgba(34,211,238,0.22),
-    0 0 44px rgba(59,130,246,0.14);
-  border-color: rgba(34,211,238,0.20);
-}
-
-html[data-theme="dark"] .glow-panel {
-  box-shadow:
-    var(--shadow-soft),
-    0 0 22px rgba(34,211,238,0.28),
-    0 0 52px rgba(59,130,246,0.16);
-  border-color: rgba(34,211,238,0.28);
-}
 
 .card {
   padding: 18px;
