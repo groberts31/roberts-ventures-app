@@ -26,7 +26,7 @@ export default function Home() {
           }}
         />
 
-        <div style={{ position: "relative", display: "grid", gap: 14 }}>
+        <div style={{ position: "relative", display: "grid", gap: 14, justifyItems: "center", textAlign: "center" }}>
           <div className="badge" style={{ width: "fit-content" }}>
             Roberts Ventures LLC
           </div>
@@ -165,7 +165,7 @@ export default function Home() {
           </h2>
 
           <p className="body" style={{ margin: 0, fontWeight: 800, opacity: 0.82, maxWidth: 700 }}>
-            Browse the catalog, pick add-ons (like cable concealment or haul-away),
+            <span className="sub-accent">Browse the catalog, pick add-ons (like cable concealment or haul-away),</span>
             and send details so we can confirm and schedule.
           </p>
 
