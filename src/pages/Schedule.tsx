@@ -38,6 +38,10 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+function money(n: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+}
+
 export default function Schedule() {
   const cart = useCart();
 
@@ -49,6 +53,47 @@ export default function Schedule() {
       return { ...i, service };
     });
   }, [cart.items, ALL_SERVICES]);
+
+  // ✅ Live estimate (min total + quote count)
+  const estimate = useMemo(() => {
+    let minTotal = 0;
+    let hasStarting = false;
+    let quoteCount = 0;
+    let missingCount = 0;
+
+    for (const i of itemsDetailed) {
+      const s: any = i.service;
+      const qty = Number(i.qty ?? 1);
+
+      if (!s) {
+        missingCount += 1;
+        continue;
+      }
+
+      if (s.priceType === "quote") {
+        quoteCount += 1;
+        continue;
+      }
+
+      const price = typeof s.price === "number" ? s.price : 0;
+
+      if (s.priceType === "starting_at") {
+        hasStarting = true;
+        minTotal += price * qty;
+        continue;
+      }
+
+      if (s.priceType === "fixed") {
+        minTotal += price * qty;
+        continue;
+      }
+
+      // any unknown priceType
+      missingCount += 1;
+    }
+
+    return { minTotal, hasStarting, quoteCount, missingCount };
+  }, [itemsDetailed]);
 
   const today = clampToMidnight(new Date());
   const maxDate = addDays(today, AVAILABILITY.maxDaysAhead);
@@ -168,13 +213,37 @@ export default function Schedule() {
           Review your request, pick a date & time, attach photos (optional), and submit.
         </p>
 
-        <div className="row">
+        <div className="row" style={{ flexWrap: "wrap" }}>
           <span className="badge">Cart items: {cart.count}</span>
           <span className="badge">
             Hours: {AVAILABILITY.startHour}:00–{AVAILABILITY.endHour}:00
           </span>
           <span className="badge">Slots: {AVAILABILITY.slotMinutes} min</span>
           <span className="badge">Request photos: {contact.photos.length}/{MAX_PHOTOS}</span>
+
+          {/* ✅ Live estimate badges */}
+          <span className="badge" style={{ justifyContent: "center" }}>
+            Est. minimum: {money(estimate.minTotal)}
+            {estimate.hasStarting ? "+" : ""}
+          </span>
+
+          {estimate.quoteCount > 0 && (
+            <span className="badge" style={{ justifyContent: "center" }}>
+              Quote items: {estimate.quoteCount}
+            </span>
+          )}
+
+          {estimate.missingCount > 0 && (
+            <span className="badge" style={{ justifyContent: "center" }}>
+              Unpriced items: {estimate.missingCount}
+            </span>
+          )}
+        </div>
+
+        <div className="muted" style={{ fontWeight: 900, marginTop: 10, maxWidth: 760 }}>
+          {estimate.quoteCount > 0
+            ? "Note: Quote-required items are not included in the estimate. Add photos to speed up quoting."
+            : "Note: “Starting at” prices are minimum estimates and may change based on site conditions."}
         </div>
       </section>
 
@@ -405,6 +474,19 @@ export default function Schedule() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Repeat estimate near submit */}
+          <div className="row" style={{ marginTop: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <span className="badge" style={{ justifyContent: "center" }}>
+              Est. minimum: {money(estimate.minTotal)}
+              {estimate.hasStarting ? "+" : ""}
+            </span>
+            {estimate.quoteCount > 0 && (
+              <span className="badge" style={{ justifyContent: "center" }}>
+                Quote items: {estimate.quoteCount}
+              </span>
+            )}
           </div>
 
           <button className="btn btn-primary" onClick={onSubmit} style={{ marginTop: 12 }}>
