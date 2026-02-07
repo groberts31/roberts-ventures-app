@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCart } from "../data/requestCart";
 import { SERVICES } from "../data/services";
+import { ADD_ONS } from "../data/addOns";
 import { AVAILABILITY } from "../data/availability";
 import {
   addDays,
@@ -40,9 +41,11 @@ function fileToDataUrl(file: File): Promise<string> {
 export default function Schedule() {
   const cart = useCart();
 
+  const ALL_SERVICES = [...SERVICES, ...ADD_ONS];
+
   const itemsDetailed = useMemo(() => {
     return cart.items.map((i) => {
-      const service = SERVICES.find((s) => s.id === i.serviceId);
+      const service = ALL_SERVICES.find((s) => s.id === i.serviceId);
       return { ...i, service };
     });
   }, [cart.items]);
