@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../data/firebase";
 import { useCart } from "../data/requestCart";
 import { SERVICES } from "../data/services";
 import { AVAILABILITY } from "../data/availability";
@@ -56,7 +58,7 @@ export default function Schedule() {
     notes: "",
   });
 
-  function onSubmit() {
+  async function onSubmit() {
     if (cart.items.length === 0) {
       alert("Your request cart is empty. Please add services first.");
       return;
@@ -70,23 +72,28 @@ export default function Schedule() {
       return;
     }
 
-    const payload = {
-      createdAt: new Date().toISOString(),
+    
+    
+try {
+    await addDoc(collection(db, "requests"), {
+      createdAt: serverTimestamp(),
       appointmentStart: selectedSlotISO,
       customer: contact,
       items: cart.items,
-    };
+      status: "new",
+      source: "web-app",
+    });
 
-    // Save locally for now (Firebase next)
-    const existing = JSON.parse(localStorage.getItem("rv_requests") ?? "[]");
-    localStorage.setItem("rv_requests", JSON.stringify([payload, ...existing]));
+    alert("Request submitted! We’ll contact you shortly.");
 
-    alert("Request submitted! (Saved locally for now.)");
-
-    // optional: clear cart after submit
     cart.clear();
     setSelectedSlotISO("");
     setContact({ name: "", phone: "", address: "", notes: "" });
+} catch (err) {
+    console.error(err);
+    alert("Submission failed. Please try again.");
+}
+
   }
 
   return (
