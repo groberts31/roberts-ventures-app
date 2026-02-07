@@ -11,7 +11,15 @@ export default function App() {
   return (
     <>
       <Navbar />
-      <main style={{ padding: 16, maxWidth: 1100, margin: "0 auto" }}>
+
+      <main
+        style={{
+          padding: "24px 16px",
+          maxWidth: 1200,
+          margin: "0 auto",
+          minHeight: "calc(100vh - 80px)",
+        }}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/services" element={<Services />} />
