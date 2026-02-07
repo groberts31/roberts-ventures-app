@@ -237,9 +237,19 @@ export default function Schedule() {
     };
 
     const existing = JSON.parse(localStorage.getItem("rv_requests") ?? "[]");
+
+    // ✅ Give this request a stable id (clean + reliable)
+    if (!(request as any).id) {
+      (request as any).id =
+        (crypto as any).randomUUID?.() ??
+        (Math.random().toString(16).slice(2) + Date.now().toString(16));
+    }
+
     localStorage.setItem("rv_requests", JSON.stringify([request, ...existing]));
 
-    alert("Request submitted! (Saved locally for now.)");
+    // ✅ Redirect to confirmation page
+    window.location.href = `/request-confirmed/${(request as any).id}`;
+    return;alert("Request submitted! (Saved locally for now.)");
 
     cart.clear();
     setSelectedSlotISO("");

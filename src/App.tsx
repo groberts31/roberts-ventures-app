@@ -14,6 +14,7 @@ import ToastHost from "./components/ToastHost";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGuard from "./components/admin/AdminGuard";
+import RequestConfirmed from "./pages/RequestConfirmed";
 
 export default function App() {
   const location = useLocation();
@@ -78,6 +79,7 @@ return (
               </div>
             }
           />
+                  <Route path="/request-confirmed/:id" element={<RequestConfirmed />} />
         </Routes>
       </main>
       <ToastHost />
