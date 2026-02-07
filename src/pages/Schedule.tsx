@@ -295,8 +295,8 @@ return { ...i, service, estLabel };
         maxWidth: 1100,
         margin: "0 auto",
         padding: compact ? 12 : 16,
-        background: "rgba(255,255,255,0.88)",
-        border: "1px solid rgba(2,6,23,0.14)",
+        background: "var(--panel-bg)",
+        border: "1px solid var(--border)",
         textAlign: "center",
       }}
     >
@@ -310,7 +310,7 @@ return { ...i, service, estLabel };
         </div>
 
         <div
-          className="badge"
+          className="badge rate-bright"
           style={{
             justifyContent: "center",
             width: "fit-content",
@@ -335,20 +335,21 @@ return { ...i, service, estLabel };
       >
         <div className="panel" style={{ padding: 12, borderRadius: 12, width: "100%", maxWidth: 360 }}>
           <div className="label">Fixed subtotal</div>
-          <div style={{ fontWeight: 950, marginTop: 6 }}>{money(estimate.fixedSubtotal)}</div>
+          <div className="rate-bright" style={{ fontWeight: 950, marginTop: 6 }}>{money(estimate.fixedSubtotal)}</div>
         </div>
 
         <div className="panel" style={{ padding: 12, borderRadius: 12, width: "100%", maxWidth: 360 }}>
           <div className="label">Starting-at subtotal</div>
-          <div style={{ fontWeight: 950, marginTop: 6 }}>
+          <div className="rate-bright" style={{ fontWeight: 950, marginTop: 6 }}>
             {money(estimate.startingSubtotal)}
             {estimate.startingSubtotal > 0 ? "+" : ""}
+          
           </div>
         </div>
 
         <div className="panel" style={{ padding: 12, borderRadius: 12, width: "100%", maxWidth: 360 }}>
           <div className="label">Quote-required items</div>
-          <div style={{ fontWeight: 950, marginTop: 6 }}>{estimate.quoteNames.length}</div>
+          <div className="rate-bright" style={{ fontWeight: 950, marginTop: 6 }}>{estimate.quoteNames.length}</div>
         </div>
       </div>
 
