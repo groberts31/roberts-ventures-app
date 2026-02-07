@@ -1,5 +1,5 @@
-
 import { NavLink } from "react-router-dom";
+import rvLogo from "../assets/roberts-ventures-logo.png";
 
 const linkStyle = ({ isActive }: { isActive: boolean }) => ({
   textDecoration: "none",
@@ -22,9 +22,22 @@ export default function Footer() {
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gap: 14 }}>
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "grid", gap: 4 }}>
-            <div style={{ fontWeight: 950, letterSpacing: "0.06em", color: "#e2e8f0" }}>
-              Roberts Ventures LLC
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+              <img
+                src={rvLogo}
+                alt="Roberts Ventures LLC"
+                style={{
+                  width: 22,
+                  height: 22,
+                  objectFit: "contain",
+                  filter: "drop-shadow(0 0 12px rgba(56,189,248,.18))",
+                }}
+              />
+              <div style={{ fontWeight: 950, letterSpacing: "0.06em", color: "#e2e8f0" }}>
+                Roberts Ventures LLC
+              </div>
             </div>
+
             <div className="muted" style={{ fontWeight: 850 }}>
               Home Services • Woodworking • Outdoor • Project Consultation
             </div>
