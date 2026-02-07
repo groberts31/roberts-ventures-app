@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import { CartProvider } from "./data/requestCart";
+import { emitToast } from "./components/ToastHost";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -14,3 +15,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+
+// RV_ALERT_TOAST_OVERRIDE: route all alert() calls through toast UI (non-blocking)
+window.alert = (msg?: any) => {
+  emitToast({ message: String(msg ?? ""), variant: "info", durationMs: 3200 });
+};
+

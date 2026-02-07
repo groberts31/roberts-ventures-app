@@ -1,191 +1,155 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ToastPayload } from "../lib/toast";
 
-type ToastItem = ToastPayload & { id: string };
+type ToastVariant = "info" | "success" | "warning" | "error";
 
-function uid() {
-  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+type ToastItem = {
+  id: string;
+  message: string;
+  variant: ToastVariant;
+};
+
+function makeId() {
+  return (crypto as any).randomUUID?.() ?? (Math.random().toString(16).slice(2) + Date.now().toString(16));
+}
+
+export type ToastEventDetail = {
+  message: string;
+  variant?: ToastVariant;
+  durationMs?: number;
+};
+
+const EVENT_NAME = "rv_toast";
+
+export function emitToast(detail: ToastEventDetail) {
+  window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail }));
 }
 
 export default function ToastHost() {
-  const [items, setItems] = useState<ToastItem[]>([]);
-
-  useEffect(() => {
-    function onToast(e: Event) {
-      const ev = e as CustomEvent<ToastPayload>;
-      const p = ev.detail;
-      const id = uid();
-      const duration = typeof p.durationMs === "number" ? p.durationMs : 2400;
-
-      const item: ToastItem = { id, ...p };
-      setItems((prev) => [item, ...prev].slice(0, 4)); // max 4 visible
-
-      window.setTimeout(() => {
-        setItems((prev) => prev.filter((x) => x.id !== id));
-      }, duration);
-    }
-
-    window.addEventListener("rv_toast", onToast);
-    return () => window.removeEventListener("rv_toast", onToast);
-  }, []);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const styles = useMemo(() => {
-    return {
-      wrap: {
-        position: "fixed" as const,
-        right: 16,
-        bottom: 16,
-        display: "grid",
-        gap: 10,
-        zIndex: 9999,
-        width: "min(440px, calc(100vw - 32px))",
-        pointerEvents: "none" as const,
-      },
-      toast: (type?: string) => ({
-        pointerEvents: "auto" as const,
-        borderRadius: 16,
-        padding: "12px 14px",
-        border: "1px solid rgba(2,6,23,0.18)",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.78))",
-        boxShadow:
-          type === "error"
-            ? "0 18px 48px rgba(220,38,38,0.18)"
-            : type === "warning"
-            ? "0 18px 48px rgba(245,158,11,0.18)"
-            : "0 18px 48px rgba(29,78,216,0.16)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        animation: "rvToastIn 180ms ease-out",
-      }),
-      topRow: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-      },
-      badge: (type?: string) => ({
-        fontSize: 11,
-        fontWeight: 950,
-        padding: "6px 10px",
-        borderRadius: 999,
-        border: "1px solid rgba(2,6,23,0.14)",
-        background:
-          type === "error"
-            ? "rgba(220,38,38,0.12)"
-            : type === "warning"
-            ? "rgba(245,158,11,0.14)"
-            : type === "info"
-            ? "rgba(14,165,233,0.14)"
-            : "rgba(34,197,94,0.14)",
-        color:
-          type === "error"
-            ? "#7f1d1d"
-            : type === "warning"
-            ? "#7c2d12"
-            : type === "info"
-            ? "#0c4a6e"
-            : "#14532d",
-        boxShadow:
-          type === "error"
-            ? "0 0 0 4px rgba(220,38,38,0.08)"
-            : type === "warning"
-            ? "0 0 0 4px rgba(245,158,11,0.08)"
-            : type === "info"
-            ? "0 0 0 4px rgba(14,165,233,0.08)"
-            : "0 0 0 4px rgba(34,197,94,0.08)",
-      }),
-      title: {
-        fontWeight: 950,
-        color: "#0f172a",
-        fontSize: 13,
-        margin: 0,
-      },
-      msg: {
-        marginTop: 6,
-        marginBottom: 0,
-        fontWeight: 800,
-        color: "#0f172a",
-        opacity: 0.9,
-        fontSize: 12.5,
-        lineHeight: 1.3,
-      },
-      btnRow: {
-        display: "flex",
-        gap: 10,
-        justifyContent: "flex-end",
-        alignItems: "center",
-        marginTop: 10,
-      },
-      actionBtn: {
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        textDecoration: "none",
-        border: "1px solid rgba(29,78,216,0.28)",
-        background: "rgba(29,78,216,0.10)",
-        borderRadius: 999,
-        fontWeight: 950,
-        fontSize: 12,
-        padding: "8px 12px",
-        cursor: "pointer",
-        color: "#1d4ed8",
-        boxShadow: "0 0 0 4px rgba(29,78,216,0.08)",
-      },
-      closeBtn: {
-        border: "1px solid rgba(2,6,23,0.14)",
-        background: "rgba(255,255,255,0.65)",
-        borderRadius: 999,
-        fontWeight: 950,
-        fontSize: 12,
-        padding: "8px 12px",
-        cursor: "pointer",
-        color: "#0f172a",
-      },
+    const baseCard: React.CSSProperties = {
+      width: "min(520px, calc(100vw - 24px))",
+      borderRadius: 14,
+      padding: "12px 14px",
+      background: "rgba(255,255,255,0.92)",
+      border: "1px solid rgba(2,6,23,0.14)",
+      boxShadow: "0 18px 40px rgba(2,6,23,0.16)",
+      backdropFilter: "blur(8px)",
+      display: "grid",
+      gap: 6,
+      pointerEvents: "auto",
+      animation: "rvToastIn 180ms ease-out",
     };
+
+    const badge: React.CSSProperties = {
+      width: "fit-content",
+      padding: "4px 10px",
+      borderRadius: 999,
+      fontWeight: 950,
+      fontSize: 12,
+      border: "1px solid rgba(2,6,23,0.14)",
+      background: "rgba(255,255,255,0.70)",
+      color: "#0f172a",
+    };
+
+    return { baseCard, badge };
   }, []);
+
+  useEffect(() => {
+    const onToast = (ev: Event) => {
+      const e = ev as CustomEvent<ToastEventDetail>;
+      const message = String(e.detail?.message ?? "").trim();
+      if (!message) return;
+
+      const variant = (e.detail?.variant ?? "info") as ToastVariant;
+      const durationMs = Number.isFinite(Number(e.detail?.durationMs)) ? Number(e.detail?.durationMs) : 2800;
+
+      const id = makeId();
+      setToasts((prev) => [{ id, message, variant }, ...prev].slice(0, 4));
+
+      window.setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id != id));
+      }, Math.max(1200, durationMs));
+    };
+
+    window.addEventListener(EVENT_NAME, onToast);
+    return () => window.removeEventListener(EVENT_NAME, onToast);
+  }, []);
+
+  if (toasts.length === 0) return null;
+
+  const variantLabel = (v: ToastVariant) => {
+    if (v === "success") return "Success";
+    if (v === "warning") return "Heads up";
+    if (v === "error") return "Error";
+    return "Info";
+  };
+
+  const variantAccent = (v: ToastVariant) => {
+    // no hard-coded colors elsewhere in your app, but toasts need readable cues
+    if (v === "success") return "rgba(16,185,129,0.18)"; // emerald-ish
+    if (v === "warning") return "rgba(245,158,11,0.18)"; // amber-ish
+    if (v === "error") return "rgba(239,68,68,0.18)";    // red-ish
+    return "rgba(59,130,246,0.14)";                      // blue-ish
+  };
 
   return (
     <>
-      <div style={styles.wrap}>
-        {items.map((t) => (
-          <div key={t.id} style={styles.toast(t.type)}>
-            <div style={styles.topRow}>
-              <span style={styles.badge(t.type)}>{(t.type ?? "success").toUpperCase()}</span>
-              <span style={{ fontWeight: 950, fontSize: 12, opacity: 0.65 }}>Roberts Ventures</span>
-            </div>
+      <style>{`
+        @keyframes rvToastIn {
+          from { transform: translateY(-6px); opacity: 0; }
+          to   { transform: translateY(0px); opacity: 1; }
+        }
+      `}</style>
 
-            {t.title ? <p style={styles.title}>{t.title}</p> : null}
-            <p style={styles.msg}>{t.message}</p>
-
-            <div style={styles.btnRow}>
-              {t.actionLabel && t.actionHref ? (
-                <a
-                  href={t.actionHref}
-                  style={styles.actionBtn}
-                  onClick={() => setItems((p) => p.filter((x) => x.id != t.id))}
-                >
-                  {t.actionLabel} →
-                </a>
-              ) : null}
+      <div
+        style={{
+          position: "fixed",
+          top: 14,
+          right: 14,
+          zIndex: 9999,
+          display: "grid",
+          gap: 10,
+          pointerEvents: "none",
+        }}
+      >
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            style={{
+              ...styles.baseCard,
+              borderColor: "rgba(2,6,23,0.14)",
+            }}
+          >
+            <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ ...styles.badge, background: variantAccent(t.variant) }}>
+                {variantLabel(t.variant)}
+              </div>
 
               <button
-                style={styles.closeBtn}
-                onClick={() => setItems((p) => p.filter((x) => x.id !== t.id))}
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 10,
+                  fontWeight: 950,
+                  pointerEvents: "auto",
+                }}
+                aria-label="Dismiss"
+                title="Dismiss"
               >
-                Close
+                ✕
               </button>
+            </div>
+
+            <div style={{ fontWeight: 900, color: "#0f172a", lineHeight: 1.25 }}>
+              {t.message}
             </div>
           </div>
         ))}
       </div>
-
-      <style>{`
-        @keyframes rvToastIn {
-          from { transform: translateY(10px); opacity: 0; }
-          to   { transform: translateY(0);  opacity: 1; }
-        }
-      `}</style>
     </>
   );
 }
