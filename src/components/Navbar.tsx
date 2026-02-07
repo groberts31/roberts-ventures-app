@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../data/requestCart";
 import React from "react";
 import rvLogo from "../assets/roberts-ventures-logo.png";
@@ -18,7 +18,10 @@ const baseLinkStyle: React.CSSProperties = {
 
 export default function Navbar() {
   const cart = useCart();
+  const count = (cart as any)?.count ?? 0;
+
   const [theme, setTheme] = React.useState(getActiveTheme());
+  const navigate = useNavigate();
 
   return (
     <header
@@ -117,49 +120,69 @@ export default function Navbar() {
           </NavLink>
         </nav>
 
-        
-        {/* Theme toggle */}
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => setTheme(toggleTheme())}
-          aria-label="Toggle dark/light theme"
-          title="Toggle theme"
-          style={{
-            padding: "8px 12px",
-            borderRadius: 999,
-            fontSize: 12,
-            fontWeight: 900,
-            letterSpacing: ".08em",
-            textTransform: "uppercase",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(148,163,184,0.18)",
-            color: "rgba(248,250,252,.92)",
-            boxShadow: "0 0 18px rgba(56,189,248,.10)",
-          }}
-        >
-          {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-        </button>
-
-{/* Cart */}
+        {/* Right controls (keeps toggle + cart together and always visible) */}
         <div
           style={{
-            padding: "6px 12px",
-            borderRadius: 999,
-            fontSize: 12,
-            fontWeight: 900,
-            letterSpacing: ".08em",
-            textTransform: "uppercase",
-            background: "linear-gradient(90deg, rgba(56,189,248,.12), rgba(167,139,250,.12))",
-            color: "rgba(248,250,252,.92)",
-            border: "1px solid rgba(56,189,248,.28)",
-            boxShadow: "0 0 18px rgba(56,189,248,.15)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
+            flexShrink: 0,
           }}
         >
-          Cart: {cart.count}
+          {/* Theme toggle */}
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setTheme(toggleTheme())}
+            aria-label="Toggle dark/light theme"
+            title="Toggle theme"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 900,
+              letterSpacing: ".08em",
+              textTransform: "uppercase",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(148,163,184,0.18)",
+              color: "rgba(248,250,252,.92)",
+              boxShadow: "0 0 18px rgba(56,189,248,.10)",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+          </button>
+
+          {/* Cart (clickable + cannot “blend in”) */}
+          <button
+            type="button"
+            onClick={() => navigate("/requests")}
+            aria-label="Open requests cart"
+            title="Open Requests"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 900,
+              letterSpacing: ".08em",
+              textTransform: "uppercase",
+              background: "linear-gradient(90deg, rgba(56,189,248,.14), rgba(167,139,250,.14))",
+              color: "rgba(248,250,252,.92)",
+              border: "1px solid rgba(56,189,248,.32)",
+              boxShadow: "0 0 18px rgba(56,189,248,.15)",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            🛒 Cart: {count}
+          </button>
         </div>
       </div>
     </header>
