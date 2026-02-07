@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import rvLogo from "../assets/roberts-ventures-logo.png";
 
 export default function Home() {
   return (
@@ -27,6 +28,19 @@ export default function Home() {
         />
 
         <div style={{ position: "relative", display: "grid", gap: 14, justifyItems: "center", textAlign: "center" }}>
+          {/* Logo */}
+          <img
+            src={rvLogo}
+            alt="Roberts Ventures LLC"
+            style={{
+              width: 92,
+              height: 92,
+              objectFit: "contain",
+              filter: "drop-shadow(0 0 18px rgba(56,189,248,.22))",
+              marginTop: 2,
+            }}
+          />
+
           <div className="badge" style={{ width: "fit-content" }}>
             Roberts Ventures LLC
           </div>
@@ -57,8 +71,8 @@ export default function Home() {
               lineHeight: 1.35,
             }}
           >
-            Pick a service, customize with add-ons, and send a request in minutes.
-            From TV mounting and ceiling fans to custom shelving, deck repair, and haul-away.
+            Pick a service, customize with add-ons, and send a request in minutes. From TV mounting and ceiling fans to
+            custom shelving, deck repair, and haul-away.
           </p>
 
           {/* CTA buttons */}
@@ -69,6 +83,7 @@ export default function Home() {
               flexWrap: "wrap",
               marginTop: 4,
               alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Link
@@ -113,6 +128,7 @@ export default function Home() {
               gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
               gap: 10,
               marginTop: 10,
+              width: "100%",
             }}
           >
             <div className="panel" style={{ padding: 12, borderRadius: 14 }}>
@@ -155,7 +171,14 @@ export default function Home() {
         }}
       >
         {/* Left: Roberts Ventures */}
-        <div className="panel card card-center glow-panel" style={{ boxShadow: "0 0 22px rgba(59,130,246,0.25), 0 0 40px rgba(59,130,246,0.12)", padding: 18, borderRadius: 18, textAlign: "center" }}>
+        <div
+          className="panel card card-center glow-panel"
+          style={{
+                        padding: 18,
+            borderRadius: 18,
+            textAlign: "center",
+          }}
+        >
           <div className="badge" style={{ width: "fit-content" }}>
             Home Services • Outdoor • Woodworking
           </div>
@@ -165,11 +188,11 @@ export default function Home() {
           </h2>
 
           <p className="body" style={{ margin: 0, fontWeight: 800, opacity: 0.82, maxWidth: 700 }}>
-            <span className="sub-accent">Browse the catalog, pick add-ons (like cable concealment or haul-away),</span>
-            and send details so we can confirm and schedule.
+            <span className="sub-accent">Browse the catalog, pick add-ons (like cable concealment or haul-away),</span> and
+            send details so we can confirm and schedule.
           </p>
 
-          <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+          <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 14, justifyContent: "center" }}>
             <Link to="/services" className="btn btn-primary" style={{ fontWeight: 950 }}>
               View Catalog
             </Link>
@@ -183,7 +206,14 @@ export default function Home() {
         </div>
 
         {/* Right: Stay Lit */}
-        <div className="panel card card-center glow-panel" style={{ boxShadow: "0 0 22px rgba(59,130,246,0.25), 0 0 40px rgba(59,130,246,0.12)", padding: 18, borderRadius: 18, textAlign: "center" }}>
+        <div
+          className="panel card card-center glow-panel"
+          style={{
+                        padding: 18,
+            borderRadius: 18,
+            textAlign: "center",
+          }}
+        >
           <div className="badge" style={{ width: "fit-content" }}>
             Stay Lit Candle Co.
           </div>
@@ -193,11 +223,10 @@ export default function Home() {
           </h2>
 
           <p className="body" style={{ margin: 0, fontWeight: 800, opacity: 0.82, maxWidth: 700 }}>
-            A dedicated area inside the Roberts Ventures app — perfect for future product
-            listings, bundles, and ordering.
+            A dedicated area inside the Roberts Ventures app — perfect for future product listings, bundles, and ordering.
           </p>
 
-          <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+          <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 14, justifyContent: "center" }}>
             <Link to="/staylit" className="btn btn-primary" style={{ fontWeight: 950 }}>
               Enter Stay Lit
             </Link>
