@@ -37,16 +37,91 @@ function getServiceId(it: any): string {
 }
 
 function getAddOnIds(cart: any, it: any): string[] {
-  // Try common patterns
-  if (Array.isArray(it?.addOns)) return it.addOns.map((x: any) => String(x?.id ?? x));
-  if (Array.isArray(it?.addOnIds)) return it.addOnIds.map((x: any) => String(x));
-  const sid = getServiceId(it);
-  if (sid && Array.isArray(cart?.addOnsByService?.[sid])) return cart.addOnsByService[sid].map((x: any) => String(x?.id ?? x));
+  // Normalize any add-on representation to a string id
+  const norm = (x: any) => String(x ?? "").trim();
+
+  // Common item-level shapes
+  if (Array.isArray(it?.addOns)) {
+    return it.addOns.map((x: any) => norm(x?.id ?? x?.addOnId ?? x?.serviceId ?? x)).filter(Boolean);
+  }
+  if (Array.isArray(it?.addOnIds)) {
+    return it.addOnIds.map((x: any) => norm(x)).filter(Boolean);
+  }
+
+  const sid = norm(it?.serviceId ?? it?.id ?? it?.service?.id);
+
+  // Common cart-level shapes
+  if (sid && Array.isArray(cart?.addOnsByService?.[sid])) {
+    return cart.addOnsByService[sid].map((x: any) => norm(x?.id ?? x?.addOnId ?? x?.serviceId ?? x)).filter(Boolean);
+  }
   if (sid && typeof cart?.getAddOns === "function") {
     const v = cart.getAddOns(sid);
-    if (Array.isArray(v)) return v.map((x: any) => String(x?.id ?? x));
+    if (Array.isArray(v)) return v.map((x: any) => norm(x?.id ?? x?.addOnId ?? x?.serviceId ?? x)).filter(Boolean);
   }
+
+  // Fallback: some stores keep an addOns map keyed by serviceId
+  if (sid && typeof cart?.addOns === "object" && cart?.addOns) {
+    const v = cart.addOns[sid];
+    if (Array.isArray(v)) return v.map((x: any) => norm(x?.id ?? x?.addOnId ?? x?.serviceId ?? x)).filter(Boolean);
+  }
+
   return [];
+}
+
+function resolveAddOn(addById: Map<string, any>, rawId: string) {
+  const ridRaw = String(rawId || "");
+  if (!ridRaw) return undefined;
+
+  const rid = normalizeId(ridRaw);
+
+  // Exact + normalized matches
+  return (
+    addById.get(ridRaw) ||
+    addById.get(rid) ||
+    addById.get(ridRaw.trim()) ||
+    addById.get(ridRaw.toLowerCase().trim()) ||
+    undefined
+  );
+}
+
+function normalizeId(x: any) {
+  return String(x ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^id:\s*/i, "")
+    .replace(/^addon\s*:\s*/i, "")
+    .replace(/\s+/g, "");
+}
+
+function buildAddOnIndex(addOns: any[]) {
+  const idx = new Map<string, any>();
+
+  for (const a of addOns) {
+    const raw = String(a?.id ?? "");
+    const norm = normalizeId(raw);
+    if (!raw) continue;
+
+    // store the original id and normalized id
+    idx.set(raw, a);
+    idx.set(norm, a);
+
+    // store common variants so cart can use different formats
+    const variants = [
+      raw.replace(/^addon[-_]/i, ""),
+      raw.replace(/^add[-_]?on[-_]/i, ""),
+      raw.replace(/^rv[-_]/i, ""),
+      norm.replace(/^addon[-_]/i, ""),
+      norm.replace(/^add[-_]?on[-_]/i, ""),
+      norm.replace(/^rv[-_]/i, ""),
+    ].filter(v => v && v != raw && v != norm);
+
+    for (const v of variants) {
+      idx.set(v, a);
+      idx.set(normalizeId(v), a);
+    }
+  }
+
+  return idx;
 }
 
 export default function EstimatePreview() {
@@ -59,8 +134,8 @@ export default function EstimatePreview() {
     const quotes: string[] = [];
     const lines: Array<{ label: string; note: string; amount?: number }> = [];
 
-    const svcById = new Map(SERVICES.map((s: any) => [String(s.id), s]));
-    const addById = new Map(ADD_ONS.map((a: any) => [String(a.id), a]));
+    const svcById = new Map([...SERVICES, ...ADD_ONS].map((s: any) => [String(s.id), s]));
+    const addById = buildAddOnIndex(ADD_ONS as any[]);
 
     for (const it of items) {
       const sid = getServiceId(it);
@@ -70,16 +145,19 @@ export default function EstimatePreview() {
       const qty = getQty(it);
 
       if (svc) {
+        const isAddOn = Boolean((svc as any).isAddOn);
+        const labelName = isAddOn ? `Add-on: ${svc.name}` : svc.name;
+
         const pt: PriceType = svc.priceType;
         if (pt === "quote") {
-          quotes.push(`${svc.name} (service)`);
-          lines.push({ label: svc.name, note: "Quote required" });
+          quotes.push(`${labelName}`);
+          lines.push({ label: labelName, note: "Quote required" });
         } else {
           const price = Number(svc.price ?? 0);
           const amt = (Number.isFinite(price) ? price : 0) * qty;
           minTotal += amt;
           lines.push({
-            label: svc.name,
+            label: labelName,
             note: pt === "starting_at" ? `Starting at ${money(price)} × ${qty}` : `${money(price)} × ${qty}`,
             amount: amt,
           });
@@ -92,7 +170,7 @@ export default function EstimatePreview() {
       // Add-ons for this service (if present)
       const addOnIds = getAddOnIds(cart, it);
       for (const aid of addOnIds) {
-        const add: any = addById.get(String(aid));
+        const add: any = resolveAddOn(addById, String(aid));
         if (!add) {
           lines.push({ label: `Add-on: ${aid}`, note: "Add-on", amount: undefined });
           continue;
