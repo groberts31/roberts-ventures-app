@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
+import "./styles/staylit-flame.css";
 import { CartProvider } from "./data/requestCart";
 import { emitToast } from "./components/ToastHost";
 
@@ -23,4 +24,3 @@ window.alert = (msg?: any) => {
   if (!message) return;
   emitToast({ message, variant: "info", durationMs: 3200 });
 };
-

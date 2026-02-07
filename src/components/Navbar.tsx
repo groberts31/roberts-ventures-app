@@ -78,7 +78,8 @@ export default function Navbar() {
             Schedule
           </NavLink>
           <NavLink to="/staylit" style={linkStyle}>
-            Stay Lit
+            <span className="slFlameNav">🔥</span>
+            <span>Stay Lit</span>
           </NavLink>
           <NavLink to="/contact" style={linkStyle}>
             Contact
