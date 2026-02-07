@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { findRequestsByPhone, type RVRequest } from "../lib/requestsStore";
+import { findRequestsByNameAndPhone, findRequestsByPhoneAndCode, type RVRequest } from "../lib/requestsStore";
 
 function normalizePhone(p: string) {
   return String(p || "").replace(/\D+/g, "");
@@ -21,20 +21,32 @@ function statusLabel(s: string) {
 
 export default function CustomerPortal() {
   const [phone, setPhone] = useState("");
+  const [showRetrieve, setShowRetrieve] = useState(false);
+  const [retrieveName, setRetrieveName] = useState("");
+  const [retrievePhone, setRetrievePhone] = useState("");
+  const [code, setCode] = useState("");
+
+  const retrieveMatches = useMemo(() => {
+    const n = String(retrieveName || "").trim();
+    const p = String(retrievePhone || "").trim();
+    if (!n || p.length < 7) return [];
+    return findRequestsByNameAndPhone(n, p).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  }, [retrieveName, retrievePhone]);
   const [searched, setSearched] = useState(false);
 
   const matches: RVRequest[] = useMemo(() => {
     const p = normalizePhone(phone);
     if (!p) return [];
-    return findRequestsByPhone(p).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-  }, [phone]);
+    return findRequestsByPhoneAndCode(p, code)
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  }, [phone, code]);
 
   return (
     <div className="stack">
       <section className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
         <h2 className="h2" style={{ margin: 0 }}>Customer Portal</h2>
         <p className="muted" style={{ fontWeight: 850, maxWidth: 720, textAlign: "center" }}>
-          Enter the phone number used on your request to view your saved requests on this device/browser.
+          Enter the phone number used on your request and your Access Code (shown after submitting) to view your requests on this device/browser.
         </p>
 
         <div style={{ width: "100%", maxWidth: 520, display: "grid", gap: 10 }}>
@@ -49,16 +61,99 @@ export default function CustomerPortal() {
             />
           </label>
 
+          <label style={{ display: "grid", gap: 6 }}>
+            <span className="label">Access Code</span>
+            <input
+              className="input"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="6-digit code"
+              inputMode="numeric"
+            />
+          </label>
+
           <button
             className="btn btn-primary"
             onClick={() => setSearched(true)}
-            disabled={normalizePhone(phone).length < 10}
+            disabled={normalizePhone(phone).length < 10 || String(code).trim().length < 6}
           >
             Find My Requests
           </button>
+          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setShowRetrieve((v) => !v)}
+              style={{ width: "fit-content" }}
+            >
+              {showRetrieve ? "Hide" : "Forgot Access Code?"}
+            </button>
+
+            {showRetrieve && (
+              <div className="panel" style={{ padding: 14, borderRadius: 14 }}>
+                <div style={{ fontWeight: 950, color: "#0f172a" }}>Retrieve Access Code</div>
+                <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+                  Enter the same name + phone used on the request. (Works on this device/browser until Firebase is connected.)
+                </div>
+
+                <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <span className="label">Full Name</span>
+                    <input
+                      className="input"
+                      value={retrieveName}
+                      onChange={(e) => setRetrieveName(e.target.value)}
+                      placeholder="First Last"
+                      autoComplete="name"
+                    />
+                  </label>
+
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <span className="label">Phone Number</span>
+                    <input
+                      className="input"
+                      value={retrievePhone}
+                      onChange={(e) => setRetrievePhone(e.target.value)}
+                      placeholder="(555) 555-5555"
+                      inputMode="tel"
+                      autoComplete="tel"
+                    />
+                  </label>
+
+                  {retrieveMatches.length === 0 ? (
+                    <div className="muted" style={{ fontWeight: 850 }}>
+                      No matching requests found yet.
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {retrieveMatches.slice(0, 6).map((r) => (
+                        <div key={String(r.id)} className="panel" style={{ padding: 12, borderRadius: 14 }}>
+                          <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                            <div style={{ fontWeight: 950, color: "#0f172a" }}>
+                              Request: {String(r.id)}
+                            </div>
+                            <div className="badge" style={{ justifyContent: "center" }}>
+                              Code: {String((r as any).accessCode || "—")}
+                            </div>
+                          </div>
+                          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+                            Created: {String(r.createdAt || "—")}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="muted" style={{ fontWeight: 850 }}>
+                        Tip: Copy the code above and use it in the main search (Phone + Access Code).
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
 
           <div className="muted" style={{ fontWeight: 850, textAlign: "center" }}>
-            Tip: This works on the same device/browser where you submitted the request. We can make it cross-device once Firebase is connected.
+            Tip: Your Access Code appears on the confirmation screen after you submit a request—save it. This portal works on the same device/browser until Firebase is connected.
           </div>
         </div>
       </section>

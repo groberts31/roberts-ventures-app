@@ -44,6 +44,11 @@ function money(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
 
+function makeAccessCode() {
+  // 6-digit numeric code
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
 function estimateLabel(s: any, qty: number) {
   if (!s) return "";
   const q = Number.isFinite(Number(qty)) && Number(qty) > 0 ? Number(qty) : 1;
@@ -249,6 +254,7 @@ return { ...i, service, estLabel };
     const request = {
       createdAt: new Date().toISOString(),
       appointmentStart: selectedSlotISO,
+      accessCode: makeAccessCode(),
       customer: {
         name: contact.name,
         phone: contact.phone,
