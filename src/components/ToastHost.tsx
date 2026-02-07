@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type ToastVariant = "info" | "success" | "warning" | "error";
 
@@ -6,6 +6,8 @@ type ToastItem = {
   id: string;
   message: string;
   variant: ToastVariant;
+  createdAt: number;
+  durationMs: number;
 };
 
 function makeId() {
@@ -24,36 +26,125 @@ export function emitToast(detail: ToastEventDetail) {
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail }));
 }
 
+function iconFor(v: ToastVariant) {
+  if (v === "success") return "✅";
+  if (v === "warning") return "⚠️";
+  if (v === "error") return "⛔";
+  return "ℹ️";
+}
+
+function labelFor(v: ToastVariant) {
+  if (v === "success") return "Success";
+  if (v === "warning") return "Heads up";
+  if (v === "error") return "Error";
+  return "Info";
+}
+
+// Accent colors (kept subtle + readable)
+function accentFor(v: ToastVariant) {
+  if (v === "success") return "rgba(16,185,129,0.55)";
+  if (v === "warning") return "rgba(245,158,11,0.60)";
+  if (v === "error") return "rgba(239,68,68,0.60)";
+  return "rgba(59,130,246,0.55)";
+}
+
 export default function ToastHost() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const rafRef = useRef<number | null>(null);
 
   const styles = useMemo(() => {
-    const baseCard: React.CSSProperties = {
-      width: "min(520px, calc(100vw - 24px))",
-      borderRadius: 14,
-      padding: "12px 14px",
-      background: "rgba(255,255,255,0.92)",
-      border: "1px solid rgba(2,6,23,0.14)",
-      boxShadow: "0 18px 40px rgba(2,6,23,0.16)",
-      backdropFilter: "blur(8px)",
+    const wrapper: React.CSSProperties = {
+      position: "fixed",
+      top: 14,
+      right: 14,
+      zIndex: 9999,
       display: "grid",
-      gap: 6,
+      gap: 10,
+      pointerEvents: "none",
+    };
+
+    const cardBase: React.CSSProperties = {
+      width: "min(520px, calc(100vw - 24px))",
+      borderRadius: 16,
+      padding: "12px 12px",
       pointerEvents: "auto",
-      animation: "rvToastIn 180ms ease-out",
+      cursor: "default",
+      userSelect: "none",
+      background:
+        "linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.76) 100%)",
+      border: "1px solid rgba(2,6,23,0.14)",
+      boxShadow: "0 22px 48px rgba(2,6,23,0.20)",
+      backdropFilter: "blur(10px)",
+      WebkitBackdropFilter: "blur(10px)",
+      overflow: "hidden",
+      transform: "translateY(-6px)",
+      opacity: 0,
+      animation: "rvToastIn 200ms ease-out forwards",
+    };
+
+    const headerRow: React.CSSProperties = {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+    };
+
+    const left: React.CSSProperties = {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      minWidth: 0,
     };
 
     const badge: React.CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 8,
       width: "fit-content",
-      padding: "4px 10px",
+      padding: "6px 10px",
       borderRadius: 999,
       fontWeight: 950,
       fontSize: 12,
       border: "1px solid rgba(2,6,23,0.14)",
-      background: "rgba(255,255,255,0.70)",
+      background: "rgba(255,255,255,0.60)",
       color: "#0f172a",
+      boxShadow: "0 10px 26px rgba(2,6,23,0.10)",
     };
 
-    return { baseCard, badge };
+    const closeBtn: React.CSSProperties = {
+      padding: "6px 10px",
+      borderRadius: 12,
+      fontWeight: 950,
+      border: "1px solid rgba(2,6,23,0.14)",
+      background: "rgba(255,255,255,0.55)",
+      color: "#0f172a",
+      cursor: "pointer",
+    };
+
+    const msg: React.CSSProperties = {
+      marginTop: 10,
+      padding: "0 2px 10px 2px",
+      fontWeight: 900,
+      color: "#0f172a",
+      lineHeight: 1.25,
+      wordBreak: "break-word",
+    };
+
+    const progressWrap: React.CSSProperties = {
+      height: 3,
+      width: "100%",
+      background: "rgba(2,6,23,0.08)",
+    };
+
+    const progressBar: React.CSSProperties = {
+      height: "100%",
+      width: "100%",
+      transformOrigin: "left center",
+      transform: "scaleX(1)",
+      transition: "transform 100ms linear",
+    };
+
+    return { wrapper, cardBase, headerRow, left, badge, closeBtn, msg, progressWrap, progressBar };
   }, []);
 
   useEffect(() => {
@@ -63,92 +154,125 @@ export default function ToastHost() {
       if (!message) return;
 
       const variant = (e.detail?.variant ?? "info") as ToastVariant;
-      const durationMs = Number.isFinite(Number(e.detail?.durationMs)) ? Number(e.detail?.durationMs) : 2800;
+      const durationMs = Number.isFinite(Number(e.detail?.durationMs)) ? Number(e.detail?.durationMs) : 3200;
 
       const id = makeId();
-      setToasts((prev) => [{ id, message, variant }, ...prev].slice(0, 4));
+      const createdAt = Date.now();
 
-      window.setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id != id));
-      }, Math.max(1200, durationMs));
+      setToasts((prev) => [{ id, message, variant, createdAt, durationMs }, ...prev].slice(0, 4));
     };
 
     window.addEventListener(EVENT_NAME, onToast);
     return () => window.removeEventListener(EVENT_NAME, onToast);
   }, []);
 
+  // Timer loop to remove expired toasts + update progress smoothly
+  useEffect(() => {
+    const tick = () => {
+      const now = Date.now();
+      setToasts((prev) => prev.filter((t) => now - t.createdAt < t.durationMs));
+      rafRef.current = window.requestAnimationFrame(tick);
+    };
+
+    rafRef.current = window.requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
+  }, []);
+
   if (toasts.length === 0) return null;
 
-  const variantLabel = (v: ToastVariant) => {
-    if (v === "success") return "Success";
-    if (v === "warning") return "Heads up";
-    if (v === "error") return "Error";
-    return "Info";
-  };
-
-  const variantAccent = (v: ToastVariant) => {
-    // no hard-coded colors elsewhere in your app, but toasts need readable cues
-    if (v === "success") return "rgba(16,185,129,0.18)"; // emerald-ish
-    if (v === "warning") return "rgba(245,158,11,0.18)"; // amber-ish
-    if (v === "error") return "rgba(239,68,68,0.18)";    // red-ish
-    return "rgba(59,130,246,0.14)";                      // blue-ish
-  };
+  const dismiss = (id: string) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
   return (
     <>
       <style>{`
         @keyframes rvToastIn {
-          from { transform: translateY(-6px); opacity: 0; }
+          from { transform: translateY(-8px); opacity: 0; }
           to   { transform: translateY(0px); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation: none !important; transition: none !important; }
         }
       `}</style>
 
-      <div
-        style={{
-          position: "fixed",
-          top: 14,
-          right: 14,
-          zIndex: 9999,
-          display: "grid",
-          gap: 10,
-          pointerEvents: "none",
-        }}
-      >
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            style={{
-              ...styles.baseCard,
-              borderColor: "rgba(2,6,23,0.14)",
-            }}
-          >
-            <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-              <div style={{ ...styles.badge, background: variantAccent(t.variant) }}>
-                {variantLabel(t.variant)}
+      <div style={styles.wrapper} aria-live="polite" aria-relevant="additions">
+        {toasts.map((t) => {
+          const elapsed = Date.now() - t.createdAt;
+          const pct = Math.min(1, Math.max(0, elapsed / t.durationMs));
+          const scale = 1 - pct;
+
+          return (
+            <div
+              key={t.id}
+              style={{
+                ...styles.cardBase,
+                borderColor: "rgba(2,6,23,0.14)",
+              }}
+              onClick={() => dismiss(t.id)}
+              title="Click to dismiss"
+              role="status"
+            >
+              {/* Neon accent edge */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: 16,
+                  pointerEvents: "none",
+                  boxShadow: `inset 0 0 0 1px ${accentFor(t.variant)}`,
+                  opacity: 0.55,
+                }}
+              />
+
+              <div style={styles.headerRow}>
+                <div style={styles.left}>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 999,
+                      background: accentFor(t.variant),
+                      boxShadow: `0 0 22px ${accentFor(t.variant)}`,
+                      flex: "0 0 auto",
+                    }}
+                  />
+                  <div style={{ ...styles.badge }}>
+                    <span style={{ fontSize: 13 }}>{iconFor(t.variant)}</span>
+                    {labelFor(t.variant)}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismiss(t.id);
+                  }}
+                  style={styles.closeBtn}
+                  aria-label="Dismiss toast"
+                  title="Dismiss"
+                >
+                  ✕
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  fontWeight: 950,
-                  pointerEvents: "auto",
-                }}
-                aria-label="Dismiss"
-                title="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
+              <div style={styles.msg}>{t.message}</div>
 
-            <div style={{ fontWeight: 900, color: "#0f172a", lineHeight: 1.25 }}>
-              {t.message}
+              {/* Progress bar */}
+              <div style={styles.progressWrap}>
+                <div
+                  style={{
+                    ...styles.progressBar,
+                    background: accentFor(t.variant),
+                    transform: `scaleX(${scale})`,
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

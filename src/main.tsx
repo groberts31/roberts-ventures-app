@@ -19,6 +19,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 // RV_ALERT_TOAST_OVERRIDE: route all alert() calls through toast UI (non-blocking)
 window.alert = (msg?: any) => {
-  emitToast({ message: String(msg ?? ""), variant: "info", durationMs: 3200 });
+  const message = String(msg ?? "").trim();
+  if (!message) return;
+  emitToast({ message, variant: "info", durationMs: 3200 });
 };
 
