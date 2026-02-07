@@ -10,6 +10,7 @@ import Requests from "./pages/Requests";
 import ServiceDetail from "./pages/ServiceDetail";
 
 import bg from "./assets/handyman-bg.png";
+import ToastHost from "./components/ToastHost";
 
 export default function App() {
   return (
@@ -25,7 +26,6 @@ export default function App() {
           ),
           url(${bg})
         `,
-
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -52,6 +52,8 @@ export default function App() {
           <Route path="/requests" element={<Requests />} />
         </Routes>
       </main>
+      <ToastHost />
+
     </div>
   );
 }

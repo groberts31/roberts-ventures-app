@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { SERVICES, type Service } from "../data/services";
 import { useCart } from "../data/requestCart";
 import { addOnsFor } from "../data/addOns";
+import { toast } from "../lib/toast";
 
 function formatPrice(s: Service) {
   if (s.priceType === "quote") return "Quote required";
@@ -163,7 +164,7 @@ export default function ServiceDetail() {
         cart.setNote(a.id, `Add-on for ${svc.name}`);
       });
 
-    alert("Added to request.");
+    toast("Added to request.", "success", "Added");
   }
 
   return (
