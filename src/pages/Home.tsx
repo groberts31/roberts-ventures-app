@@ -155,7 +155,7 @@ export default function Home() {
         }}
       >
         {/* Left: Roberts Ventures */}
-        <div className="panel card" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="panel card card-center" style={{ padding: 18, borderRadius: 18, textAlign: "center" }}>
           <div className="badge" style={{ width: "fit-content" }}>
             Home Services • Outdoor • Woodworking
           </div>
@@ -183,7 +183,7 @@ export default function Home() {
         </div>
 
         {/* Right: Stay Lit */}
-        <div className="panel card" style={{ padding: 18, borderRadius: 18 }}>
+        <div className="panel card card-center" style={{ padding: 18, borderRadius: 18, textAlign: "center" }}>
           <div className="badge" style={{ width: "fit-content" }}>
             Stay Lit Candle Co.
           </div>
