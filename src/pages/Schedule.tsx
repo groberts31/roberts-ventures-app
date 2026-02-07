@@ -11,6 +11,7 @@ import {
   formatTimeLabel,
   isOpenDay,
 } from "../data/timeSlots";
+import EstimatePreview from "../components/EstimatePreview";
 
 type PhotoAttachment = {
   name: string;
@@ -38,9 +39,30 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+
 function money(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
+
+function estimateLabel(s: any, qty: number) {
+  if (!s) return "";
+  const q = Number.isFinite(Number(qty)) && Number(qty) > 0 ? Number(qty) : 1;
+
+  if (s.priceType === "quote") return "Quote";
+
+  const price = typeof s.price === "number" ? s.price : 0;
+
+  if (s.priceType === "starting_at") {
+    const min = price * q;
+    return `From ${money(min)}`;
+  }
+
+  return money(price * q);
+}
+
+
+
+
 
 function QuoteBanner({ quoteNames }: { quoteNames: string[] }) {
   if (quoteNames.length === 0) return null;
@@ -79,7 +101,9 @@ export default function Schedule() {
   const itemsDetailed = useMemo(() => {
     return cart.items.map((i) => {
       const service = ALL_SERVICES.find((s) => s.id === i.serviceId);
-      return { ...i, service };
+      
+      const estLabel = estimateLabel(service as any, Number(i.qty ?? 1));
+return { ...i, service, estLabel };
     });
   }, [cart.items, ALL_SERVICES]);
 
@@ -257,79 +281,90 @@ export default function Schedule() {
   }
 
   function EstimateBox({ compact }: { compact?: boolean }) {
-    return (
-      <div
-        className="panel card"
-        style={{
-          width: "100%",
-          maxWidth: 900,
-          padding: compact ? 12 : 16,
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid rgba(2,6,23,0.14)",
-        }}
-      >
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="h3" style={{ margin: 0 }}>
-              Estimate Summary
-            </div>
-            <div className="muted" style={{ fontWeight: 900 }}>
-              Minimum estimate = Fixed + Starting-at items (quote items not included)
-            </div>
-          </div>
-
-          <div style={{ textAlign: "right" }}>
-            <div className="badge" style={{ justifyContent: "center" }}>
-              Minimum: {money(estimate.minTotal)}
-              {estimate.hasStarting ? "+" : ""}
-            </div>
-          </div>
+  return (
+    <div
+      className="panel card"
+      style={{
+        width: "100%",
+        maxWidth: 1100,
+        margin: "0 auto",
+        padding: compact ? 12 : 16,
+        background: "rgba(255,255,255,0.88)",
+        border: "1px solid rgba(2,6,23,0.14)",
+        textAlign: "center",
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: "grid", gap: 8, justifyItems: "center" }}>
+        <div className="h3" style={{ margin: 0 }}>
+          Estimate Summary
+        </div>
+        <div className="muted" style={{ fontWeight: 900, maxWidth: 820 }}>
+          Minimum estimate = Fixed + Starting-at items (quote items not included)
         </div>
 
         <div
+          className="badge"
           style={{
-            marginTop: 12,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 10,
+            justifyContent: "center",
+            width: "fit-content",
+            marginTop: 6,
+            fontWeight: 950,
           }}
         >
-          <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
-            <div className="label">Fixed subtotal</div>
-            <div style={{ fontWeight: 950, marginTop: 6 }}>{money(estimate.fixedSubtotal)}</div>
-          </div>
+          Minimum: {money(estimate.minTotal)}
+          {estimate.hasStarting ? "+" : ""}
+        </div>
+      </div>
 
-          <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
-            <div className="label">Starting-at subtotal</div>
-            <div style={{ fontWeight: 950, marginTop: 6 }}>
-              {money(estimate.startingSubtotal)}
-              {estimate.startingSubtotal > 0 ? "+" : ""}
-            </div>
-          </div>
+      {/* Tiles */}
+      <div
+        style={{
+          marginTop: 12,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 10,
+          justifyItems: "center",
+        }}
+      >
+        <div className="panel" style={{ padding: 12, borderRadius: 12, width: "100%", maxWidth: 360 }}>
+          <div className="label">Fixed subtotal</div>
+          <div style={{ fontWeight: 950, marginTop: 6 }}>{money(estimate.fixedSubtotal)}</div>
+        </div>
 
-          <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
-            <div className="label">Quote-required items</div>
-            <div style={{ fontWeight: 950, marginTop: 6 }}>{estimate.quoteNames.length}</div>
+        <div className="panel" style={{ padding: 12, borderRadius: 12, width: "100%", maxWidth: 360 }}>
+          <div className="label">Starting-at subtotal</div>
+          <div style={{ fontWeight: 950, marginTop: 6 }}>
+            {money(estimate.startingSubtotal)}
+            {estimate.startingSubtotal > 0 ? "+" : ""}
           </div>
         </div>
 
-        {estimate.missingNames.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <div className="label">Unpriced / missing items</div>
-            <div className="body" style={{ marginTop: 6 }}>
-              {estimate.missingNames.join(", ")}
-            </div>
-          </div>
-        )}
-
-        {!compact && (
-          <div className="muted" style={{ fontWeight: 900, marginTop: 12 }}>
-            “Starting at” prices are minimums and may change based on site conditions, access, materials, or complexity.
-          </div>
-        )}
+        <div className="panel" style={{ padding: 12, borderRadius: 12, width: "100%", maxWidth: 360 }}>
+          <div className="label">Quote-required items</div>
+          <div style={{ fontWeight: 950, marginTop: 6 }}>{estimate.quoteNames.length}</div>
+        </div>
       </div>
-    );
-  }
+
+      {/* Missing items */}
+      {estimate.missingNames.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div className="label">Unpriced / missing items</div>
+          <div className="body" style={{ marginTop: 6 }}>
+            {estimate.missingNames.join(", ")}
+          </div>
+        </div>
+      )}
+
+      {/* Disclaimer */}
+      {!compact && (
+        <div className="muted" style={{ fontWeight: 900, marginTop: 12, maxWidth: 900, marginLeft: "auto", marginRight: "auto" }}>
+          “Starting at” prices are minimums and may change based on site conditions, access, materials, or complexity.
+        </div>
+      )}
+    </div>
+  );
+}
 
   return (
     <div className="stack page">
@@ -353,7 +388,9 @@ export default function Schedule() {
             {/* ✅ Red warning at top */}
             <QuoteBanner quoteNames={estimate.quoteNames} />
 
-            <EstimateBox />
+            
+      <EstimatePreview />
+<EstimateBox />
           </div>
         )}
       </section>
@@ -376,9 +413,9 @@ export default function Schedule() {
               className="panel card"
               style={{
                 display: "grid",
-                gridTemplateColumns: "96px 1fr",
+                gridTemplateColumns: "96px minmax(0, 1fr)",
                 gap: 14,
-                alignItems: "center",
+                alignItems: "start",
               }}
             >
               {/* LEFT: image for service or add-on */}
@@ -407,7 +444,7 @@ export default function Schedule() {
               </div>
 
               {/* RIGHT: content */}
-              <div className="card-center" style={{ alignItems: "stretch", gap: 10 }}>
+              <div style={{ display: "grid", gap: 10, alignItems: "stretch" }}>
                 <div className="row" style={{ justifyContent: "space-between" }}>
                   <div>
                     <h3 className="h3" style={{ margin: 0 }}>
@@ -420,6 +457,21 @@ export default function Schedule() {
 
                   <div className="row">
                     <span className="badge">Qty: {i.qty}</span>
+                    {i.estLabel ? (
+                      <span className="badge" style={{
+                        fontWeight: 950,
+                        borderRadius: 12,
+                        padding: "8px 12px",
+                        border: "1px solid rgba(2,6,23,0.14)",
+                        background: String(i.estLabel).toLowerCase().includes("quote")
+                          ? "rgba(245,158,11,0.16)"
+                          : String(i.estLabel).toLowerCase().includes("from")
+                          ? "rgba(14,165,233,0.14)"
+                          : "rgba(34,197,94,0.14)",
+                      }}>
+                        {i.estLabel}
+                      </span>
+                    ) : null}
                     <button className="btn btn-ghost" onClick={() => cart.remove(i.serviceId)}>
                       Remove
                     </button>
@@ -548,7 +600,7 @@ export default function Schedule() {
               <EstimateBox compact />
             </div>
 
-            <div className="panel card" style={{ width: "100%", padding: 14 }}>
+            <div className="panel card schedItem" style={{ width: "100%", padding: 14 }}>
               <div className="label">Request Photos (optional)</div>
               <div className="body" style={{ marginTop: 6 }}>
                 Add photos to help with quote-required work. Max {MAX_PHOTOS} photos, ~{Math.round(MAX_BYTES_PER_PHOTO / 1024)}KB each.

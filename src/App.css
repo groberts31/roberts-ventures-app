@@ -65,3 +65,109 @@
     animation: none;
   }
 }
+
+
+/* RV: Schedule item styles */
+.schedList {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.schedItem {
+  width: 100%;
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.10);
+  backdrop-filter: blur(8px);
+}
+
+.schedItem:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 18px 42px rgba(2, 6, 23, 0.14);
+}
+
+.schedItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.schedItemTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-weight: 950;
+  color: #0f172a;
+}
+
+.schedItemMeta {
+  margin-top: 6px;
+  font-weight: 850;
+  opacity: 0.85;
+}
+
+.schedPills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.schedPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255,255,255,0.75);
+}
+
+.schedPillService {
+  background: rgba(79, 70, 229, 0.10);
+  border-color: rgba(79, 70, 229, 0.22);
+  color: #312e81;
+}
+
+.schedPillAddOn {
+  background: rgba(16, 185, 129, 0.10);
+  border-color: rgba(16, 185, 129, 0.22);
+  color: #064e3b;
+}
+
+.schedEstimate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: 950;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255,255,255,0.80);
+}
+
+.schedQuote {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.22);
+  color: #7c2d12;
+}
+
+.schedFrom {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.22);
+  color: #0c4a6e;
+}
+
+.schedFixed {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.20);
+  color: #14532d;
+}
