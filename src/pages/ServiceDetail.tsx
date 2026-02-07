@@ -17,6 +17,12 @@ function formatPrice(s: Service) {
   return `Starting at ${money}`;
 }
 
+
+function buildAddedMessage(serviceName: string, addOnCount: number) {
+  if (addOnCount > 0) return `${serviceName} added (+${addOnCount} add-on${addOnCount === 1 ? "" : "s"})`;
+  return `${serviceName} added`;
+}
+
 type DetailPack = {
   included: string[];
   prep: string[];
@@ -164,7 +170,7 @@ export default function ServiceDetail() {
         cart.setNote(a.id, `Add-on for ${svc.name}`);
       });
 
-    toast("Added to request.", "success", "Added");
+    toast(buildAddedMessage(svc.name, selected.length), "success", "Added", 2600, "View Schedule", "/schedule");
   }
 
   return (

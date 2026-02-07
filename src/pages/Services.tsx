@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CATEGORIES, SERVICES, type Service } from "../data/services";
 import { useCart } from "../data/requestCart";
+import { toast } from "../lib/toast";
 
 function formatPrice(s: Service) {
   if (s.priceType === "quote") return "Quote required";
@@ -144,7 +145,7 @@ export default function ServicesPage() {
               <div className="body">{s.shortDesc}</div>
 
               <div className="row">
-                <button className="btn btn-primary" onClick={() => cart.add(s)}>
+                <button className="btn btn-primary" onClick={() => { cart.add(s); toast(`${s.name} added`, "success", "Added", 2600, "View Schedule", "/schedule"); }}>
                   Add to Request
                 </button>
 

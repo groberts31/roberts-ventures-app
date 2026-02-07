@@ -15,7 +15,7 @@ export default function ToastHost() {
       const ev = e as CustomEvent<ToastPayload>;
       const p = ev.detail;
       const id = uid();
-      const duration = typeof p.durationMs === "number" ? p.durationMs : 2200;
+      const duration = typeof p.durationMs === "number" ? p.durationMs : 2400;
 
       const item: ToastItem = { id, ...p };
       setItems((prev) => [item, ...prev].slice(0, 4)); // max 4 visible
@@ -38,7 +38,7 @@ export default function ToastHost() {
         display: "grid",
         gap: 10,
         zIndex: 9999,
-        width: "min(420px, calc(100vw - 32px))",
+        width: "min(440px, calc(100vw - 32px))",
         pointerEvents: "none" as const,
       },
       toast: (type?: string) => ({
@@ -109,14 +109,36 @@ export default function ToastHost() {
         fontSize: 12.5,
         lineHeight: 1.3,
       },
+      btnRow: {
+        display: "flex",
+        gap: 10,
+        justifyContent: "flex-end",
+        alignItems: "center",
+        marginTop: 10,
+      },
+      actionBtn: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        textDecoration: "none",
+        border: "1px solid rgba(29,78,216,0.28)",
+        background: "rgba(29,78,216,0.10)",
+        borderRadius: 999,
+        fontWeight: 950,
+        fontSize: 12,
+        padding: "8px 12px",
+        cursor: "pointer",
+        color: "#1d4ed8",
+        boxShadow: "0 0 0 4px rgba(29,78,216,0.08)",
+      },
       closeBtn: {
-        pointerEvents: "auto" as const,
         border: "1px solid rgba(2,6,23,0.14)",
         background: "rgba(255,255,255,0.65)",
         borderRadius: 999,
         fontWeight: 950,
         fontSize: 12,
-        padding: "6px 10px",
+        padding: "8px 12px",
         cursor: "pointer",
         color: "#0f172a",
       },
@@ -130,6 +152,23 @@ export default function ToastHost() {
           <div key={t.id} style={styles.toast(t.type)}>
             <div style={styles.topRow}>
               <span style={styles.badge(t.type)}>{(t.type ?? "success").toUpperCase()}</span>
+              <span style={{ fontWeight: 950, fontSize: 12, opacity: 0.65 }}>Roberts Ventures</span>
+            </div>
+
+            {t.title ? <p style={styles.title}>{t.title}</p> : null}
+            <p style={styles.msg}>{t.message}</p>
+
+            <div style={styles.btnRow}>
+              {t.actionLabel && t.actionHref ? (
+                <a
+                  href={t.actionHref}
+                  style={styles.actionBtn}
+                  onClick={() => setItems((p) => p.filter((x) => x.id != t.id))}
+                >
+                  {t.actionLabel} →
+                </a>
+              ) : null}
+
               <button
                 style={styles.closeBtn}
                 onClick={() => setItems((p) => p.filter((x) => x.id !== t.id))}
@@ -137,9 +176,6 @@ export default function ToastHost() {
                 Close
               </button>
             </div>
-
-            {t.title ? <p style={styles.title}>{t.title}</p> : null}
-            <p style={styles.msg}>{t.message}</p>
           </div>
         ))}
       </div>
