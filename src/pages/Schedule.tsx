@@ -54,45 +54,57 @@ export default function Schedule() {
     });
   }, [cart.items, ALL_SERVICES]);
 
-  // ✅ Live estimate (min total + quote count)
+  // ✅ Estimate breakdown (fixed + starting at minimum + quote list)
   const estimate = useMemo(() => {
-    let minTotal = 0;
-    let hasStarting = false;
-    let quoteCount = 0;
-    let missingCount = 0;
+    let fixedSubtotal = 0;
+    let startingSubtotal = 0;
+
+    const quoteNames: string[] = [];
+    const missingNames: string[] = [];
 
     for (const i of itemsDetailed) {
       const s: any = i.service;
       const qty = Number(i.qty ?? 1);
 
       if (!s) {
-        missingCount += 1;
+        missingNames.push(i.serviceId);
         continue;
       }
 
+      const name = s.name ?? i.serviceId;
+
       if (s.priceType === "quote") {
-        quoteCount += 1;
+        quoteNames.push(name);
         continue;
       }
 
       const price = typeof s.price === "number" ? s.price : 0;
 
-      if (s.priceType === "starting_at") {
-        hasStarting = true;
-        minTotal += price * qty;
-        continue;
-      }
-
       if (s.priceType === "fixed") {
-        minTotal += price * qty;
+        fixedSubtotal += price * qty;
         continue;
       }
 
-      // any unknown priceType
-      missingCount += 1;
+      if (s.priceType === "starting_at") {
+        startingSubtotal += price * qty;
+        continue;
+      }
+
+      // unknown price type
+      missingNames.push(name);
     }
 
-    return { minTotal, hasStarting, quoteCount, missingCount };
+    const minTotal = fixedSubtotal + startingSubtotal;
+    const hasStarting = startingSubtotal > 0;
+
+    return {
+      fixedSubtotal,
+      startingSubtotal,
+      minTotal,
+      hasStarting,
+      quoteNames,
+      missingNames,
+    };
   }, [itemsDetailed]);
 
   const today = clampToMidnight(new Date());
@@ -205,6 +217,93 @@ export default function Schedule() {
     setContact({ name: "", phone: "", address: "", notes: "", photos: [] });
   }
 
+  function EstimateBox({ compact }: { compact?: boolean }) {
+    return (
+      <div
+        className="panel card"
+        style={{
+          width: "100%",
+          maxWidth: 900,
+          padding: compact ? 12 : 16,
+          background: "rgba(255,255,255,0.88)",
+          border: "1px solid rgba(2,6,23,0.14)",
+        }}
+      >
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ display: "grid", gap: 6 }}>
+            <div className="h3" style={{ margin: 0 }}>
+              Estimate Summary
+            </div>
+            <div className="muted" style={{ fontWeight: 900 }}>
+              Minimum estimate = Fixed + Starting-at items (quote items not included)
+            </div>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <div className="badge" style={{ justifyContent: "center" }}>
+              Minimum: {money(estimate.minTotal)}
+              {estimate.hasStarting ? "+" : ""}
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 10,
+          }}
+        >
+          <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
+            <div className="label">Fixed subtotal</div>
+            <div style={{ fontWeight: 950, marginTop: 6 }}>{money(estimate.fixedSubtotal)}</div>
+          </div>
+
+          <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
+            <div className="label">Starting-at subtotal</div>
+            <div style={{ fontWeight: 950, marginTop: 6 }}>
+              {money(estimate.startingSubtotal)}
+              {estimate.startingSubtotal > 0 ? "+" : ""}
+            </div>
+          </div>
+
+          <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
+            <div className="label">Quote-required items</div>
+            <div style={{ fontWeight: 950, marginTop: 6 }}>{estimate.quoteNames.length}</div>
+          </div>
+        </div>
+
+        {estimate.quoteNames.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div className="label">Quote-required list</div>
+            <div className="body" style={{ marginTop: 6 }}>
+              {estimate.quoteNames.join(", ")}
+            </div>
+            <div className="muted" style={{ fontWeight: 900, marginTop: 8 }}>
+              Tip: Add photos below to speed up quoting.
+            </div>
+          </div>
+        )}
+
+        {estimate.missingNames.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div className="label">Unpriced / missing items</div>
+            <div className="body" style={{ marginTop: 6 }}>
+              {estimate.missingNames.join(", ")}
+            </div>
+          </div>
+        )}
+
+        {!compact && (
+          <div className="muted" style={{ fontWeight: 900, marginTop: 12 }}>
+            “Starting at” prices are minimums and may change based on site conditions, access, materials, or complexity.
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="stack page">
       <section className="panel card card-center">
@@ -220,31 +319,13 @@ export default function Schedule() {
           </span>
           <span className="badge">Slots: {AVAILABILITY.slotMinutes} min</span>
           <span className="badge">Request photos: {contact.photos.length}/{MAX_PHOTOS}</span>
-
-          {/* ✅ Live estimate badges */}
-          <span className="badge" style={{ justifyContent: "center" }}>
-            Est. minimum: {money(estimate.minTotal)}
-            {estimate.hasStarting ? "+" : ""}
-          </span>
-
-          {estimate.quoteCount > 0 && (
-            <span className="badge" style={{ justifyContent: "center" }}>
-              Quote items: {estimate.quoteCount}
-            </span>
-          )}
-
-          {estimate.missingCount > 0 && (
-            <span className="badge" style={{ justifyContent: "center" }}>
-              Unpriced items: {estimate.missingCount}
-            </span>
-          )}
         </div>
 
-        <div className="muted" style={{ fontWeight: 900, marginTop: 10, maxWidth: 760 }}>
-          {estimate.quoteCount > 0
-            ? "Note: Quote-required items are not included in the estimate. Add photos to speed up quoting."
-            : "Note: “Starting at” prices are minimum estimates and may change based on site conditions."}
-        </div>
+        {cart.items.length > 0 && (
+          <div style={{ width: "100%", marginTop: 14 }}>
+            <EstimateBox />
+          </div>
+        )}
       </section>
 
       {cart.items.length === 0 ? (
@@ -431,6 +512,9 @@ export default function Schedule() {
               onChange={(e) => setContact({ ...contact, notes: e.target.value })}
             />
 
+            {/* ✅ Compact estimate box right above photos */}
+            <EstimateBox compact />
+
             <div className="panel card" style={{ width: "100%", padding: 14 }}>
               <div className="label">Request Photos (optional)</div>
               <div className="body" style={{ marginTop: 6 }}>
@@ -474,19 +558,6 @@ export default function Schedule() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Repeat estimate near submit */}
-          <div className="row" style={{ marginTop: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <span className="badge" style={{ justifyContent: "center" }}>
-              Est. minimum: {money(estimate.minTotal)}
-              {estimate.hasStarting ? "+" : ""}
-            </span>
-            {estimate.quoteCount > 0 && (
-              <span className="badge" style={{ justifyContent: "center" }}>
-                Quote items: {estimate.quoteCount}
-              </span>
-            )}
           </div>
 
           <button className="btn btn-primary" onClick={onSubmit} style={{ marginTop: 12 }}>
