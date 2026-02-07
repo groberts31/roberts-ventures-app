@@ -116,6 +116,12 @@ body {
 
 .muted { color: var(--text-muted); }
 
+
+/* Bright subtext accent (used under card headers) */
+.sub-accent{
+  color: var(--sub-accent, #a78bfa);
+  font-weight: 850;
+}
 /* ================= LAYOUT ================= */
 
 .stack {
@@ -536,5 +542,178 @@ html[data-theme="dark"] {
 /* Keep non-header body text readable */
 .body, .lead {
   text-shadow: none !important;
+}
+
+
+/* ================= SUBHEADER / SECONDARY TEXT BOOST ================= */
+/* Text directly under headers (usually .muted) should be brighter than body,
+   but dimmer than neon headers. */
+
+:root{
+  --subheader: #334155;        /* slate for light background */
+  --subheader-strong: #1f2937; /* slightly stronger slate */
+  --body-readable: #0f172a;    /* ensure body is readable on light cards */
+}
+
+html[data-theme="dark"]{
+  --subheader: #c7d2fe;        /* soft indigo/ice for dark mode */
+  --subheader-strong: #e0e7ff; /* brighter but not neon */
+  --body-readable: #e5e7eb;    /* readable on dark */
+}
+
+/* Most “text directly under header” in your UI uses .muted */
+.muted{
+  color: var(--subheader) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em;
+}
+
+/* If you want an even stronger “subheader” line, use .muted strong tags */
+.muted b, .muted strong{
+  color: var(--subheader-strong) !important;
+}
+
+/* Keep normal paragraph text readable in both themes */
+.body, .lead{
+  color: var(--body-readable) !important;
+}
+
+
+/* ================= CARD TEXT CONTRAST BOOST (GLOBAL) ================= */
+/* Makes card headers bright, and makes descriptions/subtexts brighter (but not as bright as headers). */
+
+:root{
+  /* Light mode card text */
+  --card-header: #0b5cff;   /* bright electric blue */
+  --card-subtext: #1f2a44;  /* darker but high-contrast slate */
+}
+
+html[data-theme="dark"]{
+  /* Dark mode card text */
+  --card-header: #67e8f9;   /* neon cyan */
+  --card-subtext: #c7d2fe;  /* bright periwinkle */
+}
+
+/* Card headers: bright */
+.panel .h1,
+.panel .h2,
+.panel .h3,
+.panel h1,
+.panel h2,
+.panel h3{
+  color: var(--card-header) !important;
+}
+
+/* Card descriptions/subtexts: brighter but less bright than header */
+.panel .muted,
+.panel .lead,
+.panel .body,
+.panel p,
+.panel li,
+.panel label,
+.panel small{
+  color: var(--card-subtext) !important;
+}
+
+/* Keep badges readable too */
+.panel .badge{
+  color: var(--card-subtext) !important;
+}
+
+/* ================= UNIFIED CARD SUBTEXT COLOR ================= */
+/* All card descriptions use ONE bright, readable color */
+
+:root{
+  /* Light mode */
+  --card-header: #0057ff;     /* strong blue */
+  --card-subtext: #0f172a;    /* very dark slate (high contrast) */
+}
+
+html[data-theme="dark"]{
+  /* Dark mode */
+  --card-header: #67e8f9;     /* neon cyan */
+  --card-subtext: #e0e7ff;    /* bright lavender-white */
+}
+
+/* Headers stay bright */
+.panel .h1,
+.panel .h2,
+.panel .h3,
+.panel h1,
+.panel h2,
+.panel h3{
+  color: var(--card-header) !important;
+}
+
+/* ALL subtext uses same color */
+.panel .muted,
+.panel .lead,
+.panel .body,
+.panel p,
+.panel li,
+.panel span,
+.panel small,
+.panel label{
+  color: var(--card-subtext) !important;
+  opacity: 1 !important;
+}
+
+/* ================= CARD SUBTEXT ONLY (BRIGHT) ================= */
+/* Strictly targets description text under headers */
+
+:root{
+  --card-header: #0057ff;   /* header color */
+  --card-subtext: #0ea5e9;  /* bright neon subtext */
+}
+
+html[data-theme="dark"]{
+  --card-header: #67e8f9;
+  --card-subtext: #c7d2fe;
+}
+
+/* Headers inside cards */
+.panel .h1,
+.panel .h2,
+.panel .h3{
+  color: var(--card-header) !important;
+}
+
+/* ONLY description/subtext */
+.panel .muted,
+.panel .body,
+.panel .lead,
+.panel .description,
+.panel .subtext{
+  color: var(--card-subtext) !important;
+  opacity: 1 !important;
+}
+
+/* Reset normal paragraphs so they don't get forced */
+.panel p:not(.muted):not(.body):not(.lead):not(.description):not(.subtext){
+  color: var(--text-main) !important;
+}
+
+/* ================= STAY LIT 2ND NAVBAR COLORS ================= */
+/* Make 2nd navbar brand + links match card description subtext color */
+
+.staylit-subnav,
+.staylit-subnav * {
+  color: var(--card-subtext) !important;
+}
+
+/* Keep hover/active readable + consistent */
+.staylit-subnav a:hover,
+.staylit-subnav a:focus-visible {
+  opacity: 0.95;
+  text-decoration: none;
+  filter: drop-shadow(0 0 10px rgba(14,165,233,0.25));
+}
+
+.staylit-subnav a[aria-current="page"] {
+  font-weight: 900;
+  background: rgba(14,165,233,0.14);
+  border: 1px solid rgba(14,165,233,0.30);
+  border-radius: 999px;
+  padding: 6px 10px;
 }
 
