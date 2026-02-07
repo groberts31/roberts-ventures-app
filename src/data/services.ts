@@ -1,3 +1,10 @@
+import consultImg from "../assets/services/consultation.png";
+import tvMountImg from "../assets/services/tv-mount.png";
+import ceilingFanImg from "../assets/services/ceiling-fan.png";
+import shelvesImg from "../assets/services/custom-shelves.png";
+import deckRepairImg from "../assets/services/deck-repair.png";
+import junkImg from "../assets/services/junk-removal.png";
+
 export type PriceType = "fixed" | "starting_at" | "quote";
 
 export type Service = {
@@ -9,6 +16,8 @@ export type Service = {
   price?: number;        // used for fixed or starting_at
   unitLabel?: string;    // e.g. "per visit", "per hour", "starting at"
   durationMins?: number; // for scheduling defaults
+  image?: string;
+
 };
 
 export const CATEGORIES = [
@@ -29,6 +38,7 @@ export const SERVICES: Service[] = [
     price: 150,
     unitLabel: "flat rate",
     durationMins: 90,
+    image: tvMountImg,
   },
   {
     id: "ceiling-fan",
@@ -39,6 +49,7 @@ export const SERVICES: Service[] = [
     price: 175,
     unitLabel: "starting at",
     durationMins: 120,
+    image: ceilingFanImg,
   },
   {
     id: "custom-shelves",
@@ -47,6 +58,7 @@ export const SERVICES: Service[] = [
     shortDesc: "Design + build shelving to fit your space.",
     priceType: "quote",
     durationMins: 60,
+    image: shelvesImg,
   },
   {
     id: "deck-repair",
@@ -54,7 +66,8 @@ export const SERVICES: Service[] = [
     name: "Deck Repair",
     shortDesc: "Replace boards, tighten structure, improve safety.",
     priceType: "quote",
-    durationMins: 60,
+    durationMins: 120,
+    image: deckRepairImg,
   },
   {
     id: "junk-removal",
@@ -64,7 +77,8 @@ export const SERVICES: Service[] = [
     priceType: "starting_at",
     price: 125,
     unitLabel: "starting at",
-    durationMins: 60,
+    durationMins: 90,
+    image: junkImg,
   },
   {
     id: "project-consult",
@@ -75,5 +89,6 @@ export const SERVICES: Service[] = [
     price: 75,
     unitLabel: "per 30 min",
     durationMins: 30,
+    image: consultImg,
   },
 ];
