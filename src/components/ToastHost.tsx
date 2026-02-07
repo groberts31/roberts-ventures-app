@@ -30,22 +30,15 @@ function iconFor(v: ToastVariant) {
   if (v === "success") return "✅";
   if (v === "warning") return "⚠️";
   if (v === "error") return "⛔";
-  return "ℹ️";
+  return "✨"; // info: no "Info" text, just a vibe
 }
 
-function labelFor(v: ToastVariant) {
-  if (v === "success") return "Success";
-  if (v === "warning") return "Heads up";
-  if (v === "error") return "Error";
-  return "Info";
-}
-
-// Accent colors (kept subtle + readable)
+// Dark neon accents
 function accentFor(v: ToastVariant) {
-  if (v === "success") return "rgba(16,185,129,0.55)";
-  if (v === "warning") return "rgba(245,158,11,0.60)";
-  if (v === "error") return "rgba(239,68,68,0.60)";
-  return "rgba(59,130,246,0.55)";
+  if (v === "success") return "rgba(34,197,94,0.95)";   // neon green
+  if (v === "warning") return "rgba(250,204,21,0.95)";  // neon yellow
+  if (v === "error") return "rgba(248,113,113,0.95)";   // neon red
+  return "rgba(59,130,246,0.95)";                       // neon blue
 }
 
 export default function ToastHost() {
@@ -65,75 +58,84 @@ export default function ToastHost() {
 
     const cardBase: React.CSSProperties = {
       width: "min(520px, calc(100vw - 24px))",
-      borderRadius: 16,
+      borderRadius: 18,
       padding: "12px 12px",
       pointerEvents: "auto",
       cursor: "default",
       userSelect: "none",
+      // Dark glass background
       background:
-        "linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.76) 100%)",
-      border: "1px solid rgba(2,6,23,0.14)",
-      boxShadow: "0 22px 48px rgba(2,6,23,0.20)",
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
+        "linear-gradient(180deg, rgba(2,6,23,0.90) 0%, rgba(2,6,23,0.78) 100%)",
+      border: "1px solid rgba(148,163,184,0.16)",
+      boxShadow: "0 22px 55px rgba(0,0,0,0.55)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
       overflow: "hidden",
-      transform: "translateY(-6px)",
+      transform: "translateY(-8px)",
       opacity: 0,
-      animation: "rvToastIn 200ms ease-out forwards",
+      animation: "rvToastIn 220ms ease-out forwards",
+      position: "relative",
     };
 
     const headerRow: React.CSSProperties = {
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+      justifyContent: "center", // center header contents
       gap: 10,
+      position: "relative",
+      paddingTop: 2,
     };
 
-    const left: React.CSSProperties = {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      minWidth: 0,
-    };
-
-    const badge: React.CSSProperties = {
+    const iconBadge: React.CSSProperties = {
       display: "inline-flex",
       alignItems: "center",
-      gap: 8,
-      width: "fit-content",
-      padding: "6px 10px",
+      justifyContent: "center",
+      width: 36,
+      height: 36,
       borderRadius: 999,
-      fontWeight: 950,
-      fontSize: 12,
-      border: "1px solid rgba(2,6,23,0.14)",
-      background: "rgba(255,255,255,0.60)",
-      color: "#0f172a",
-      boxShadow: "0 10px 26px rgba(2,6,23,0.10)",
+      border: "1px solid rgba(148,163,184,0.18)",
+      background: "rgba(15,23,42,0.55)",
+      boxShadow: "0 0 0 1px rgba(148,163,184,0.10) inset",
+      fontSize: 16,
+      color: "rgba(226,232,240,0.95)",
     };
 
     const closeBtn: React.CSSProperties = {
-      padding: "6px 10px",
+      position: "absolute",
+      right: 0,
+      top: 0,
+      padding: "7px 10px",
       borderRadius: 12,
       fontWeight: 950,
-      border: "1px solid rgba(2,6,23,0.14)",
-      background: "rgba(255,255,255,0.55)",
-      color: "#0f172a",
+      border: "1px solid rgba(148,163,184,0.18)",
+      background: "rgba(15,23,42,0.50)",
+      color: "rgba(226,232,240,0.92)",
       cursor: "pointer",
     };
 
     const msg: React.CSSProperties = {
       marginTop: 10,
-      padding: "0 2px 10px 2px",
+      padding: "0 6px 12px 6px",
       fontWeight: 900,
-      color: "#0f172a",
+      color: "rgba(226,232,240,0.95)",
       lineHeight: 1.25,
       wordBreak: "break-word",
+      textAlign: "center", // center message
+    };
+
+    const sub: React.CSSProperties = {
+      marginTop: 2,
+      marginBottom: 2,
+      fontWeight: 850,
+      fontSize: 12,
+      color: "rgba(148,163,184,0.85)",
+      textAlign: "center",
     };
 
     const progressWrap: React.CSSProperties = {
       height: 3,
       width: "100%",
-      background: "rgba(2,6,23,0.08)",
+      background: "rgba(148,163,184,0.12)",
     };
 
     const progressBar: React.CSSProperties = {
@@ -144,7 +146,7 @@ export default function ToastHost() {
       transition: "transform 100ms linear",
     };
 
-    return { wrapper, cardBase, headerRow, left, badge, closeBtn, msg, progressWrap, progressBar };
+    return { wrapper, cardBase, headerRow, iconBadge, closeBtn, msg, sub, progressWrap, progressBar };
   }, []);
 
   useEffect(() => {
@@ -189,7 +191,7 @@ export default function ToastHost() {
     <>
       <style>{`
         @keyframes rvToastIn {
-          from { transform: translateY(-8px); opacity: 0; }
+          from { transform: translateY(-10px); opacity: 0; }
           to   { transform: translateY(0px); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -202,46 +204,45 @@ export default function ToastHost() {
           const elapsed = Date.now() - t.createdAt;
           const pct = Math.min(1, Math.max(0, elapsed / t.durationMs));
           const scale = 1 - pct;
+          const accent = accentFor(t.variant);
 
           return (
             <div
               key={t.id}
-              style={{
-                ...styles.cardBase,
-                borderColor: "rgba(2,6,23,0.14)",
-              }}
+              style={styles.cardBase}
               onClick={() => dismiss(t.id)}
               title="Click to dismiss"
               role="status"
             >
-              {/* Neon accent edge */}
+              {/* Neon border glow */}
               <div
                 style={{
                   position: "absolute",
-                  inset: 0,
-                  borderRadius: 16,
+                  inset: -1,
+                  borderRadius: 18,
                   pointerEvents: "none",
-                  boxShadow: `inset 0 0 0 1px ${accentFor(t.variant)}`,
+                  boxShadow: `0 0 0 1px rgba(148,163,184,0.12) inset, 0 0 26px ${accent}`,
                   opacity: 0.55,
                 }}
               />
 
+              {/* Neon top strip */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 2,
+                  background: accent,
+                  boxShadow: `0 0 18px ${accent}`,
+                  opacity: 0.9,
+                }}
+              />
+
               <div style={styles.headerRow}>
-                <div style={styles.left}>
-                  <div
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: 999,
-                      background: accentFor(t.variant),
-                      boxShadow: `0 0 22px ${accentFor(t.variant)}`,
-                      flex: "0 0 auto",
-                    }}
-                  />
-                  <div style={{ ...styles.badge }}>
-                    <span style={{ fontSize: 13 }}>{iconFor(t.variant)}</span>
-                    {labelFor(t.variant)}
-                  </div>
+                <div style={styles.iconBadge}>
+                  {iconFor(t.variant)}
                 </div>
 
                 <button
@@ -258,14 +259,15 @@ export default function ToastHost() {
                 </button>
               </div>
 
+              {/* No "Info" / "Success" text — just centered content */}
               <div style={styles.msg}>{t.message}</div>
 
-              {/* Progress bar */}
               <div style={styles.progressWrap}>
                 <div
                   style={{
                     ...styles.progressBar,
-                    background: accentFor(t.variant),
+                    background: accent,
+                    boxShadow: `0 0 14px ${accent}`,
                     transform: `scaleX(${scale})`,
                   }}
                 />
