@@ -9,6 +9,8 @@ import Contact from "./pages/Contact";
 import Requests from "./pages/Requests";
 import ServiceDetail from "./pages/ServiceDetail";
 
+import CustomerPortal from "./pages/CustomerPortal";
+import CustomerRequestDetail from "./pages/CustomerRequestDetail";
 import bg from "./assets/handyman-bg.png";
 import ToastHost from "./components/ToastHost";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -56,6 +58,8 @@ return (
           <Route path="/contact" element={<Contact />} />
           <Route path="/requests" element={<Requests />} />
         
+          <Route path="/customer" element={<CustomerPortal />} />
+          <Route path="/customer/requests/:id" element={<CustomerRequestDetail />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"
