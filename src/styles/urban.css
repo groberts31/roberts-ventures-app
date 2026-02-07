@@ -1,0 +1,221 @@
+/* =========================================================
+   ROBERTS VENTURES — DARK NEON URBAN THEME (GLOBAL)
+   ========================================================= */
+
+:root{
+  --rv-bg-main: #05070f;
+  --rv-bg-card: rgba(8,12,24,.82);
+  --rv-bg-glass: rgba(15,23,42,.72);
+
+  --rv-text-main: #f8fafc;
+  --rv-text-soft: rgba(248,250,252,.78);
+  --rv-text-muted: rgba(248,250,252,.55);
+
+  --rv-neon-blue: #38bdf8;
+  --rv-neon-violet: #a78bfa;
+  --rv-neon-pink: #f472b6;
+  --rv-neon-green: #22c55e;
+
+  --rv-radius: 18px;
+
+  --rv-glow-soft: 0 0 18px rgba(56,189,248,.25);
+  --rv-glow-med: 0 0 30px rgba(167,139,250,.35);
+  --rv-glow-hard: 0 0 45px rgba(56,189,248,.45);
+}
+
+/* =========================
+   BASE
+   ========================= */
+
+html, body{
+  background: var(--rv-bg-main);
+  color: var(--rv-text-main);
+  letter-spacing: .01em;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+body{
+  font-weight: 650;
+}
+
+/* =========================
+   TEXT
+   ========================= */
+
+p, li, span{
+  color: var(--rv-text-soft);
+  line-height: 1.7;
+}
+
+.muted{
+  color: var(--rv-text-muted) !important;
+  font-weight: 700;
+}
+
+/* =========================
+   HEADINGS
+   ========================= */
+
+h1, h2, h3, h4,
+.h1, .h2, .h3{
+  color: var(--rv-text-main);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+h1, .h1{
+  font-weight: 980;
+  text-shadow: var(--rv-glow-med);
+}
+
+h2, .h2{
+  font-weight: 950;
+  text-shadow: var(--rv-glow-soft);
+}
+
+h3, .h3{
+  font-weight: 900;
+}
+
+/* =========================
+   NEON TITLES
+   ========================= */
+
+.rv-urban-title{
+  font-weight: 980;
+  letter-spacing: .12em;
+  background: linear-gradient(
+    90deg,
+    var(--rv-neon-blue),
+    var(--rv-neon-violet),
+    var(--rv-neon-pink)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(var(--rv-glow-hard));
+}
+
+/* =========================
+   CARDS / PANELS
+   ========================= */
+
+.panel.card{
+  background: var(--rv-bg-card) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: var(--rv-radius);
+  box-shadow:
+    0 12px 35px rgba(0,0,0,.6),
+    var(--rv-glow-soft);
+}
+
+/* =========================
+   BADGES
+   ========================= */
+
+.badge{
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    90deg,
+    rgba(56,189,248,.18),
+    rgba(167,139,250,.18)
+  );
+  border: 1px solid rgba(56,189,248,.35);
+  box-shadow: var(--rv-glow-soft);
+  color: var(--rv-text-main);
+}
+
+/* =========================
+   BUTTONS
+   ========================= */
+
+.btn{
+  font-weight: 900;
+  letter-spacing: .04em;
+  border-radius: 999px;
+}
+
+.btn-primary{
+  background: linear-gradient(
+    90deg,
+    #2563eb,
+    #7c3aed
+  );
+  border: none;
+  color: white;
+  box-shadow: var(--rv-glow-med);
+}
+
+.btn-primary:hover{
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: var(--rv-glow-hard);
+}
+
+.btn-ghost{
+  color: var(--rv-neon-blue);
+  border: 1px solid rgba(56,189,248,.35);
+}
+
+/* =========================
+   NAV LINKS
+   ========================= */
+
+.nav-link{
+  color: var(--rv-text-soft) !important;
+  font-weight: 850 !important;
+  letter-spacing: .04em;
+}
+
+.nav-link:hover{
+  color: var(--rv-neon-blue) !important;
+  box-shadow: var(--rv-glow-soft);
+}
+
+.nav-link.active{
+  background: linear-gradient(
+    90deg,
+    rgba(56,189,248,.25),
+    rgba(167,139,250,.25)
+  ) !important;
+
+  color: white !important;
+  box-shadow: var(--rv-glow-med);
+}
+
+/* =========================
+   INPUTS / FORMS
+   ========================= */
+
+input, select, textarea{
+  background: rgba(15,23,42,.9);
+  color: var(--rv-text-main);
+  border: 1px solid rgba(148,163,184,.25);
+}
+
+input:focus, select:focus, textarea:focus{
+  outline: none;
+  border-color: var(--rv-neon-blue);
+  box-shadow: var(--rv-glow-soft);
+}
+
+/* =========================
+   FOOTER
+   ========================= */
+
+footer{
+  background: rgba(2,6,23,.9);
+  color: var(--rv-text-muted);
+}
+
+/* =========================
+   ICONS / EMOJIS GLOW
+   ========================= */
+
+h1 span, h2 span, .h1 span, .h2 span,
+.slFlameNav{
+  filter: drop-shadow(0 0 12px rgba(56,189,248,.5));
+}
