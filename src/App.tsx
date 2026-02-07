@@ -54,7 +54,7 @@ return (
           <Route path="/services" element={<Services />} />
           <Route path="/services/:id" element={<ServiceDetail />} />
           <Route path="/schedule" element={<Schedule />} />
-          <Route path="/staylit" element={<StayLit />} />
+          <Route path="/staylit/*" element={<StayLit />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/requests" element={<Requests />} />
         
