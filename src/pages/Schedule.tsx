@@ -42,6 +42,35 @@ function money(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
 
+function QuoteBanner({ quoteNames }: { quoteNames: string[] }) {
+  if (quoteNames.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 900,
+        borderRadius: 14,
+        padding: 14,
+        border: "1px solid rgba(220,38,38,0.35)",
+        background: "rgba(220,38,38,0.10)",
+        color: "#7f1d1d",
+        boxShadow: "0 10px 28px rgba(220,38,38,0.10)",
+      }}
+    >
+      <div style={{ fontWeight: 950, fontSize: 14 }}>
+        Quote required for {quoteNames.length} item{quoteNames.length === 1 ? "" : "s"}
+      </div>
+      <div style={{ marginTop: 6, fontWeight: 800, fontSize: 12, opacity: 0.95 }}>
+        Please add photos below for fastest response. Quote items are not included in the estimate.
+      </div>
+      <div style={{ marginTop: 8, fontSize: 12, fontWeight: 800 }}>
+        {quoteNames.join(", ")}
+      </div>
+    </div>
+  );
+}
+
 export default function Schedule() {
   const cart = useCart();
 
@@ -274,18 +303,6 @@ export default function Schedule() {
           </div>
         </div>
 
-        {estimate.quoteNames.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <div className="label">Quote-required list</div>
-            <div className="body" style={{ marginTop: 6 }}>
-              {estimate.quoteNames.join(", ")}
-            </div>
-            <div className="muted" style={{ fontWeight: 900, marginTop: 8 }}>
-              Tip: Add photos below to speed up quoting.
-            </div>
-          </div>
-        )}
-
         {estimate.missingNames.length > 0 && (
           <div style={{ marginTop: 12 }}>
             <div className="label">Unpriced / missing items</div>
@@ -322,7 +339,10 @@ export default function Schedule() {
         </div>
 
         {cart.items.length > 0 && (
-          <div style={{ width: "100%", marginTop: 14 }}>
+          <div style={{ width: "100%", marginTop: 14, display: "grid", gap: 12 }}>
+            {/* ✅ Red warning at top */}
+            <QuoteBanner quoteNames={estimate.quoteNames} />
+
             <EstimateBox />
           </div>
         )}
@@ -512,8 +532,11 @@ export default function Schedule() {
               onChange={(e) => setContact({ ...contact, notes: e.target.value })}
             />
 
-            {/* ✅ Compact estimate box right above photos */}
-            <EstimateBox compact />
+            {/* ✅ Compact estimate + red quote banner near photos */}
+            <div style={{ display: "grid", gap: 10 }}>
+              <QuoteBanner quoteNames={estimate.quoteNames} />
+              <EstimateBox compact />
+            </div>
 
             <div className="panel card" style={{ width: "100%", padding: 14 }}>
               <div className="label">Request Photos (optional)</div>
