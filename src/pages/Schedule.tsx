@@ -1,6 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useCart } from "../data/requestCart";
 import { SERVICES } from "../data/services";
+import { AVAILABILITY } from "../data/availability";
+import {
+  addDays,
+  buildSlotsForDate,
+  clampToMidnight,
+  formatDateInput,
+  formatTimeLabel,
+  isOpenDay,
+} from "../data/timeSlots";
+
+type ContactInfo = {
+  name: string;
+  phone: string;
+  address: string;
+  notes: string;
+};
 
 export default function Schedule() {
   const cart = useCart();
@@ -12,100 +28,233 @@ export default function Schedule() {
     });
   }, [cart.items]);
 
+  // date limits
+  const today = clampToMidnight(new Date());
+  const maxDate = addDays(today, AVAILABILITY.maxDaysAhead);
+
+  // pick next valid open day as default
+  const defaultDate = useMemo(() => {
+    let d = new Date(today);
+    for (let i = 0; i <= 14; i++) {
+      if (isOpenDay(d)) return d;
+      d = addDays(d, 1);
+    }
+    return today;
+  }, [today]);
+
+  const [dateStr, setDateStr] = useState(formatDateInput(defaultDate));
+  const chosenDate = useMemo(() => new Date(dateStr + "T00:00:00"), [dateStr]);
+
+  const slots = useMemo(() => buildSlotsForDate(chosenDate), [chosenDate]);
+
+  const [selectedSlotISO, setSelectedSlotISO] = useState<string>("");
+
+  const [contact, setContact] = useState<ContactInfo>({
+    name: "",
+    phone: "",
+    address: "",
+    notes: "",
+  });
+
+  function onSubmit() {
+    if (cart.items.length === 0) {
+      alert("Your request cart is empty. Please add services first.");
+      return;
+    }
+    if (!contact.name.trim() || !contact.phone.trim()) {
+      alert("Please enter at least your name and phone number.");
+      return;
+    }
+    if (!selectedSlotISO) {
+      alert("Please select a time slot.");
+      return;
+    }
+
+    const payload = {
+      createdAt: new Date().toISOString(),
+      appointmentStart: selectedSlotISO,
+      customer: contact,
+      items: cart.items,
+    };
+
+    // Save locally for now (Firebase next)
+    const existing = JSON.parse(localStorage.getItem("rv_requests") ?? "[]");
+    localStorage.setItem("rv_requests", JSON.stringify([payload, ...existing]));
+
+    alert("Request submitted! (Saved locally for now.)");
+
+    // optional: clear cart after submit
+    cart.clear();
+    setSelectedSlotISO("");
+    setContact({ name: "", phone: "", address: "", notes: "" });
+  }
+
   return (
     <div className="stack page">
-      <section className="panel card">
-        <div className="label">Request Builder</div>
-        <h1 className="h2" style={{ marginTop: 6 }}>Schedule / Request</h1>
-        <p className="lead" style={{ marginTop: 6 }}>
-          Review your selected services, adjust quantity, and add notes. Next we’ll choose date & time.
+      <section className="panel card card-center">
+        <h1 className="h2">Schedule Your Service</h1>
+        <p className="lead" style={{ maxWidth: 720 }}>
+          Review your request cart, pick a date & time, and submit your info. We’ll follow up to confirm details.
         </p>
 
-        <div className="row" style={{ marginTop: 12 }}>
-          <div className="badge">Items: {cart.count}</div>
-          {cart.items.length > 0 && (
-            <button className="btn btn-ghost" onClick={cart.clear}>
-              Clear All
-            </button>
-          )}
+        <div className="row">
+          <span className="badge">Cart items: {cart.count}</span>
+          <span className="badge">
+            Hours: {AVAILABILITY.startHour}:00–{AVAILABILITY.endHour}:00
+          </span>
+          <span className="badge">Slots: {AVAILABILITY.slotMinutes} min</span>
         </div>
       </section>
 
+      {/* Cart editor */}
       {cart.items.length === 0 ? (
-        <section className="panel card">
-          <div className="h3">Your request cart is empty</div>
-          <p className="body">Go to Services and add items to get started.</p>
+        <section className="panel card card-center">
+          <h3 className="h3">Your request cart is empty</h3>
+          <p className="body" style={{ maxWidth: 560 }}>
+            Go to Services, add what you need, then come back here to schedule.
+          </p>
+          <button className="btn btn-primary" onClick={() => (window.location.href = "/services")}>
+            Go to Services
+          </button>
         </section>
       ) : (
-        <>
-          <section className="stack">
-            {itemsDetailed.map((i) => (
-              <article key={i.serviceId} className="panel card">
-                <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <div className="h3">{i.service?.name ?? "Service"}</div>
-                    <div className="muted" style={{ fontSize: 13, fontWeight: 700 }}>
-                      {i.service?.category ?? "—"}
-                    </div>
-                  </div>
+        <section className="stack">
+          {itemsDetailed.map((i) => (
+            <article key={i.serviceId} className="panel card card-center">
+              <h3 className="h3">{i.service?.name ?? "Service"}</h3>
+              <div className="muted">{i.service?.category ?? "—"}</div>
 
-                  <button className="btn" onClick={() => cart.remove(i.serviceId)}>
-                    Remove
-                  </button>
-                </div>
-
-                <div className="row" style={{ marginTop: 10 }}>
-                  <label style={{ display: "grid", gap: 6 }}>
-                    <span className="label">Quantity</span>
-                    <input
-                      className="field"
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={i.qty}
-                      onChange={(e) => cart.setQty(i.serviceId, Number(e.target.value))}
-                      style={{ width: 140 }}
-                    />
-                  </label>
-
-                  <div className="badge">
-                    Tip: add sizes, locations, and special requests in notes.
-                  </div>
-                </div>
-
-                <label style={{ display: "grid", gap: 6, marginTop: 10 }}>
-                  <span className="label">Notes for this service</span>
-                  <textarea
-                    className="field"
-                    value={i.note}
-                    onChange={(e) => cart.setNote(i.serviceId, e.target.value)}
-                    placeholder='Example: "2 TVs (55&quot; and 65&quot;). Living room wall. Hide cables if possible."'
-                    rows={3}
-                  />
-                </label>
-              </article>
-            ))}
-          </section>
-
-          <section className="panel card">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <div>
-                <div className="label">Next step</div>
-                <div className="h3" style={{ marginTop: 6 }}>Pick Date & Time</div>
-                <p className="body" style={{ margin: "6px 0 0 0" }}>
-                  Next we’ll generate time slots based on your hours and allow customers to submit.
-                </p>
+              <div className="row">
+                <span className="badge">Qty: {i.qty}</span>
+                <button className="btn btn-ghost" onClick={() => cart.remove(i.serviceId)}>
+                  Remove
+                </button>
               </div>
 
-              <button
-                className="btn btn-primary"
-                onClick={() => alert("Next: Date/time picker + submit request")}
-              >
-                Continue →
-              </button>
-            </div>
-          </section>
-        </>
+              <label style={{ width: "100%", maxWidth: 620, display: "grid", gap: 6 }}>
+                <span className="label">Notes for this service</span>
+                <textarea
+                  className="field"
+                  rows={3}
+                  value={i.note}
+                  onChange={(e) => cart.setNote(i.serviceId, e.target.value)}
+                  placeholder="Add helpful details (sizes, location, photos later, etc.)"
+                />
+              </label>
+            </article>
+          ))}
+
+          <div className="row" style={{ justifyContent: "center" }}>
+            <button className="btn btn-ghost" onClick={cart.clear}>
+              Clear All
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Date & time */}
+      {cart.items.length > 0 && (
+        <section className="panel card card-center">
+          <h2 className="h2">Pick a Date</h2>
+
+          <div style={{ width: "100%", maxWidth: 520, display: "grid", gap: 10 }}>
+            <input
+              className="field"
+              type="date"
+              value={dateStr}
+              min={formatDateInput(today)}
+              max={formatDateInput(maxDate)}
+              onChange={(e) => {
+                setDateStr(e.target.value);
+                setSelectedSlotISO("");
+              }}
+            />
+
+            {!isOpenDay(chosenDate) && (
+              <div className="badge" style={{ justifyContent: "center" }}>
+                Closed on this day — please choose another date.
+              </div>
+            )}
+          </div>
+
+          <h2 className="h2" style={{ marginTop: 18 }}>Pick a Time</h2>
+
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 720,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              gap: 10,
+              marginTop: 10,
+            }}
+          >
+            {slots.length === 0 ? (
+              <div className="badge" style={{ gridColumn: "1 / -1", justifyContent: "center" }}>
+                No slots available for this date.
+              </div>
+            ) : (
+              slots.map((t) => {
+                const iso = t.toISOString();
+                const selected = selectedSlotISO === iso;
+                return (
+                  <button
+                    key={iso}
+                    type="button"
+                    className={"btn " + (selected ? "btn-primary" : "btn-ghost")}
+                    onClick={() => setSelectedSlotISO(iso)}
+                    style={{ justifyContent: "center" }}
+                  >
+                    {formatTimeLabel(t)}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Contact + submit */}
+      {cart.items.length > 0 && (
+        <section className="panel card card-center">
+          <h2 className="h2">Your Info</h2>
+
+          <div style={{ width: "100%", maxWidth: 720, display: "grid", gap: 10 }}>
+            <input
+              className="field"
+              placeholder="Full Name"
+              value={contact.name}
+              onChange={(e) => setContact({ ...contact, name: e.target.value })}
+            />
+            <input
+              className="field"
+              placeholder="Phone Number"
+              value={contact.phone}
+              onChange={(e) => setContact({ ...contact, phone: e.target.value })}
+            />
+            <input
+              className="field"
+              placeholder="Service Address (optional for now)"
+              value={contact.address}
+              onChange={(e) => setContact({ ...contact, address: e.target.value })}
+            />
+            <textarea
+              className="field"
+              rows={4}
+              placeholder="General notes (parking, gate code, preferred arrival window, etc.)"
+              value={contact.notes}
+              onChange={(e) => setContact({ ...contact, notes: e.target.value })}
+            />
+          </div>
+
+          <button className="btn btn-primary" onClick={onSubmit} style={{ marginTop: 12 }}>
+            Submit Request
+          </button>
+
+          <div className="muted" style={{ fontSize: 12, fontWeight: 700, maxWidth: 760 }}>
+            Next upgrade: we’ll save requests to Firebase and notify you automatically.
+          </div>
+        </section>
       )}
     </div>
   );
