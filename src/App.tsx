@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 
 import Home from "./pages/Home";
@@ -11,9 +11,13 @@ import ServiceDetail from "./pages/ServiceDetail";
 
 import bg from "./assets/handyman-bg.png";
 import ToastHost from "./components/ToastHost";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminGuard from "./components/admin/AdminGuard";
 
 export default function App() {
-  return (
+  const location = useLocation();
+return (
     <div
       style={{
         minHeight: "100vh",
@@ -34,7 +38,7 @@ export default function App() {
     >
       <Navbar />
 
-      <main
+      <main key={location.pathname} className="page-enter"
         style={{
           padding: "24px 16px",
           maxWidth: 1200,
@@ -50,6 +54,30 @@ export default function App() {
           <Route path="/staylit" element={<StayLit />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/requests" element={<Requests />} />
+        
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminGuard>
+                <AdminDashboard />
+              </AdminGuard>
+            }
+          />
+                  <Route
+            path="*"
+            element={
+              <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+                <h1 style={{ fontWeight: 950, margin: 0 }}>Page not found (404)</h1>
+                <p style={{ marginTop: 10, fontWeight: 800, opacity: 0.8 }}>
+                  If you expected Admin to load, this usually means the route is missing or the app is not wrapped in BrowserRouter.
+                </p>
+                <p style={{ marginTop: 10, fontWeight: 900 }}>
+                  Try: <code>/admin/login</code> then <code>/admin</code>
+                </p>
+              </div>
+            }
+          />
         </Routes>
       </main>
       <ToastHost />

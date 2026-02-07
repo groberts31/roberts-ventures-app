@@ -1,0 +1,533 @@
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "../../lib/toast";
+import { setAdminAuthed } from "../../components/admin/AdminGuard";
+
+type CartItem = { serviceId: string; qty: number; note: string };
+
+type QuoteLine = {
+  id: string;
+  label: string;
+  qty: number;
+  unitPrice: number; // dollars
+};
+
+type QuoteDraft = {
+  lines: QuoteLine[];
+  taxRatePct: number; // 0-100
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+};
+
+type RequestRecord = {
+  createdAt: string;
+  appointmentStart: string;
+  customer: { name: string; phone: string; address?: string; notes?: string };
+  items: CartItem[];
+  photos?: { name: string; type: string; dataUrl: string }[];
+  status?: "new" | "in_progress" | "complete"; // may be missing on older records
+  quote?: QuoteDraft;
+};
+
+const KEY = "rv_requests";
+
+function safeStatus(s: any): "new" | "in_progress" | "complete" {
+  if (s === "in_progress" || s === "complete" || s === "new") return s;
+  return "new";
+}
+
+function uid() {
+  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+
+function readRequests(): RequestRecord[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) ?? "[]");
+    const arr = Array.isArray(raw) ? raw : [];
+    return arr.map((r: any) => ({ ...r, status: safeStatus(r?.status) }));
+  } catch {
+    return [];
+  }
+}
+
+function writeRequests(reqs: RequestRecord[]) {
+  localStorage.setItem(KEY, JSON.stringify(reqs));
+}
+
+function fmt(dtIso: string) {
+  const d = new Date(dtIso);
+  if (Number.isNaN(d.getTime())) return dtIso;
+  return d.toLocaleString();
+}
+
+function money(n: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+}
+
+function clampNum(x: any, fallback: number) {
+  const n = Number(x);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function badgeStyle(status: string) {
+  if (status === "complete")
+    return { background: "rgba(34,197,94,0.12)", color: "#14532d", border: "1px solid rgba(34,197,94,0.20)" };
+  if (status === "in_progress")
+    return { background: "rgba(14,165,233,0.12)", color: "#0c4a6e", border: "1px solid rgba(14,165,233,0.20)" };
+  return { background: "rgba(245,158,11,0.14)", color: "#7c2d12", border: "1px solid rgba(245,158,11,0.22)" };
+}
+
+export default function AdminDashboard() {
+  const [reqs, setReqs] = useState<RequestRecord[]>([]);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "new" | "in_progress" | "complete">("all");
+
+  // which request has the quote panel open
+  const [openQuoteKey, setOpenQuoteKey] = useState<string | null>(null);
+
+  function refresh() {
+    setReqs(readRequests());
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return reqs.filter((r) => {
+      const st = safeStatus(r.status);
+      if (statusFilter !== "all" && st !== statusFilter) return false;
+      if (!term) return true;
+
+      const hay = [
+        r.customer?.name,
+        r.customer?.phone,
+        r.customer?.address,
+        r.customer?.notes,
+        st,
+        r.createdAt,
+        r.appointmentStart,
+        ...(r.items ?? []).map((i) => i.serviceId),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return hay.includes(term);
+    });
+  }, [reqs, q, statusFilter]);
+
+  function updateRequestByIndex(index: number, updater: (r: RequestRecord) => RequestRecord) {
+    const next = [...reqs];
+    if (!next[index]) return;
+    next[index] = updater(next[index]);
+    setReqs(next);
+    writeRequests(next);
+  }
+
+  function setStatus(index: number, status: "new" | "in_progress" | "complete") {
+    updateRequestByIndex(index, (r) => ({ ...r, status }));
+    toast("Status updated.", "success", "Saved", 1600);
+  }
+
+  function clearAll() {
+    if (!confirm("Delete ALL saved requests from this browser? This cannot be undone.")) return;
+    localStorage.setItem(KEY, "[]");
+    refresh();
+    toast("All requests cleared (local only).", "warning", "Cleared", 2400);
+  }
+
+  function logout() {
+    setAdminAuthed(false);
+    toast("Logged out.", "info", "Admin", 1600, "Go Home", "/");
+    window.location.href = "/";
+  }
+
+  // ------------------------
+  // Quote builder functions
+  // ------------------------
+  function ensureQuote(index: number) {
+    updateRequestByIndex(index, (r) => {
+      if (r.quote) return r;
+      const now = new Date().toISOString();
+      const seeded: QuoteLine[] = (r.items ?? []).map((it) => ({
+        id: uid(),
+        label: it.serviceId, // can be swapped to friendly name later
+        qty: clampNum(it.qty, 1),
+        unitPrice: 0,
+      }));
+      return {
+        ...r,
+        quote: {
+          lines: seeded,
+          taxRatePct: 0,
+          notes: "",
+          createdAt: now,
+          updatedAt: now,
+        },
+        status: safeStatus(r.status),
+      };
+    });
+  }
+
+  function setQuoteField(index: number, patch: Partial<QuoteDraft>) {
+    updateRequestByIndex(index, (r) => {
+      const now = new Date().toISOString();
+      const qd: QuoteDraft = r.quote ?? { lines: [], taxRatePct: 0, notes: "", createdAt: now, updatedAt: now };
+      return { ...r, quote: { ...qd, ...patch, updatedAt: now } };
+    });
+  }
+
+  function setQuoteLine(index: number, lineId: string, patch: Partial<QuoteLine>) {
+    updateRequestByIndex(index, (r) => {
+      if (!r.quote) return r;
+      const now = new Date().toISOString();
+      return {
+        ...r,
+        quote: {
+          ...r.quote,
+          updatedAt: now,
+          lines: r.quote.lines.map((ln) => (ln.id === lineId ? { ...ln, ...patch } : ln)),
+        },
+      };
+    });
+  }
+
+  function addQuoteLine(index: number) {
+    updateRequestByIndex(index, (r) => {
+      const now = new Date().toISOString();
+      const qd = r.quote ?? { lines: [], taxRatePct: 0, notes: "", createdAt: now, updatedAt: now };
+      return {
+        ...r,
+        quote: {
+          ...qd,
+          updatedAt: now,
+          lines: [...qd.lines, { id: uid(), label: "Custom line item", qty: 1, unitPrice: 0 }],
+        },
+      };
+    });
+  }
+
+  function removeQuoteLine(index: number, lineId: string) {
+    updateRequestByIndex(index, (r) => {
+      if (!r.quote) return r;
+      const now = new Date().toISOString();
+      return { ...r, quote: { ...r.quote, updatedAt: now, lines: r.quote.lines.filter((ln) => ln.id !== lineId) } };
+    });
+  }
+
+  function calcTotals(qd?: QuoteDraft) {
+    const lines = qd?.lines ?? [];
+    const subtotal = lines.reduce((sum, ln) => sum + clampNum(ln.qty, 0) * clampNum(ln.unitPrice, 0), 0);
+    const taxRate = Math.max(0, Math.min(100, clampNum(qd?.taxRatePct, 0)));
+    const tax = subtotal * (taxRate / 100);
+    const total = subtotal + tax;
+    return { subtotal, taxRate, tax, total };
+  }
+
+  function buildQuoteText(r: RequestRecord) {
+    const qd = r.quote;
+    const { subtotal, taxRate, tax, total } = calcTotals(qd);
+
+    const lines = (qd?.lines ?? []).map((ln) => {
+      const lineTotal = clampNum(ln.qty, 0) * clampNum(ln.unitPrice, 0);
+      return `- ${ln.label} — ${ln.qty} × ${money(ln.unitPrice)} = ${money(lineTotal)}`;
+    });
+
+    const appt = r.appointmentStart ? fmt(r.appointmentStart) : "—";
+
+    return [
+      `Roberts Ventures LLC — Quote`,
+      ``,
+      `Customer: ${r.customer?.name || "—"}`,
+      `Phone: ${r.customer?.phone || "—"}`,
+      r.customer?.address ? `Address: ${r.customer.address}` : null,
+      `Requested Appointment: ${appt}`,
+      ``,
+      `Line Items:`,
+      ...(lines.length ? lines : [`- (No line items yet)`]),
+      ``,
+      `Subtotal: ${money(subtotal)}`,
+      taxRate > 0 ? `Tax (${taxRate}%): ${money(tax)}` : null,
+      `Total: ${money(total)}`,
+      ``,
+      qd?.notes?.trim() ? `Notes: ${qd.notes.trim()}` : null,
+      ``,
+      `Reply to confirm and we’ll get you scheduled.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  async function copyQuote(index: number) {
+    const r = reqs[index];
+    if (!r?.quote) return toast("Create a quote first.", "warning", "No Quote", 1800);
+    const text = buildQuoteText(r);
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("Quote copied to clipboard.", "success", "Copied", 1800);
+    } catch {
+      toast("Clipboard blocked. Select the preview text and copy.", "warning", "Clipboard", 2400);
+    }
+  }
+
+  function openEmail(index: number) {
+    const r = reqs[index];
+    if (!r?.quote) return toast("Create a quote first.", "warning", "No Quote", 1800);
+    const subject = encodeURIComponent(`Roberts Ventures LLC Quote — ${r.customer?.name || "Customer"}`);
+    const body = encodeURIComponent(buildQuoteText(r));
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
+  function markQuoteSent(index: number) {
+    const now = new Date().toISOString();
+    updateRequestByIndex(index, (r) => {
+      if (!r.quote) return r;
+      const st = safeStatus(r.status);
+      return {
+        ...r,
+        status: st === "new" ? "in_progress" : st,
+        quote: { ...r.quote, sentAt: now, updatedAt: now },
+      };
+    });
+    toast("Marked quote as sent.", "success", "Saved", 1600);
+  }
+
+  // ------------------------
+  // Render
+  // ------------------------
+  return (
+    <div className="stack page">
+      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "grid", gap: 6 }}>
+            <h1 className="h2" style={{ margin: 0 }}>Admin Dashboard</h1>
+            <div className="muted" style={{ fontWeight: 900 }}>Requests stored locally in this browser (Firebase later).</div>
+          </div>
+
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+            <button className="btn btn-ghost" onClick={refresh}>Refresh</button>
+            <button className="btn btn-ghost" onClick={clearAll}>Clear All</button>
+            <button className="btn btn-primary admin-quote-btn" style={{ boxShadow: "0 8px 22px rgba(29,78,216,0.28)", border: "1px solid rgba(29,78,216,0.35)", fontWeight: 950 }} onClick={logout}>Logout</button>
+          </div>
+        </div>
+
+        <div className="row" style={{ width: "100%", marginTop: 12, gap: 10, flexWrap: "wrap" }}>
+          <input
+            className="field"
+            style={{ flex: 1, minWidth: 240 }}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name, phone, service id, notes…"
+          />
+
+          <select
+            className="field"
+            style={{ width: 220 }}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+          >
+            <option value="all">All statuses</option>
+            <option value="new">New</option>
+            <option value="in_progress">In progress</option>
+            <option value="complete">Complete</option>
+          </select>
+
+          <span className="badge" style={{ justifyContent: "center" }}>Total: {filtered.length}</span>
+        </div>
+      </section>
+
+      {filtered.length === 0 ? (
+        <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <h3 className="h3">No requests found</h3>
+          <p className="body" style={{ maxWidth: 720 }}>
+            If you submitted a request earlier, it’s stored in <code>localStorage</code> on the same device/browser.
+          </p>
+        </section>
+      ) : (
+        <section className="stack" style={{ maxWidth: 1100, margin: "0 auto" }}>
+          {filtered.map((r, idx) => {
+            const key = (r.createdAt || "x") + ":" + idx;
+            const quoteOpen = openQuoteKey === key;
+            const st = safeStatus(r.status);
+            const totals = calcTotals(r.quote);
+
+            return (
+              <article key={key} className="panel card" style={{ padding: 16 }}>
+                <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div className="h3" style={{ margin: 0 }}>
+                      {r.customer?.name || "Customer"}{" "}
+                      <span className="badge" style={{ marginLeft: 8, ...badgeStyle(st) }}>
+                        {st.replace("_", " ").toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="muted" style={{ fontWeight: 900 }}>
+                      Created: {fmt(r.createdAt)} · Appointment: {fmt(r.appointmentStart)}
+                    </div>
+
+                    <div className="body" style={{ marginTop: 6 }}>
+                      <strong>Phone:</strong> {r.customer?.phone || "—"}{" "}
+                      {r.customer?.address ? (
+                        <>
+                          · <strong>Address:</strong> {r.customer.address}
+                        </>
+                      ) : null}
+                    </div>
+
+                    {r.customer?.notes ? (
+                      <div className="body" style={{ marginTop: 6 }}>
+                        <strong>Notes:</strong> {r.customer.notes}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                    <button className="btn btn-ghost" onClick={() => setStatus(idx, "new")}>New</button>
+                    <button className="btn btn-ghost" onClick={() => setStatus(idx, "in_progress")}>In Progress</button>
+                    <button className="btn btn-ghost" onClick={() => setStatus(idx, "complete")}>Complete</button>
+
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => {
+                        ensureQuote(idx);
+                        setOpenQuoteKey((prev) => (prev === key ? null : key));
+                      }}
+                    >
+                      {quoteOpen ? "Close Quote" : "Edit Price / Send Quote"}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 14 }}>
+                  <div className="label">Requested items</div>
+                  <div className="body" style={{ marginTop: 8, display: "grid", gap: 6 }}>
+                    {(r.items ?? []).map((it, j) => (
+                      <div key={j} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+                        <div style={{ fontWeight: 950 }}>
+                          {it.serviceId} <span className="muted">· qty {it.qty}</span>
+                        </div>
+                        {it.note ? (
+                          <div className="muted" style={{ fontWeight: 800, marginTop: 4 }}>
+                            {it.note}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {quoteOpen ? (
+                  <div style={{ marginTop: 16 }} className="panel card">
+                    <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                      <div style={{ display: "grid", gap: 6 }}>
+                        <div className="h3" style={{ margin: 0 }}>Quote Builder</div>
+                        <div className="muted" style={{ fontWeight: 900 }}>
+                          Edit unit prices, add custom lines, then copy or email the quote.
+                        </div>
+                      </div>
+
+                      <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                        <span className="badge" style={{ justifyContent: "center" }}>Subtotal: {money(totals.subtotal)}</span>
+                        <span className="badge" style={{ justifyContent: "center" }}>Total: {money(totals.total)}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                      {(r.quote?.lines ?? []).map((ln) => (
+                        <div key={ln.id} className="panel" style={{ padding: 12, borderRadius: 12, display: "grid", gap: 10 }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 140px 90px", gap: 10, alignItems: "center" }}>
+                            <input className="field" value={ln.label} onChange={(e) => setQuoteLine(idx, ln.id, { label: e.target.value })} />
+                            <input className="field" inputMode="numeric" value={ln.qty} onChange={(e) => setQuoteLine(idx, ln.id, { qty: clampNum(e.target.value, 1) })} />
+                            <input className="field" inputMode="decimal" value={ln.unitPrice} onChange={(e) => setQuoteLine(idx, ln.id, { unitPrice: clampNum(e.target.value, 0) })} />
+                            <button className="btn btn-ghost" onClick={() => removeQuoteLine(idx, ln.id)}>Remove</button>
+                          </div>
+
+                          <div className="muted" style={{ fontWeight: 900 }}>
+                            Line total: {money(clampNum(ln.qty, 0) * clampNum(ln.unitPrice, 0))}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="row" style={{ justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+                        <button className="btn btn-ghost" onClick={() => addQuoteLine(idx)}>+ Add Custom Line</button>
+
+                        <div className="row" style={{ gap: 8, alignItems: "center" }}>
+                          <span className="label">Tax %</span>
+                          <input
+                            className="field"
+                            style={{ width: 120 }}
+                            inputMode="decimal"
+                            value={r.quote?.taxRatePct ?? 0}
+                            onChange={(e) => setQuoteField(idx, { taxRatePct: Math.max(0, Math.min(100, clampNum(e.target.value, 0))) })}
+                          />
+                        </div>
+                      </div>
+
+                      <label style={{ display: "grid", gap: 6 }}>
+                        <span className="label">Quote Notes (optional)</span>
+                        <textarea
+                          className="field"
+                          rows={4}
+                          value={r.quote?.notes ?? ""}
+                          onChange={(e) => setQuoteField(idx, { notes: e.target.value })}
+                          placeholder="Example: Price valid for 7 days. Includes standard hardware. Materials not included unless listed above."
+                        />
+                      </label>
+
+                      <div className="row" style={{ justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+                        <button className="btn btn-primary" onClick={() => copyQuote(idx)}>Copy Quote</button>
+                        <button className="btn btn-primary" onClick={() => openEmail(idx)}>Open Email Draft</button>
+                        <button className="btn btn-ghost" onClick={() => markQuoteSent(idx)}>Mark Quote Sent</button>
+                      </div>
+
+                      <div className="panel" style={{ padding: 12, borderRadius: 12 }}>
+                        <div className="label">Preview</div>
+                        <pre style={{ marginTop: 10, whiteSpace: "pre-wrap", fontWeight: 800, color: "#0f172a" }}>
+{buildQuoteText(r)}
+                        </pre>
+                      </div>
+
+                      <div className="muted" style={{ fontWeight: 900 }}>
+                        {r.quote?.sentAt ? `Quote marked sent: ${fmt(r.quote.sentAt)}` : "Quote not marked as sent yet."}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {(r.photos?.length ?? 0) > 0 ? (
+                  <div style={{ marginTop: 14 }}>
+                    <div className="label">Photos</div>
+                    <div style={{ marginTop: 8, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                      {r.photos!.map((p, k) => (
+                        <div key={k} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+                          <img
+                            src={p.dataUrl}
+                            alt={p.name}
+                            style={{
+                              width: "100%",
+                              height: 120,
+                              objectFit: "cover",
+                              borderRadius: 10,
+                              border: "1px solid rgba(15,23,42,0.15)",
+                            }}
+                          />
+                          <div className="muted" style={{ fontSize: 11, fontWeight: 900, marginTop: 6, wordBreak: "break-word" }}>
+                            {p.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </section>
+      )}
+    </div>
+  );
+}

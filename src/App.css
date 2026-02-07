@@ -40,3 +40,28 @@
 .read-the-docs {
   color: #888;
 }
+
+/* --- Splash fade-in animation (Home) --- */
+.page-enter {
+  animation: pageEnter 520ms ease-out both;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Respect accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}

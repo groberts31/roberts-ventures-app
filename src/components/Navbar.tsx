@@ -83,7 +83,8 @@ export default function Navbar() {
           <NavLink to="/contact" style={linkStyle}>
             Contact
           </NavLink>
-        </nav>
+        
+            <a href="/admin/login" className="btn btn-ghost" style={{ fontWeight: 900, padding: "8px 14px" }}>Admin</a></nav>
 
         {/* Cart */}
         <div
