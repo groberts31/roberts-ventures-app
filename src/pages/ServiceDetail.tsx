@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { SERVICES, type Service } from "../data/services";
 import { useCart } from "../data/requestCart";
+import { addOnsFor } from "../data/addOns";
 
 function formatPrice(s: Service) {
   if (s.priceType === "quote") return "Quote required";
@@ -36,7 +37,6 @@ const DETAILS: Record<string, DetailPack> = {
     ],
     disclaimer: "Does not include in-wall electrical work. Additional materials or special surfaces may require a quote.",
   },
-
   "ceiling-fan": {
     included: [
       "Remove existing fan/light fixture (standard ceiling height)",
@@ -51,7 +51,6 @@ const DETAILS: Record<string, DetailPack> = {
     ],
     disclaimer: "High ceilings, new wiring, or non-standard boxes may require a quote.",
   },
-
   "custom-shelves": {
     included: [
       "Consultation to confirm measurements, style, and materials",
@@ -66,7 +65,6 @@ const DETAILS: Record<string, DetailPack> = {
     ],
     disclaimer: "Final pricing depends on size, materials, wall type, and finish requirements.",
   },
-
   "deck-repair": {
     included: [
       "Inspection of deck boards, fasteners, and structural safety",
@@ -81,7 +79,6 @@ const DETAILS: Record<string, DetailPack> = {
     ],
     disclaimer: "Structural framing repairs and large material replacement may require a quote after inspection.",
   },
-
   "junk-removal": {
     included: [
       "Pickup/haul away of approved items",
@@ -95,20 +92,18 @@ const DETAILS: Record<string, DetailPack> = {
     ],
     disclaimer: "Pricing may change based on volume, weight, and disposal requirements.",
   },
-
   "project-consult": {
     included: [
       "Walkthrough of your project goals and constraints",
       "Recommendations on materials, approach, timeline, and budget range",
       "Risk flags and what to prioritize first",
-      "Written next-step summary (optional add-on later)",
     ],
     prep: [
       "Bring photos, inspiration links, or sketches if you have them",
       "List your must-haves vs nice-to-haves",
       "Have measurements ready if you want a faster estimate",
     ],
-    disclaimer: "This consultation is for planning and scoping; final pricing may require an on-site review depending on complexity.",
+    disclaimer: "This consultation is for planning/scoping; final pricing may require an on-site review depending on complexity.",
   },
 };
 
@@ -120,10 +115,7 @@ function getDetails(serviceId: string): DetailPack {
         "Basic setup and cleanup included",
         "Clear communication on next steps",
       ],
-      prep: [
-        "Provide photos if the job is quote-required",
-        "Ensure the work area is accessible",
-      ],
+      prep: ["Provide photos if the job is quote-required", "Ensure the work area is accessible"],
       disclaimer: "Some jobs may require a quote depending on conditions and materials.",
     }
   );
@@ -151,14 +143,29 @@ export default function ServiceDetail() {
 
   const svc = service;
   const details = getDetails(svc.id);
+  const addOns = addOnsFor(svc.id);
 
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState("");
+  const [addOnIds, setAddOnIds] = useState<string[]>([]);
+
+  function toggleAddOn(addOnId: string) {
+    setAddOnIds((prev) => (prev.includes(addOnId) ? prev.filter((x) => x !== addOnId) : [...prev, addOnId]));
+  }
 
   function add() {
+    // Add main service
     cart.add(svc);
     cart.setQty(svc.id, qty);
     cart.setNote(svc.id, note);
+
+    // Add selected add-ons as their own service entries
+    for (const ao of addOns.filter((x) => addOnIds.includes(x.id))) {
+      cart.add(ao);
+      cart.setQty(ao.id, 1);
+      cart.setNote(ao.id, `Add-On for: ${svc.name}`);
+    }
+
     alert("Added to request.");
   }
 
@@ -185,11 +192,7 @@ export default function ServiceDetail() {
           }}
         >
           {svc.image ? (
-            <img
-              src={svc.image}
-              alt={svc.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
+            <img src={svc.image} alt={svc.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           ) : null}
         </div>
 
@@ -249,6 +252,60 @@ export default function ServiceDetail() {
         ) : null}
       </section>
 
+      {/* Add-ons */}
+      {addOns.length > 0 && (
+        <section className="panel card">
+          <div className="h3">Recommended add-ons</div>
+          <p className="body" style={{ marginTop: 8, maxWidth: 820 }}>
+            Optional upgrades that pair well with this service. Select any you want included in your request.
+          </p>
+
+          <div
+            style={{
+              marginTop: 12,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 10,
+            }}
+          >
+            {addOns.map((ao) => {
+              const selected = addOnIds.includes(ao.id);
+              return (
+                <button
+                  key={ao.id}
+                  type="button"
+                  className={"panel"}
+                  onClick={() => toggleAddOn(ao.id)}
+                  style={{
+                    padding: 12,
+                    borderRadius: 14,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    border: selected ? "2px solid rgba(29,78,216,0.55)" : "1px solid rgba(2,6,23,0.14)",
+                    boxShadow: selected ? "0 14px 36px rgba(29,78,216,0.18)" : "none",
+                    background: "rgba(255,255,255,0.88)",
+                  }}
+                >
+                  <div className="row" style={{ justifyContent: "space-between" }}>
+                    <div style={{ fontWeight: 950 }}>{ao.name}</div>
+                    <span className="badge">{ao.priceType === "quote" ? "Quote" : ao.priceType === "fixed" ? "Fixed" : "Starting"}</span>
+                  </div>
+                  <div className="muted" style={{ fontWeight: 900, marginTop: 6 }}>
+                    {formatPrice(ao)}
+                  </div>
+                  <div className="body" style={{ marginTop: 8 }}>
+                    {ao.shortDesc}
+                  </div>
+                  <div className="row" style={{ marginTop: 10 }}>
+                    <span className="badge">{selected ? "Selected ✓" : "Tap to select"}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section className="panel card">
         <div className="h3">Add to Request</div>
 
@@ -282,6 +339,12 @@ export default function ServiceDetail() {
 
           {cart.has(svc.id) && <span className="badge">In cart ✓</span>}
         </div>
+
+        {addOnIds.length > 0 && (
+          <div className="muted" style={{ fontWeight: 900, fontSize: 12, marginTop: 10 }}>
+            Add-ons selected: {addOnIds.length}
+          </div>
+        )}
       </section>
 
       <style>{`
