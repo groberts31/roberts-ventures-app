@@ -12,6 +12,40 @@ export default function StayLitSplash() {
         textAlign: "center",
       }}
     >
+      {/* Flicker CSS (inline + guaranteed to load) */}
+      <style>{`
+        @keyframes slFlameFlicker {
+          0%   { transform: translateY(0px)   rotate(-10deg) scale(1.00) translateZ(0); filter: drop-shadow(0 0 10px rgba(251,191,36,0.85)); opacity: .92; }
+          12%  { transform: translateY(-4px)  rotate( 12deg) scale(1.18) translateZ(0); filter: drop-shadow(0 0 18px rgba(245,158,11,0.95)); opacity: 1; }
+          28%  { transform: translateY(-7px)  rotate( -8deg) scale(1.26) translateZ(0); filter: drop-shadow(0 0 24px rgba(251,146,60,0.95)); opacity: .98; }
+          45%  { transform: translateY(-3px)  rotate( 10deg) scale(1.16) translateZ(0); filter: drop-shadow(0 0 16px rgba(253,186,116,0.90)); opacity: 1; }
+          63%  { transform: translateY(-9px)  rotate(-12deg) scale(1.30) translateZ(0); filter: drop-shadow(0 0 26px rgba(251,113,133,0.45)); opacity: .92; }
+          78%  { transform: translateY(-5px)  rotate(  8deg) scale(1.22) translateZ(0); filter: drop-shadow(0 0 20px rgba(251,191,36,0.95)); opacity: 1; }
+          92%  { transform: translateY(-2px)  rotate( -6deg) scale(1.10) translateZ(0); filter: drop-shadow(0 0 14px rgba(253,186,116,0.85)); opacity: .96; }
+          100% { transform: translateY(0px)   rotate(-10deg) scale(1.00) translateZ(0); filter: drop-shadow(0 0 10px rgba(251,191,36,0.85)); opacity: .92; }
+        }
+        .slFlame {
+          display: inline-block;
+          transform-origin: 50% 85%;
+          animation: slFlameFlicker 0.75s infinite;
+          will-change: transform, filter, opacity;
+        }
+        /* A subtle second aura that pulses behind the title */
+        @keyframes slAuraPulse {
+          0% { opacity: .25; transform: scale(1); }
+          50% { opacity: .45; transform: scale(1.06); }
+          100% { opacity: .25; transform: scale(1); }
+        }
+        .slAura {
+          position: absolute;
+          inset: -10px -18px;
+          background: radial-gradient(circle at 50% 40%, rgba(59,130,246,.30), rgba(0,0,0,0) 65%);
+          filter: blur(10px);
+          animation: slAuraPulse 2.2s ease-in-out infinite;
+          pointer-events: none;
+        }
+      `}</style>
+
       <div
         className="stack"
         style={{
@@ -34,7 +68,6 @@ export default function StayLitSplash() {
           }}
         >
           <div className="card-center" style={{ gap: 16 }}>
-
             {/* LOGO */}
             <img
               src={logo}
@@ -62,20 +95,24 @@ export default function StayLitSplash() {
             </div>
 
             {/* MAIN TITLE */}
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "clamp(2.2rem, 5vw, 3.2rem)",
-                fontWeight: 950,
-                letterSpacing: "0.04em",
-                background: "linear-gradient(90deg,#ffffff,#93c5fd,#ffffff)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                textShadow: "0 0 20px rgba(147,197,253,0.4)",
-              }}
-            >
-              🔥 STAY LIT
-            </h1>
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <div className="slAura" />
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "clamp(2.2rem, 5vw, 3.2rem)",
+                  fontWeight: 950,
+                  letterSpacing: "0.04em",
+                  background: "linear-gradient(90deg,#ffffff,#93c5fd,#ffffff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "0 0 20px rgba(147,197,253,0.4)",
+                  position: "relative",
+                }}
+              >
+                <span className="slFlame" style={{ fontSize: "1.15em", marginRight: 10, color: "#fbbf24", WebkitTextFillColor: "#fbbf24" }}>🔥</span> STAY LIT
+              </h1>
+            </div>
 
             {/* SUBTITLE */}
             <div
@@ -99,9 +136,8 @@ export default function StayLitSplash() {
                 fontSize: 15,
               }}
             >
-              Hand-poured candles built for atmosphere, focus, and relaxation.
-              Choose a ready-to-ship candle — or design your own with custom scent,
-              jar, and wick.
+              Hand-poured candles built for atmosphere, focus, and relaxation. Choose a ready-to-ship candle — or
+              design your own with custom scent, jar, and wick.
             </div>
 
             {/* FEATURES */}
