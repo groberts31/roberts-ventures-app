@@ -7,9 +7,29 @@ import Schedule from "./pages/Schedule";
 import StayLit from "./pages/StayLit";
 import Contact from "./pages/Contact";
 
+import bg from "./assets/handyman-bg.png";
+
 export default function App() {
   return (
-    <>
+    <div
+      style={{
+        minHeight: "100vh",
+
+        /* Reduced overlay = more visible background */
+        backgroundImage: `
+          linear-gradient(
+            rgba(255,255,255,0.75),
+            rgba(255,255,255,0.82)
+          ),
+          url(${bg})
+        `,
+
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <Navbar />
 
       <main
@@ -28,6 +48,6 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
         </Routes>
       </main>
-    </>
+    </div>
   );
 }
