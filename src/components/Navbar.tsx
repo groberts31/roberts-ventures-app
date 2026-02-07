@@ -1,16 +1,19 @@
 import { NavLink } from "react-router-dom";
 import { useCart } from "../data/requestCart";
+import type React from "react";
+import rvLogo from "../assets/roberts-ventures-logo.png";
 
-const linkStyle = ({ isActive }: { isActive: boolean }) => ({
+const baseLinkStyle: React.CSSProperties = {
   textDecoration: "none",
   padding: "8px 12px",
   borderRadius: 999,
-  fontWeight: 700,
+  fontWeight: 850,
   fontSize: 14,
-  color: isActive ? "#0f172a" : "#475569",
-  background: isActive ? "rgba(37,99,235,0.15)" : "transparent",
   transition: "all .2s ease",
-});
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+};
 
 export default function Navbar() {
   const cart = useCart();
@@ -22,9 +25,8 @@ export default function Navbar() {
         top: 0,
         zIndex: 50,
         backdropFilter: "blur(18px)",
-        background:
-          "linear-gradient(90deg, rgba(255,255,255,.85), rgba(248,251,255,.9))",
-        borderBottom: "1px solid #e5e7eb",
+        background: "linear-gradient(90deg, rgba(10,10,15,.78), rgba(6,10,22,.82))",
+        borderBottom: "1px solid rgba(148,163,184,.15)",
       }}
     >
       <div
@@ -40,22 +42,37 @@ export default function Navbar() {
         }}
       >
         {/* Brand */}
-        <div style={{ lineHeight: 1.15 }}>
-          <div
+        <div style={{ lineHeight: 1.15, display: "flex", alignItems: "center", gap: 10 }}>
+          <img
+            src={rvLogo}
+            alt="Roberts Ventures LLC"
             style={{
-              fontSize: 18,
-              fontWeight: 900,
-              letterSpacing: ".02em",
-              background: "linear-gradient(90deg,#2563eb,#60a5fa)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              width: 30,
+              height: 30,
+              objectFit: "contain",
+              filter: "drop-shadow(0 0 14px rgba(56,189,248,.22))",
             }}
-          >
-            Roberts Ventures LLC
-          </div>
+          />
 
-          <div style={{ fontSize: 11, color: "#64748b" }}>
-            Services • Stay Lit Candle Co.
+          <div style={{ display: "grid" }}>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 950,
+                letterSpacing: ".06em",
+                textTransform: "uppercase",
+                background: "linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 0 16px rgba(56,189,248,.25))",
+              }}
+            >
+              Roberts Ventures LLC
+            </div>
+
+            <div style={{ fontSize: 11, color: "rgba(248,250,252,.62)", fontWeight: 800 }}>
+              Services • Stay Lit Candle Co.
+            </div>
           </div>
         </div>
 
@@ -68,29 +85,35 @@ export default function Navbar() {
             justifyContent: "center",
           }}
         >
-<NavLink to="/" style={linkStyle} end>
+          <NavLink to="/" end style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Home
           </NavLink>
-          <NavLink to="/services" style={linkStyle}>
+
+          <NavLink to="/services" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Services
           </NavLink>
-          <NavLink to="/schedule" style={linkStyle}>
+
+          <NavLink to="/schedule" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Schedule
           </NavLink>
-          <NavLink to="/staylit" style={linkStyle}>
+
+          <NavLink to="/staylit" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             <span className="slFlameNav">🔥</span>
             <span>Stay Lit</span>
           </NavLink>
-          <NavLink to="/contact" style={linkStyle}>
+
+          <NavLink to="/contact" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Contact
           </NavLink>
-          <NavLink to="/customer" style={linkStyle}>
+
+          <NavLink to="/customer" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Customer Portal
           </NavLink>
-          <NavLink to="/admin" style={linkStyle}>
+
+          <NavLink to="/admin" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Admin
           </NavLink>
-</nav>
+        </nav>
 
         {/* Cart */}
         <div
@@ -98,10 +121,13 @@ export default function Navbar() {
             padding: "6px 12px",
             borderRadius: 999,
             fontSize: 12,
-            fontWeight: 800,
-            background: "rgba(37,99,235,.1)",
-            color: "#1e3a8a",
-            border: "1px solid rgba(37,99,235,.25)",
+            fontWeight: 900,
+            letterSpacing: ".08em",
+            textTransform: "uppercase",
+            background: "linear-gradient(90deg, rgba(56,189,248,.12), rgba(167,139,250,.12))",
+            color: "rgba(248,250,252,.92)",
+            border: "1px solid rgba(56,189,248,.28)",
+            boxShadow: "0 0 18px rgba(56,189,248,.15)",
           }}
         >
           Cart: {cart.count}
