@@ -1,0 +1,432 @@
+     1	import { useEffect, useMemo, useState } from "react";
+     2	import { useParams, Link } from "react-router-dom";
+     3	import { estimateBuild } from "../lib/buildPricing";
+     4	import { renderBuildPreviewPng } from "../lib/render3d";
+     5	import {
+     6	  addCustomerNote,
+     7	  compileNotes,
+     8	  getBuild,
+     9	  markSubmitted,
+    10	  type BuildSubmission,
+    11	  type RenderJob,
+    12	  upsertBuild,
+    13	} from "../lib/buildsStore";
+    14	
+    15	function fmt(iso: string) {
+    16	  const d = new Date(iso);
+    17	  if (Number.isNaN(d.getTime())) return iso;
+    18	  return d.toLocaleString();
+    19	}
+    20	
+    21	function money(n: number) {
+    22	  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+    23	}
+    24	
+    25	export default function BuildPreview() {
+    26	  const { id } = useParams();
+    27	  const [build, setBuild] = useState<BuildSubmission | null>(null);
+    28	
+    29	  // Customer refinement fields
+    30	  const [changeRequest, setChangeRequest] = useState("");
+    31	  const [extraNotes, setExtraNotes] = useState("");
+    32	
+    33	  useEffect(() => {
+    34	    if (!id) return;
+    35	    setBuild(getBuild(id));
+    36	  }, [id]);
+    37	
+    38	  const version = useMemo(() => build?.versions?.[0] ?? null, [build]);
+    39	
+    40	  // Render queue: ONE image at a time
+    41	  useEffect(() => {
+    42	    if (!build || !version) return;
+    43	
+    44	    const latest0 = getBuild(build.id) ?? build;
+    45	    const lv0 = latest0.versions?.[0];
+    46	    if (!lv0) return;
+    47	
+    48	    const renders0 = lv0.renders || [];
+    49	
+    50	    const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
+    51	    let target: RenderJob | null = currentlyRendering;
+    52	
+    53	    if (!target) {
+    54	      const firstQueued = renders0.find((r) => r.status === "queued") ?? null;
+    55	
+    56	      if (firstQueued) {
+    57	        const startedAt = new Date().toISOString();
+    58	        const updatedRenders = renders0.map((r) =>
+    59	          r.renderId === firstQueued.renderId ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob) : r
+    60	        );
+    61	
+    62	        const nextV = { ...lv0, renders: updatedRenders };
+    63	        const nextBuild: BuildSubmission = {
+    64	          ...latest0,
+    65	          updatedAt: new Date().toISOString(),
+    66	          versions: [nextV, ...latest0.versions.slice(1)],
+    67	        };
+    68	
+    69	        upsertBuild(nextBuild);
+    70	        setBuild(nextBuild);
+    71	
+    72	        target = updatedRenders.find((r) => r.renderId === firstQueued.renderId) as RenderJob;
+    73	      }
+    74	    }
+    75	
+    76	    if (!target) return;
+    77	
+    78	    let cancelled = false;
+    79	
+    80	    const run = async () => {
+    81	      try {
+    82	        await new Promise((res) => setTimeout(res, 450));
+    83	        if (cancelled) return;
+    84	
+    85	        const latest = getBuild(build.id);
+    86	        if (!latest) return;
+    87	
+    88	        const lv = latest.versions[0];
+    89	        const est = estimateBuild(lv.inputsSnapshot.dims, lv.inputsSnapshot.options);
+    90	
+    91	        const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
+    92	
+    93	        const notesCompiled = compileNotes(lv.inputsSnapshot.notesLog, lv.inputsSnapshot.notes);
+    94	
+    95	        const png = await renderBuildPreviewPng({
+    96	          projectType: lv.inputsSnapshot.type,
+    97	          view: target!.view,
+    98	          title,
+    99	          notes: notesCompiled,
+   100	          dims: lv.inputsSnapshot.dims,
+   101	          options: lv.inputsSnapshot.options,
+   102	          width: 1200,
+   103	          height: 800,
+   104	        });
+   105	
+   106	        if (cancelled) return;
+   107	
+   108	        const updatedRenders = (lv.renders || []).map((x) => {
+   109	          if (x.renderId !== target!.renderId) return x;
+   110	          return {
+   111	            ...x,
+   112	            status: "complete" as const,
+   113	            finishedAt: new Date().toISOString(),
+   114	            imageDataUrl: png,
+   115	            estimatePublic: {
+   116	              total: est.total,
+   117	              rangeLow: est.rangeLow,
+   118	              rangeHigh: est.rangeHigh,
+   119	              label: "Est. total (updates per view)",
+   120	            },
+   121	          };
+   122	        });
+   123	
+   124	        const nextV = {
+   125	          ...lv,
+   126	          renders: updatedRenders,
+   127	          estimatePublic: {
+   128	            total: est.total,
+   129	            rangeLow: est.rangeLow,
+   130	            rangeHigh: est.rangeHigh,
+   131	            materials: est.materials,
+   132	            labor: est.labor,
+   133	            overhead: est.overhead,
+   134	            finish: est.finish,
+   135	          },
+   136	        };
+   137	
+   138	        const nextBuild: BuildSubmission = {
+   139	          ...latest,
+   140	          updatedAt: new Date().toISOString(),
+   141	          versions: [nextV, ...latest.versions.slice(1)],
+   142	        };
+   143	
+   144	        upsertBuild(nextBuild);
+   145	        setBuild(nextBuild);
+   146	      } catch (e) {
+   147	        console.error(e);
+   148	        if (cancelled) return;
+   149	
+   150	        const latest = getBuild(build.id);
+   151	        if (!latest) return;
+   152	
+   153	        const lv = latest.versions[0];
+   154	        const updatedRenders = (lv.renders || []).map((x) => {
+   155	          if (x.renderId !== target!.renderId) return x;
+   156	          return { ...x, status: "failed" as const, finishedAt: new Date().toISOString() };
+   157	        });
+   158	
+   159	        const nextV = { ...lv, renders: updatedRenders };
+   160	        const nextBuild: BuildSubmission = {
+   161	          ...latest,
+   162	          updatedAt: new Date().toISOString(),
+   163	          versions: [nextV, ...latest.versions.slice(1)],
+   164	        };
+   165	
+   166	        upsertBuild(nextBuild);
+   167	        setBuild(nextBuild);
+   168	      }
+   169	    };
+   170	
+   171	    run();
+   172	
+   173	    return () => {
+   174	      cancelled = true;
+   175	    };
+   176	  }, [build?.id, build?.updatedAt, version?.versionId]);
+   177	
+   178	  if (!build || !version) {
+   179	    return (
+   180	      <div className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
+   181	        <h3 className="h3">Build not found</h3>
+   182	        <Link className="btn btn-primary" to="/builds/new">
+   183	          Start a Build
+   184	        </Link>
+   185	      </div>
+   186	    );
+   187	  }
+   188	
+   189	  const v = version;
+   190	  const b = build;
+   191	  const est = v.estimatePublic;
+   192	
+   193	  const notesLog = v.inputsSnapshot.notesLog || [];
+   194	  const compiledNotes = compileNotes(notesLog, v.inputsSnapshot.notes);
+   195	
+   196	  function submit() {
+   197	    const next = markSubmitted(b.id);
+   198	    if (!next) return alert("Could not submit. Try again.");
+   199	    setBuild(next);
+   200	    alert(`Submitted! Your Build Access Code: ${String(next.accessCode || "—")}`);
+   201	  }
+   202	
+   203	  function submitRefinement() {
+   204	    const req = changeRequest.trim();
+   205	    const add = extraNotes.trim();
+   206	
+   207	    if (!req && !add) {
+   208	      alert("Please add a change request and/or extra notes.");
+   209	      return;
+   210	    }
+   211	
+   212	    const next = addCustomerNote(b.id, req, add);
+   213	    if (!next) {
+   214	      alert("Could not save changes. Please refresh and try again.");
+   215	      return;
+   216	    }
+   217	
+   218	    setChangeRequest("");
+   219	    setExtraNotes("");
+   220	    setBuild(next);
+   221	    alert("Saved! We’re generating updated previews now.");
+   222	  }
+   223	
+   224	  return (
+   225	    <div className="stack page" style={{ gap: 16 }}>
+   226	      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+   227	        <div style={{ display: "grid", gap: 8 }}>
+   228	          <h1 className="h2" style={{ margin: 0, fontWeight: 950 }}>
+   229	            Build Preview
+   230	          </h1>
+   231	          <div className="muted" style={{ fontWeight: 850 }}>
+   232	            Created: {fmt(build.createdAt)} • Status: <span className="badge">{build.status.toUpperCase()}</span>
+   233	          </div>
+   234	          <div className="muted" style={{ fontWeight: 850 }}>
+   235	            Customer: <strong>{build.customer?.name}</strong> • {build.customer?.phone} • {build.customer?.email}
+   236	          </div>
+   237	        </div>
+   238	
+   239	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   240	          <div style={{ fontWeight: 950, color: "#0f172a" }}>
+   241	            {v.inputsSnapshot.type} — {v.inputsSnapshot.dims.lengthIn}" × {v.inputsSnapshot.dims.widthIn}" × {v.inputsSnapshot.dims.heightIn}"
+   242	          </div>
+   243	          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+   244	            Wood: {v.inputsSnapshot.options.woodSpecies} • Finish: {v.inputsSnapshot.options.finish} • Joinery:{" "}
+   245	            {v.inputsSnapshot.options.joinery}
+   246	          </div>
+   247	
+   248	          {compiledNotes ? (
+   249	            <div className="panel" style={{ padding: 12, borderRadius: 12, marginTop: 10 }}>
+   250	              <div className="label">Notes on file (used to improve the model)</div>
+   251	              <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 6 }}>
+   252	                {compiledNotes}
+   253	              </div>
+   254	            </div>
+   255	          ) : null}
+   256	
+   257	          <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+   258	            <Link className="btn btn-ghost" to="/builds/new">
+   259	              Start Another
+   260	            </Link>
+   261	            <Link className="btn btn-ghost" to="/builds/portal">
+   262	              Build Portal
+   263	            </Link>
+   264	            <button className="btn btn-primary" onClick={submit} style={{ fontWeight: 950 }}>
+   265	              Submit for Review
+   266	            </button>
+   267	          </div>
+   268	
+   269	          <div className="muted" style={{ fontWeight: 850, marginTop: 10 }}>
+   270	            After submitting you’ll get a 6-digit Access Code to view your build in the Build Portal.
+   271	          </div>
+   272	        </div>
+   273	
+   274	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   275	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Refine this build (add details)</div>
+   276	          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+   277	            Add specific details and we’ll regenerate previews. Examples: “tapered legs”, “lower shelf”, “drawer”, “apron”, “feet”, “2 shelves”.
+   278	          </div>
+   279	
+   280	          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   281	            <label style={{ display: "grid", gap: 6 }}>
+   282	              <span className="label">What would you like changed?</span>
+   283	              <input
+   284	                className="field"
+   285	                value={changeRequest}
+   286	                onChange={(e) => setChangeRequest(e.target.value)}
+   287	                placeholder="Example: Add a lower shelf and tapered legs"
+   288	              />
+   289	            </label>
+   290	
+   291	            <label style={{ display: "grid", gap: 6 }}>
+   292	              <span className="label">Extra notes (used by the renderer)</span>
+   293	              <textarea
+   294	                className="field"
+   295	                rows={4}
+   296	                value={extraNotes}
+   297	                onChange={(e) => setExtraNotes(e.target.value)}
+   298	                placeholder="Example: drawer centered on front, apron on all sides, rounded corners, etc."
+   299	              />
+   300	            </label>
+   301	
+   302	            <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+   303	              <button className="btn btn-primary" onClick={submitRefinement} style={{ fontWeight: 950 }}>
+   304	                Save refinement + regenerate previews →
+   305	              </button>
+   306	            </div>
+   307	          </div>
+   308	
+   309	          {Array.isArray(notesLog) && notesLog.length ? (
+   310	            <div className="panel" style={{ padding: 12, borderRadius: 12, marginTop: 12 }}>
+   311	              <div className="label">Notes timeline</div>
+   312	              <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+   313	                Notes are saved in separate chunks so Admin can remove any later if needed.
+   314	              </div>
+   315	
+   316	              <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   317	                {notesLog.map((n) => (
+   318	                  <div key={n.noteId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+   319	                    <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+   320	                      <div style={{ fontWeight: 950, color: "#0f172a" }}>
+   321	                        {String(n.kind).toUpperCase()} • {String(n.author).toUpperCase()}
+   322	                        <span className="badge" style={{ marginLeft: 8 }}>{fmt(n.createdAt)}</span>
+   323	                      </div>
+   324	                      <div className="muted" style={{ fontWeight: 850 }}>
+   325	                        Note ID: <span className="badge">{String(n.noteId).slice(-8).toUpperCase()}</span>
+   326	                      </div>
+   327	                    </div>
+   328	                    <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{n.text}</div>
+   329	                  </div>
+   330	                ))}
+   331	              </div>
+   332	            </div>
+   333	          ) : null}
+   334	        </div>
+   335	
+   336	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   337	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Estimate (public)</div>
+   338	          {!est ? (
+   339	            <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>Estimating… (will populate as render previews complete)</div>
+   340	          ) : (
+   341	            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   342	              <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   343	                <span className="badge rate-bright">Estimated Total: {money(est.total)}</span>
+   344	                {typeof est.rangeLow === "number" && typeof est.rangeHigh === "number" ? (
+   345	                  <span className="badge">Range: {money(est.rangeLow)} – {money(est.rangeHigh)}</span>
+   346	                ) : null}
+   347	              </div>
+   348	
+   349	              <div className="muted" style={{ fontWeight: 850 }}>
+   350	                Breakdown (customer-safe): Materials {money(est.materials)} • Labor {money(est.labor)} • Finish {money(est.finish)} • Overhead {money(est.overhead)}
+   351	              </div>
+   352	            </div>
+   353	          )}
+   354	        </div>
+   355	      </section>
+   356	
+   357	      <section className="stack" style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+   358	        <div className="h3" style={{ margin: 0 }}>Render Previews</div>
+   359	        <div className="muted" style={{ fontWeight: 850 }}>
+   360	          One render runs at a time (queued → rendering → complete). Each render has its own estimate box.
+   361	        </div>
+   362	
+   363	        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginTop: 10 }}>
+   364	          {(v.renders || []).map((r) => (
+   365	            <article key={r.renderId} className="panel card" style={{ padding: 12, display: "grid", gap: 10 }}>
+   366	              <div style={{ fontWeight: 950, color: "#0f172a" }}>
+   367	                View: {String(r.view).toUpperCase()}
+   368	                <span className="badge" style={{ marginLeft: 8 }}>{r.status.toUpperCase()}</span>
+   369	              </div>
+   370	
+   371	              <div
+   372	                style={{
+   373	                  width: "100%",
+   374	                  height: 180,
+   375	                  borderRadius: 14,
+   376	                  overflow: "hidden",
+   377	                  border: "1px solid rgba(15,23,42,0.18)",
+   378	                  background: "rgba(2,6,23,0.25)",
+   379	                }}
+   380	              >
+   381	                {r.imageDataUrl ? (
+   382	                  <img
+   383	                    src={r.imageDataUrl}
+   384	                    alt={`${r.view} render`}
+   385	                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+   386	                  />
+   387	                ) : (
+   388	                  <div className="card-center" style={{ width: "100%", height: "100%", padding: 12 }}>
+   389	                    <div className="muted" style={{ fontWeight: 900 }}>
+   390	                      {r.status === "queued"
+   391	                        ? "Queued…"
+   392	                        : r.status === "rendering"
+   393	                        ? "Rendering…"
+   394	                        : r.status === "failed"
+   395	                        ? "Render failed (will re-run on refresh later)"
+   396	                        : "No image"}
+   397	                    </div>
+   398	                  </div>
+   399	                )}
+   400	              </div>
+   401	
+   402	              <div className="panel" style={{ padding: 10, borderRadius: 12 }}>
+   403	                <div className="label">Estimate for this render</div>
+   404	                {!r.estimatePublic ? (
+   405	                  <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+   406	                    {r.status === "complete" ? "Finalizing estimate…" : "Waiting for render to complete…"}
+   407	                  </div>
+   408	                ) : (
+   409	                  <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+   410	                    <div className="badge rate-bright" style={{ justifyContent: "center" }}>
+   411	                      {r.estimatePublic.label || "Estimated Total"}: {money(r.estimatePublic.total)}
+   412	                    </div>
+   413	                    {typeof r.estimatePublic.rangeLow === "number" && typeof r.estimatePublic.rangeHigh === "number" ? (
+   414	                      <div className="muted" style={{ fontWeight: 850 }}>
+   415	                        Range: {money(r.estimatePublic.rangeLow)} – {money(r.estimatePublic.rangeHigh)}
+   416	                      </div>
+   417	                    ) : null}
+   418	                  </div>
+   419	                )}
+   420	              </div>
+   421	
+   422	              <div className="muted" style={{ fontWeight: 850 }}>
+   423	                {r.startedAt ? `Started: ${fmt(r.startedAt)}` : "Not started yet"}
+   424	                {r.finishedAt ? ` • Finished: ${fmt(r.finishedAt)}` : ""}
+   425	              </div>
+   426	            </article>
+   427	          ))}
+   428	        </div>
+   429	      </section>
+   430	    </div>
+   431	  );
+   432	}

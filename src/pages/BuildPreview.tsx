@@ -7,6 +7,7 @@ import {
   compileNotes,
   getBuild,
   markSubmitted,
+  removeLastCustomerNote,
   type BuildSubmission,
   type RenderJob,
   upsertBuild,
@@ -193,6 +194,11 @@ export default function BuildPreview() {
   const notesLog = v.inputsSnapshot.notesLog || [];
   const compiledNotes = compileNotes(notesLog, v.inputsSnapshot.notes);
 
+  const canRemoveCustomerNote = Array.isArray(notesLog)
+    ? notesLog.some(n => String(n?.author||"").toLowerCase()==="customer")
+    : false;
+
+
   function submit() {
     const next = markSubmitted(b.id);
     if (!next) return alert("Could not submit. Try again.");
@@ -208,6 +214,21 @@ export default function BuildPreview() {
       alert("Please add a change request and/or extra notes.");
       return;
     }
+
+  function removeLastNote(){
+    if(!canRemoveCustomerNote) return;
+
+    const next = removeLastCustomerNote(b.id);
+
+    if(!next){
+      alert("Could not remove note. Try refresh.");
+      return;
+    }
+
+    setBuild(next);
+    alert("Last note removed. Re-rendering now.");
+  }
+
 
     const next = addCustomerNote(b.id, req, add);
     if (!next) {
@@ -302,6 +323,15 @@ export default function BuildPreview() {
             <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
               <button className="btn btn-primary" onClick={submitRefinement} style={{ fontWeight: 950 }}>
                 Save refinement + regenerate previews →
+              </button>
+
+              <button
+                className="btn btn-ghost"
+                onClick={removeLastNote}
+                disabled={!canRemoveCustomerNote}
+                style={{ fontWeight: 950 }}
+              >
+                Remove my last note
               </button>
             </div>
           </div>

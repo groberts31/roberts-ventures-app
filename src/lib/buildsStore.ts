@@ -37,8 +37,13 @@ export type RenderJob = {
   };
 };
 
+/**
+ * Canonical structured note items.
+ * We keep legacy `notes?: string` as a backwards-compat compiled blob,
+ * but `notesLog` is the ONLY structured source of truth.
+ */
 export type NoteAuthor = "customer" | "admin";
-export type NoteKind = "initial" | "refinement";
+export type NoteKind = "initial" | "change" | "refinement" | "note";
 
 export type NoteItem = {
   noteId: string;
@@ -56,8 +61,12 @@ export type BuildVersion = {
     type: string;
     dims: BuildDims;
     options: BuildOptions;
-    notes?: string; // legacy compiled string (kept for backwards compat)
-    notesLog?: NoteItem[]; // canonical structured notes
+
+    // legacy compiled string (keep for backwards compatibility)
+    notes?: string;
+
+    // canonical structured notes (single definition!)
+    notesLog?: NoteItem[];
   };
   renders: RenderJob[];
 
@@ -89,8 +98,13 @@ export type BuildSubmission = {
     type: string;
     dims: BuildDims;
     options: BuildOptions;
-    notes?: string; // legacy
-    notesLog?: NoteItem[]; // canonical
+
+    // legacy compiled string (still used by UI + renderer as fallback)
+    notes?: string;
+
+    // canonical structured notes
+    notesLog?: NoteItem[];
+
     refPhotos?: { name: string; type: string; dataUrl: string }[];
   };
 
@@ -113,7 +127,7 @@ function uid() {
 }
 
 export function normalizePhone(p: string) {
-  return String(p || "").replace(/\D+/g, "");
+  return String(p || "").replace(/\\D+/g, "");
 }
 
 export function makeAccessCode() {
@@ -149,51 +163,20 @@ export function deleteBuild(id: string) {
 }
 
 /**
- * Canonical notes are stored in notesLog.
- * This compiles them into one string for render heuristics + display.
+ * Compile notes for display + renderer.
+ * - If legacy `notes` exists, it stays at the top.
+ * - Structured notes follow in time order.
  */
-export function compileNotes(notesLog?: NoteItem[], fallback?: string) {
-  const log = Array.isArray(notesLog) ? notesLog.filter(Boolean) : [];
-  if (log.length) {
-    return log
-      .map((n) => String(n?.text || "").trim())
-      .filter(Boolean)
-      .join("\n\n---\n\n");
-  }
-  return String(fallback || "").trim();
-}
+export function compileNotes(notesLog?: NoteItem[], legacyNotes?: string) {
+  const head = String(legacyNotes || "").trim();
+  const items = Array.isArray(notesLog) ? notesLog : [];
 
-/**
- * If older builds only have project.notes (string), migrate them into notesLog on read/update paths.
- * We do this lazily when we create revisions or add/remove notes.
- */
-function ensureNotesLog(b: BuildSubmission) {
-  const existing = Array.isArray(b.project?.notesLog) ? b.project.notesLog!.filter(Boolean) : [];
-  if (existing.length) return existing;
+  const body = items
+    .map((n) => String(n?.text || "").trim())
+    .filter(Boolean)
+    .join("\\n\\n---\\n\\n");
 
-  const legacy = String(b.project?.notes || "").trim();
-  if (!legacy) return [];
-
-  const now = new Date().toISOString();
-  return [
-    {
-      noteId: uid(),
-      createdAt: now,
-      author: "customer" as const,
-      kind: "initial" as const,
-      text: legacy,
-    },
-  ];
-}
-
-function baseRenders(includeDetail: boolean) {
-  const arr: RenderJob[] = [
-    { renderId: uid(), view: "iso", status: "queued" },
-    { renderId: uid(), view: "front", status: "queued" },
-    { renderId: uid(), view: "top", status: "queued" },
-  ];
-  if (includeDetail) arr.push({ renderId: uid(), view: "detail", status: "queued" });
-  return arr;
+  return [head, body].filter(Boolean).join("\\n\\n---\\n\\n");
 }
 
 export function createDraftBuild(args: {
@@ -206,31 +189,35 @@ export function createDraftBuild(args: {
   const now = new Date().toISOString();
   const id = uid();
 
-  const initialNotes = String(args.notes || "").trim();
-  const notesLog: NoteItem[] = initialNotes
+  const baseNotes = String(args.notes || "").trim();
+
+  const notesLog: NoteItem[] = baseNotes
     ? [
         {
           noteId: uid(),
           createdAt: now,
           author: "customer",
           kind: "initial",
-          text: initialNotes,
+          text: baseNotes,
         },
       ]
     : [];
 
-  const versionId = uid();
   const version: BuildVersion = {
-    versionId,
+    versionId: uid(),
     createdAt: now,
     inputsSnapshot: {
       type: args.type,
       dims: args.dims,
       options: args.options,
-      notes: initialNotes,
+      notes: baseNotes,
       notesLog,
     },
-    renders: baseRenders(false),
+    renders: [
+      { renderId: uid(), view: "iso", status: "queued" },
+      { renderId: uid(), view: "front", status: "queued" },
+      { renderId: uid(), view: "top", status: "queued" },
+    ],
   };
 
   const build: BuildSubmission = {
@@ -243,7 +230,7 @@ export function createDraftBuild(args: {
       type: args.type,
       dims: args.dims,
       options: args.options,
-      notes: initialNotes,
+      notes: baseNotes,
       notesLog,
       refPhotos: [],
     },
@@ -255,19 +242,19 @@ export function createDraftBuild(args: {
 }
 
 /**
- * Legacy revision helper (still used elsewhere). Keeps notes and notesLog in sync.
+ * Creates a new version with renders re-queued.
+ * IMPORTANT: carries notesLog forward via project snapshot.
  */
-export function addRevision(id: string, customerChangeRequest: string, patch?: Partial<BuildSubmission["project"]>) {
+export function addRevision(
+  id: string,
+  customerChangeRequest: string,
+  patch?: Partial<BuildSubmission["project"]>
+) {
   const b = getBuild(id);
   if (!b) return null;
 
   const now = new Date().toISOString();
-  const mergedProject = { ...b.project, ...(patch || {}) };
-
-  const mergedNotesLog =
-    Array.isArray((patch as any)?.notesLog) ? ((patch as any).notesLog as NoteItem[]) : ensureNotesLog({ ...b, project: mergedProject });
-
-  const compiled = compileNotes(mergedNotesLog, mergedProject.notes);
+  const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
 
   const version: BuildVersion = {
     versionId: uid(),
@@ -277,16 +264,21 @@ export function addRevision(id: string, customerChangeRequest: string, patch?: P
       type: mergedProject.type,
       dims: mergedProject.dims,
       options: mergedProject.options,
-      notes: compiled,
-      notesLog: mergedNotesLog,
+      notes: mergedProject.notes || "",
+      notesLog: Array.isArray(mergedProject.notesLog) ? mergedProject.notesLog : [],
     },
-    renders: baseRenders(true),
+    renders: [
+      { renderId: uid(), view: "iso", status: "queued" },
+      { renderId: uid(), view: "front", status: "queued" },
+      { renderId: uid(), view: "top", status: "queued" },
+      { renderId: uid(), view: "detail", status: "queued" },
+    ],
   };
 
   const next: BuildSubmission = {
     ...b,
     updatedAt: now,
-    project: { ...mergedProject, notes: compiled, notesLog: mergedNotesLog },
+    project: mergedProject,
     versions: [version, ...b.versions],
   };
 
@@ -295,115 +287,83 @@ export function addRevision(id: string, customerChangeRequest: string, patch?: P
 }
 
 /**
- * Customer adds an additional note chunk (becomes removable later).
- * Creates a new version + re-queues renders automatically.
+ * Adds customer-provided notes in structured form and triggers a new version + renders.
  */
-export function addCustomerNote(id: string, changeRequest: string, noteText: string) {
+export function addCustomerNote(id: string, changeRequest?: string, extraNotes?: string) {
   const b = getBuild(id);
   if (!b) return null;
 
   const now = new Date().toISOString();
-  const baseLog = ensureNotesLog(b);
+  const prevLog = Array.isArray(b.project.notesLog) ? b.project.notesLog : [];
 
-  const clean = String(noteText || "").trim();
+  const nextLog: NoteItem[] = [...prevLog];
+
   const req = String(changeRequest || "").trim();
+  const add = String(extraNotes || "").trim();
 
-  if (!clean && !req) return null;
+  if (req) {
+    nextLog.push({
+      noteId: uid(),
+      createdAt: now,
+      author: "customer",
+      kind: "change",
+      text: req,
+    });
+  }
 
-  const nextLog: NoteItem[] = [
-    ...baseLog,
-    ...(clean
-      ? [
-          {
-            noteId: uid(),
-            createdAt: now,
-            author: "customer",
-            kind: "refinement",
-            text: clean,
-          } as NoteItem,
-        ]
-      : []),
-  ];
+  if (add) {
+    nextLog.push({
+      noteId: uid(),
+      createdAt: now,
+      author: "customer",
+      kind: "refinement",
+      text: add,
+    });
+  }
 
   const compiled = compileNotes(nextLog, b.project.notes);
 
-  const version: BuildVersion = {
-    versionId: uid(),
-    createdAt: now,
-    customerChangeRequest: req || "Customer provided additional details",
-    inputsSnapshot: {
-      type: b.project.type,
-      dims: b.project.dims,
-      options: b.project.options,
-      notes: compiled,
-      notesLog: nextLog,
-    },
-    renders: baseRenders(true),
-  };
-
-  const next: BuildSubmission = {
-    ...b,
-    updatedAt: now,
-    project: { ...b.project, notes: compiled, notesLog: nextLog },
-    versions: [version, ...b.versions],
-  };
-
-  upsertBuild(next);
-  return next;
+  // keep legacy notes updated for backwards compatibility / visibility
+  return addRevision(id, "Customer provided additional details", {
+    notesLog: nextLog,
+    notes: compiled,
+  });
 }
 
 /**
- * Remove a specific customer note item (typically a refinement note).
- * Creates a new version + re-queues renders automatically.
+ * Removes the last NOTE authored by customer (change/refinement/note/initial) and triggers re-render.
+ * This is what your customer button will call.
  */
-export function removeCustomerNote(id: string, noteId: string, adminReason?: string) {
+export function removeLastCustomerNote(id: string) {
   const b = getBuild(id);
   if (!b) return null;
 
-  const now = new Date().toISOString();
-  const baseLog = ensureNotesLog(b);
+  const prevLog = Array.isArray(b.project.notesLog) ? b.project.notesLog : [];
+  if (!prevLog.length) return b;
 
-  const nid = String(noteId || "").trim();
-  if (!nid) return null;
+  // remove last customer-authored entry
+  let idx = -1;
+  for (let i = prevLog.length - 1; i >= 0; i--) {
+    if (prevLog[i]?.author === "customer") {
+      idx = i;
+      break;
+    }
+  }
+  if (idx < 0) return b;
 
-  const removed = baseLog.find((n) => n.noteId === nid) || null;
-  const nextLog = baseLog.filter((n) => n.noteId !== nid);
+  const nextLog = prevLog.slice(0, idx).concat(prevLog.slice(idx + 1));
+  const compiled = compileNotes(nextLog, b.project.notes);
 
-  const compiled = compileNotes(nextLog, "");
-
-  const reason = String(adminReason || "").trim();
-  const customerChangeRequest =
-    reason ||
-    (removed ? `Admin removed customer note: "${String(removed.text || "").slice(0, 60)}${String(removed.text || "").length > 60 ? "…" : ""}"` : "Admin removed a customer note");
-
-  const version: BuildVersion = {
-    versionId: uid(),
-    createdAt: now,
-    customerChangeRequest,
-    inputsSnapshot: {
-      type: b.project.type,
-      dims: b.project.dims,
-      options: b.project.options,
-      notes: compiled,
-      notesLog: nextLog,
-    },
-    renders: baseRenders(true),
-  };
-
-  const next: BuildSubmission = {
-    ...b,
-    updatedAt: now,
-    project: { ...b.project, notes: compiled, notesLog: nextLog },
-    versions: [version, ...b.versions],
-  };
-
-  upsertBuild(next);
-  return next;
+  return addRevision(id, "Customer removed last note", {
+    notesLog: nextLog,
+    notes: compiled,
+  });
 }
 
 export function markSubmitted(id: string) {
   const b = getBuild(id);
   if (!b) return null;
+
   const now = new Date().toISOString();
   const accessCode = b.accessCode && String(b.accessCode).trim().length >= 6 ? b.accessCode : makeAccessCode();
 
@@ -420,7 +380,7 @@ export function markSubmitted(id: string) {
 
 export function findBuildsByPhoneAndCode(phone: string, code: string) {
   const p = normalizePhone(phone);
-  const c = String(code || "").replace(/\D+/g, "");
+  const c = String(code || "").replace(/\\D+/g, "");
   if (!p || c.length < 6) return [];
   return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
 }
