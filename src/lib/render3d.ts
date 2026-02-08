@@ -63,6 +63,14 @@ function normType(t: string) {
   return String(t || "").trim().toLowerCase();
 }
 
+function normNotes(n: string | undefined) {
+  return String(n || "").trim().toLowerCase();
+}
+
+function has(notes: string, ...phrases: string[]) {
+  return phrases.some((p) => notes.includes(p));
+}
+
 function addBox(
   group: THREE.Group,
   w: number,
@@ -80,12 +88,24 @@ function addBox(
   return geom;
 }
 
+/**
+ * Notes-driven features (simple heuristics, safe defaults):
+ * - "lower shelf", "bottom shelf", "shelf" -> adds a shelf panel for table/bench/workbench
+ * - "apron" -> adds apron rails (unless notes include "no apron")
+ * - "drawer" -> adds a simple drawer box under top (front-facing)
+ * - "taper" / "tapered legs" -> visually tapers legs using mesh scaling
+ * - "feet" -> adds small feet blocks for planter/cabinet
+ *
+ * This is NOT photoreal; it's an improving proxy model based on customer intent.
+ */
 function buildModel(args: {
   projectType: string;
   dims: BuildDims;
   options: BuildOptions;
+  notes?: string;
 }) {
   const group = new THREE.Group();
+  const notes = normNotes(args.notes);
 
   // Interpret dims consistently:
   // lengthIn => X (long)
@@ -124,19 +144,16 @@ function buildModel(args: {
 
   const geoms: THREE.BufferGeometry[] = [];
 
-  // --- TABLE / BENCH / WORKBENCH (top + 4 legs) ---
-    // (We will write valid TS below)
-  // NOTE: keep one model per type.
-
   const isTable = t.includes("table");
   const isBench = t.includes("bench");
   const isWorkbench = t.includes("workbench");
 
+  // --- TABLE / BENCH / WORKBENCH (top + 4 legs) ---
   if (isTable || isBench || isWorkbench) {
     const topY = height - topThickness / 2;
 
     // Top
-    geoms.push(addBox(group, length, topThickness, depth, 0, topY, 0, woodMat) as any);
+    geoms.push(addBox(group, length, topThickness, depth, 0, topY, 0, woodMat));
 
     // Legs
     const legH = Math.max(2, height - topThickness);
@@ -149,16 +166,76 @@ function buildModel(args: {
 
     const legY = legH / 2;
 
-    geoms.push(addBox(group, legSize, legH, legSize, lx1, legY, lz1, darkMat) as any);
-    geoms.push(addBox(group, legSize, legH, legSize, lx2, legY, lz1, darkMat) as any);
-    geoms.push(addBox(group, legSize, legH, legSize, lx1, legY, lz2, darkMat) as any);
-    geoms.push(addBox(group, legSize, legH, legSize, lx2, legY, lz2, darkMat) as any);
+    const legGeom = new THREE.BoxGeometry(legSize, legH, legSize);
 
-    // Simple stretcher for workbench feel (optional but helps “accuracy”)
+    function addLeg(x: number, z: number) {
+      const mesh = new THREE.Mesh(legGeom, darkMat);
+      mesh.position.set(x, legY, z);
+
+      // Notes: tapered legs (visual taper using non-uniform scale)
+      if (has(notes, "taper", "tapered leg", "tapered legs")) {
+        // slightly narrower at the top by scaling X/Z a bit (simple proxy)
+        // Using scale affects the whole mesh uniformly; we fake taper by scaling and adding a small "cap"
+        mesh.scale.set(0.88, 1, 0.88);
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(legSize * 0.92, legSize * 0.18, legSize * 0.92), darkMat);
+        cap.position.set(x, legH - (legSize * 0.09), z);
+        group.add(cap);
+        geoms.push(cap.geometry as THREE.BufferGeometry);
+      }
+
+      group.add(mesh);
+    }
+
+    addLeg(lx1, lz1);
+    addLeg(lx2, lz1);
+    addLeg(lx1, lz2);
+    addLeg(lx2, lz2);
+
+    geoms.push(legGeom);
+
+    // Notes: apron rails (default on workbench, optional on table/bench)
+    const wantsApron = isWorkbench || (has(notes, "apron") && !has(notes, "no apron", "noapron"));
+    if (wantsApron) {
+      const apronH = clamp(height * 0.12, 2, 6);
+      const apronY = height - topThickness - apronH / 2;
+
+      // Front/back rails (along X)
+      geoms.push(addBox(group, length - inset * 2, apronH, boardT, 0, apronY, zMax - inset - boardT / 2, darkMat));
+      geoms.push(addBox(group, length - inset * 2, apronH, boardT, 0, apronY, zMin + inset + boardT / 2, darkMat));
+
+      // Left/right rails (along Z)
+      geoms.push(addBox(group, boardT, apronH, depth - inset * 2, xMin + inset + boardT / 2, apronY, 0, darkMat));
+      geoms.push(addBox(group, boardT, apronH, depth - inset * 2, xMax - inset - boardT / 2, apronY, 0, darkMat));
+    }
+
+    // Notes: lower shelf / bottom shelf
+    const wantsShelf = isWorkbench || has(notes, "lower shelf", "bottom shelf") || (has(notes, "shelf") && !has(notes, "no shelf"));
+    if (wantsShelf) {
+      const shelfY = clamp(legH * 0.28, 6, legH - 8);
+      const shelfT = clamp(boardT, 0.6, 1.5);
+      geoms.push(addBox(group, length - inset * 2 - legSize * 0.2, shelfT, depth - inset * 2 - legSize * 0.2, 0, shelfY, 0, woodMat));
+    }
+
+    // Notes: drawer (simple centered drawer under top, front-facing)
+    if (has(notes, "drawer", "drawers")) {
+      const drawerH = clamp(height * 0.18, 3, 8);
+      const drawerW = clamp(length * 0.35, 10, length - 10);
+      const drawerD = clamp(depth * 0.45, 8, depth - 6);
+      const drawerY = height - topThickness - drawerH / 2 - 1.2;
+      const drawerZ = zMax - drawerD / 2 - 1.2;
+
+      geoms.push(addBox(group, drawerW, drawerH, drawerD, 0, drawerY, drawerZ, darkMat));
+
+      // drawer face
+      const faceT = clamp(boardT * 0.8, 0.4, 1.1);
+      geoms.push(addBox(group, drawerW * 0.96, drawerH * 0.92, faceT, 0, drawerY, zMax - 0.6, woodMat));
+    }
+
+    // Simple stretcher for workbench feel
     if (isWorkbench) {
       const stretcherH = clamp(legSize * 0.45, 0.8, 2.0);
       const stretcherY = clamp(legH * 0.35, 6, legH - 4);
-      geoms.push(addBox(group, length - inset * 2 - legSize, stretcherH, legSize * 0.6, 0, stretcherY, 0, darkMat) as any);
+      geoms.push(addBox(group, length - inset * 2 - legSize, stretcherH, legSize * 0.6, 0, stretcherY, 0, darkMat));
     }
   }
 
@@ -172,38 +249,50 @@ function buildModel(args: {
     const upY = upH / 2;
     const upX = length / 2 - sideT / 2;
 
-    geoms.push(addBox(group, sideT, upH, depth, -upX, upY, 0, woodMat) as any);
-    geoms.push(addBox(group, sideT, upH, depth,  upX, upY, 0, woodMat) as any);
+    geoms.push(addBox(group, sideT, upH, depth, -upX, upY, 0, woodMat));
+    geoms.push(addBox(group, sideT, upH, depth,  upX, upY, 0, woodMat));
 
-    // Shelves: bottom, mid, top (inside the uprights)
+    // Shelves: bottom, mid, top
     const insideL = Math.max(8, length - sideT * 2);
-    const shelfZ = 0;
+    const shelfCount = has(notes, "5 shelf", "five shelf") ? 5 : has(notes, "4 shelf", "four shelf") ? 4 : 3;
 
-    const shelfCount = 3;
     for (let i = 0; i < shelfCount; i++) {
-      const frac = (i + 1) / (shelfCount + 1); // 1/4, 2/4, 3/4
+      const frac = (i + 1) / (shelfCount + 1);
       const y = clamp(frac * (height - shelfT) + shelfT / 2, shelfT / 2, height - shelfT / 2);
-      geoms.push(addBox(group, insideL, shelfT, depth, 0, y, shelfZ, woodMat) as any);
+      geoms.push(addBox(group, insideL, shelfT, depth, 0, y, 0, woodMat));
     }
   }
 
-  // --- CABINET (box with shelves + back panel feel) ---
+  // --- CABINET (box with shelf + back) ---
   else if (t.includes("cabinet")) {
     const wallT = clamp(boardT, 0.6, 1.25);
     const shelfT = wallT;
     const insideL = Math.max(10, length - wallT * 2);
     const insideD = Math.max(8, depth - wallT * 2);
 
-    // Bottom / Top / Sides / Back
-    geoms.push(addBox(group, length, wallT, depth, 0, wallT / 2, 0, woodMat) as any);                 // bottom
-    geoms.push(addBox(group, length, wallT, depth, 0, height - wallT / 2, 0, woodMat) as any);          // top
-    geoms.push(addBox(group, wallT, height, depth, -length / 2 + wallT / 2, height / 2, 0, woodMat) as any); // left
-    geoms.push(addBox(group, wallT, height, depth,  length / 2 - wallT / 2, height / 2, 0, woodMat) as any); // right
-    geoms.push(addBox(group, length, height, wallT, 0, height / 2, -depth / 2 + wallT / 2, woodMat) as any); // back
+    geoms.push(addBox(group, length, wallT, depth, 0, wallT / 2, 0, woodMat));                        // bottom
+    geoms.push(addBox(group, length, wallT, depth, 0, height - wallT / 2, 0, woodMat));               // top
+    geoms.push(addBox(group, wallT, height, depth, -length / 2 + wallT / 2, height / 2, 0, woodMat)); // left
+    geoms.push(addBox(group, wallT, height, depth,  length / 2 - wallT / 2, height / 2, 0, woodMat)); // right
+    geoms.push(addBox(group, length, height, wallT, 0, height / 2, -depth / 2 + wallT / 2, woodMat)); // back
 
-    // One shelf
-    const shelfY = height * 0.55;
-    geoms.push(addBox(group, insideL, shelfT, insideD, 0, shelfY, wallT / 2, woodMat) as any);
+    // Shelf count from notes
+    const shelves = has(notes, "2 shelf", "two shelf") ? 2 : has(notes, "3 shelf", "three shelf") ? 3 : 1;
+    for (let i = 0; i < shelves; i++) {
+      const frac = (i + 1) / (shelves + 1);
+      const y = clamp(frac * (height - shelfT) + shelfT / 2, shelfT / 2, height - shelfT / 2);
+      geoms.push(addBox(group, insideL, shelfT, insideD, 0, y, wallT / 2, woodMat));
+    }
+
+    // Notes: feet
+    if (has(notes, "feet", "legs")) {
+      const foot = clamp(wallT * 1.2, 0.8, 2.2);
+      const fy = foot / 2;
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMax - foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMax - foot, darkMat));
+    }
   }
 
   // --- PLANTER BOX (open top, 4 walls + bottom) ---
@@ -211,25 +300,33 @@ function buildModel(args: {
     const wallT = clamp(boardT, 0.6, 1.5);
     const bottomT = wallT;
 
-    // Bottom
-    geoms.push(addBox(group, length, bottomT, depth, 0, bottomT / 2, 0, woodMat) as any);
+    geoms.push(addBox(group, length, bottomT, depth, 0, bottomT / 2, 0, woodMat)); // bottom
 
-    // Walls
     const wallH = Math.max(8, height - bottomT);
     const wallY = bottomT + wallH / 2;
 
     // front/back
-    geoms.push(addBox(group, length, wallH, wallT, 0, wallY,  depth / 2 - wallT / 2, woodMat) as any);
-    geoms.push(addBox(group, length, wallH, wallT, 0, wallY, -depth / 2 + wallT / 2, woodMat) as any);
+    geoms.push(addBox(group, length, wallH, wallT, 0, wallY,  depth / 2 - wallT / 2, woodMat));
+    geoms.push(addBox(group, length, wallH, wallT, 0, wallY, -depth / 2 + wallT / 2, woodMat));
 
     // left/right
-    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2, -length / 2 + wallT / 2, wallY, 0, woodMat) as any);
-    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2,  length / 2 - wallT / 2, wallY, 0, woodMat) as any);
+    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2, -length / 2 + wallT / 2, wallY, 0, woodMat));
+    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2,  length / 2 - wallT / 2, wallY, 0, woodMat));
+
+    // Notes: feet
+    if (has(notes, "feet", "legs", "stand")) {
+      const foot = clamp(wallT * 1.25, 0.8, 2.4);
+      const fy = foot / 2;
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMax - foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMax - foot, darkMat));
+    }
   }
 
   // --- DEFAULT (fallback block) ---
   else {
-    geoms.push(addBox(group, length, height, depth, 0, height / 2, 0, woodMat) as any);
+    geoms.push(addBox(group, length, height, depth, 0, height / 2, 0, woodMat));
   }
 
   return { group, length, depth, height, geoms };
@@ -239,6 +336,7 @@ export async function renderBuildPreviewPng(args: {
   view: View;
   projectType: string;
   title?: string;
+  notes?: string;
   dims: BuildDims;
   options: BuildOptions;
   width?: number;
@@ -263,8 +361,13 @@ export async function renderBuildPreviewPng(args: {
   rim.position.set(-260, 160, -200);
   scene.add(rim);
 
-  // Model
-  const model = buildModel({ projectType: args.projectType, dims: args.dims, options: args.options });
+  // Model (now notes-aware)
+  const model = buildModel({
+    projectType: args.projectType,
+    dims: args.dims,
+    options: args.options,
+    notes: args.notes,
+  });
   scene.add(model.group);
 
   // Ground
@@ -311,7 +414,6 @@ export async function renderBuildPreviewPng(args: {
 
   // Cleanup
   model.geoms.forEach((g) => g.dispose());
-
   (ground.geometry as THREE.BufferGeometry).dispose();
   (ground.material as THREE.Material).dispose();
   (grid.geometry as THREE.BufferGeometry).dispose();

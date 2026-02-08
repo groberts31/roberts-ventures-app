@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { estimateBuild } from "../lib/buildPricing";
 import { renderBuildPreviewPng } from "../lib/render3d";
-import { getBuild, markSubmitted, upsertBuild, type BuildSubmission, type RenderJob } from "../lib/buildsStore";
+import {
+  addRevision,
+  getBuild,
+  markSubmitted,
+  upsertBuild,
+  type BuildSubmission,
+  type RenderJob,
+} from "../lib/buildsStore";
 
 function fmt(iso: string) {
   const d = new Date(iso);
@@ -17,6 +24,10 @@ function money(n: number) {
 export default function BuildPreview() {
   const { id } = useParams();
   const [build, setBuild] = useState<BuildSubmission | null>(null);
+
+  // Customer refinement fields (new)
+  const [changeRequest, setChangeRequest] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -85,8 +96,10 @@ export default function BuildPreview() {
         const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
 
         const png = await renderBuildPreviewPng({
+          projectType: lv.inputsSnapshot.type,
           view: target!.view,
           title,
+          notes: lv.inputsSnapshot.notes || "",
           dims: lv.inputsSnapshot.dims,
           options: lv.inputsSnapshot.options,
           width: 1200,
@@ -187,6 +200,39 @@ export default function BuildPreview() {
     alert(`Submitted! Your Build Access Code: ${String(next.accessCode || "—")}`);
   }
 
+  function submitRefinement() {
+    const req = changeRequest.trim();
+    const add = extraNotes.trim();
+
+    if (!req && !add) {
+      alert("Please add a change request and/or extra notes.");
+      return;
+    }
+
+    // Combine prior notes + new notes (preserves context for the renderer)
+    const prevNotes = String(b.project?.notes || "").trim();
+    const combinedNotes = [prevNotes, add].filter(Boolean).join("\n\n---\n\n");
+
+    const next = addRevision(
+      b.id,
+      req || "Customer provided additional details",
+      {
+        notes: combinedNotes,
+      }
+    );
+
+    if (!next) {
+      alert("Could not save changes. Please refresh and try again.");
+      return;
+    }
+
+    // Clear inputs + update state; new version will re-queue renders automatically
+    setChangeRequest("");
+    setExtraNotes("");
+    setBuild(next);
+    alert("Saved! We’re generating updated previews now.");
+  }
+
   return (
     <div className="stack page" style={{ gap: 16 }}>
       <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
@@ -207,6 +253,15 @@ export default function BuildPreview() {
           <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
             Wood: {v.inputsSnapshot.options.woodSpecies} • Finish: {v.inputsSnapshot.options.finish} • Joinery: {v.inputsSnapshot.options.joinery}
           </div>
+
+          {String(v.inputsSnapshot.notes || "").trim() ? (
+            <div className="panel" style={{ padding: 12, borderRadius: 12, marginTop: 10 }}>
+              <div className="label">Notes on file</div>
+              <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 6 }}>
+                {v.inputsSnapshot.notes}
+              </div>
+            </div>
+          ) : null}
 
           <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 12 }}>
             <Link className="btn btn-ghost" to="/builds/new">Start Another</Link>
@@ -241,6 +296,45 @@ export default function BuildPreview() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* NEW: Customer refinement panel */}
+        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+          <div style={{ fontWeight: 950, color: "#0f172a" }}>Refine this build (add details for better renders)</div>
+          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+            Add more information any time — we’ll save a new revision and regenerate previews. Helpful examples:
+            “lower shelf”, “drawer”, “tapered legs”, “apron”, “feet”, “no apron”, “no shelf”, “2 shelves”, etc.
+          </div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+            <label style={{ display: "grid", gap: 6 }}>
+              <span className="label">What do you want changed?</span>
+              <textarea
+                className="field"
+                rows={3}
+                value={changeRequest}
+                onChange={(e) => setChangeRequest(e.target.value)}
+                placeholder='Example: "Add a lower shelf and a single center drawer."'
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              <span className="label">Extra notes (used by the renderer)</span>
+              <textarea
+                className="field"
+                rows={4}
+                value={extraNotes}
+                onChange={(e) => setExtraNotes(e.target.value)}
+                placeholder='Example: "Tapered legs, no apron, shelf 8 inches off the floor, rounded corners."'
+              />
+            </label>
+
+            <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+              <button className="btn btn-primary" onClick={submitRefinement} style={{ fontWeight: 950 }}>
+                Save details & regenerate renders →
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
