@@ -1,0 +1,626 @@
+===== src/pages/BuildPreview.tsx =====
+
+import { useEffect, useMemo, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { estimateBuild } from "../lib/buildPricing";
+import { renderBuildPreviewPng } from "../lib/render3d";
+import {
+  addRevision,
+  getBuild,
+  markSubmitted,
+  upsertBuild,
+  type BuildSubmission,
+  type RenderJob,
+} from "../lib/buildsStore";
+
+function fmt(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
+}
+
+function money(n: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+}
+
+export default function BuildPreview() {
+  const { id } = useParams();
+  const [build, setBuild] = useState<BuildSubmission | null>(null);
+
+  // Customer refinement fields (new)
+  const [changeRequest, setChangeRequest] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    setBuild(getBuild(id));
+  }, [id]);
+
+  const version = useMemo(() => build?.versions?.[0] ?? null, [build]);
+
+  // Render queue: ONE image at a time (real Three.js PNG render -> dataUrl)
+  useEffect(() => {
+    if (!build || !version) return;
+
+    // Always run from latest stored build (avoids stale closures)
+    const latest0 = getBuild(build.id) ?? build;
+    const lv0 = latest0.versions?.[0];
+    if (!lv0) return;
+
+    const renders0 = lv0.renders || [];
+
+    // 1) If nothing is currently rendering, promote FIRST queued -> rendering
+    const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
+    let target: RenderJob | null = currentlyRendering;
+
+    if (!target) {
+      const firstQueued = renders0.find((r) => r.status === "queued") ?? null;
+
+      if (firstQueued) {
+        const startedAt = new Date().toISOString();
+        const updatedRenders = renders0.map((r) =>
+          r.renderId === firstQueued.renderId
+            ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob)
+            : r
+        );
+
+        const nextV = { ...lv0, renders: updatedRenders };
+        const nextBuild: BuildSubmission = {
+          ...latest0,
+          updatedAt: new Date().toISOString(),
+          versions: [nextV, ...latest0.versions.slice(1)],
+        };
+
+        upsertBuild(nextBuild);
+        setBuild(nextBuild);
+
+        target = updatedRenders.find((r) => r.renderId === firstQueued.renderId) as RenderJob;
+      }
+    }
+
+    if (!target) return;
+
+    // 2) Complete ONLY the single target render (no parallel)
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        // short delay so UI shows "Rendering…" before completion
+        await new Promise((res) => setTimeout(res, 450));
+        if (cancelled) return;
+
+        const latest = getBuild(build.id);
+        if (!latest) return;
+
+        const lv = latest.versions[0];
+        const est = estimateBuild(lv.inputsSnapshot.dims, lv.inputsSnapshot.options);
+
+        const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
+
+        const png = await renderBuildPreviewPng({
+          projectType: lv.inputsSnapshot.type,
+          view: target!.view,
+          title,
+          notes: lv.inputsSnapshot.notes || "",
+          dims: lv.inputsSnapshot.dims,
+          options: lv.inputsSnapshot.options,
+          width: 1200,
+          height: 800,
+        });
+
+        if (cancelled) return;
+
+        const updatedRenders = (lv.renders || []).map((x) => {
+          if (x.renderId !== target!.renderId) return x;
+
+          return {
+            ...x,
+            status: "complete" as const,
+            finishedAt: new Date().toISOString(),
+            imageDataUrl: png,
+            estimatePublic: {
+              total: est.total,
+              rangeLow: est.rangeLow,
+              rangeHigh: est.rangeHigh,
+              label: "Est. total (updates per view)",
+            },
+          };
+        });
+
+        const nextV = {
+          ...lv,
+          renders: updatedRenders,
+          estimatePublic: {
+            total: est.total,
+            rangeLow: est.rangeLow,
+            rangeHigh: est.rangeHigh,
+            materials: est.materials,
+            labor: est.labor,
+            overhead: est.overhead,
+            finish: est.finish,
+          },
+        };
+
+        const nextBuild: BuildSubmission = {
+          ...latest,
+          updatedAt: new Date().toISOString(),
+          versions: [nextV, ...latest.versions.slice(1)],
+        };
+
+        upsertBuild(nextBuild);
+        setBuild(nextBuild);
+      } catch (e) {
+        console.error(e);
+        if (cancelled) return;
+
+        // Mark target as failed
+        const latest = getBuild(build.id);
+        if (!latest) return;
+
+        const lv = latest.versions[0];
+        const updatedRenders = (lv.renders || []).map((x) => {
+          if (x.renderId !== target!.renderId) return x;
+          return { ...x, status: "failed" as const, finishedAt: new Date().toISOString() };
+        });
+
+        const nextV = { ...lv, renders: updatedRenders };
+        const nextBuild: BuildSubmission = {
+          ...latest,
+          updatedAt: new Date().toISOString(),
+          versions: [nextV, ...latest.versions.slice(1)],
+        };
+
+        upsertBuild(nextBuild);
+        setBuild(nextBuild);
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [build?.id, build?.updatedAt, version?.versionId]); // keep queue moving after each render update
+
+  if (!build || !version) {
+    return (
+      <div className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
+        <h3 className="h3">Build not found</h3>
+        <Link className="btn btn-primary" to="/builds/new">Start a Build</Link>
+      </div>
+    );
+  }
+
+  const v = version;
+  const b = build;
+  const est = v.estimatePublic;
+
+  function submit() {
+    const next = markSubmitted(b.id);
+    if (!next) return alert("Could not submit. Try again.");
+    setBuild(next);
+    alert(`Submitted! Your Build Access Code: ${String(next.accessCode || "—")}`);
+  }
+
+  function submitRefinement() {
+    const req = changeRequest.trim();
+    const add = extraNotes.trim();
+
+    if (!req && !add) {
+      alert("Please add a change request and/or extra notes.");
+      return;
+    }
+
+    // Combine prior notes + new notes (preserves context for the renderer)
+    const prevNotes = String(b.project?.notes || "").trim();
+    const combinedNotes = [prevNotes, add].filter(Boolean).join("\n\n---\n\n");
+
+    const next = addRevision(
+      b.id,
+      req || "Customer provided additional details",
+      {
+        notes: combinedNotes,
+      }
+    );
+
+    if (!next) {
+      alert("Could not save changes. Please refresh and try again.");
+      return;
+    }
+
+    // Clear inputs + update state; new version will re-queue renders automatically
+    setChangeRequest("");
+    setExtraNotes("");
+    setBuild(next);
+    alert("Saved! We’re generating updated previews now.");
+  }
+
+  return (
+    <div className="stack page" style={{ gap: 16 }}>
+      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+        <div style={{ display: "grid", gap: 8 }}>
+          <h1 className="h2" style={{ margin: 0, fontWeight: 950 }}>Build Preview</h1>
+          <div className="muted" style={{ fontWeight: 850 }}>
+            Created: {fmt(build.createdAt)} • Status: <span className="badge">{build.status.toUpperCase()}</span>
+          </div>
+          <div className="muted" style={{ fontWeight: 850 }}>
+            Customer: <strong>{build.customer?.name}</strong> • {build.customer?.phone} • {build.customer?.email}
+          </div>
+        </div>
+
+        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+          <div style={{ fontWeight: 950, color: "#0f172a" }}>
+            {v.inputsSnapshot.type} — {v.inputsSnapshot.dims.lengthIn}" × {v.inputsSnapshot.dims.widthIn}" × {v.inputsSnapshot.dims.heightIn}"
+          </div>
+          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+            Wood: {v.inputsSnapshot.options.woodSpecies} • Finish: {v.inputsSnapshot.options.finish} • Joinery: {v.inputsSnapshot.options.joinery}
+          </div>
+
+          {String(v.inputsSnapshot.notes || "").trim() ? (
+            <div className="panel" style={{ padding: 12, borderRadius: 12, marginTop: 10 }}>
+              <div className="label">Notes on file</div>
+              <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 6 }}>
+
+
+===== src/lib/render3d.ts =====
+
+import * as THREE from "three";
+import type { BuildDims, BuildOptions } from "./buildsStore";
+
+type View = "iso" | "front" | "top" | "detail";
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function safeIn(n: number, fallback: number) {
+  const v = Number(n);
+  return Number.isFinite(v) && v > 0 ? v : fallback;
+}
+
+function woodColor(species: BuildOptions["woodSpecies"]) {
+  // Simple readable tones (non-photoreal). Upgrade later with textures.
+  switch (species) {
+    case "Pine": return 0xE6D2A6;
+    case "Poplar": return 0xD8E0A8;
+    case "Plywood": return 0xD9C7A3;
+    case "Oak": return 0xC8A06C;
+    case "Maple": return 0xEAD9B6;
+    case "Walnut": return 0x6B4A2E;
+    default: return 0xC8A06C;
+  }
+}
+
+function finishSheen(finish: BuildOptions["finish"]) {
+  if (finish === "Natural") return { roughness: 0.65, metalness: 0.02 };
+  if (finish === "Stain") return { roughness: 0.55, metalness: 0.03 };
+  if (finish === "Paint") return { roughness: 0.35, metalness: 0.01 };
+  if (finish === "Poly") return { roughness: 0.25, metalness: 0.04 };
+  return { roughness: 0.55, metalness: 0.03 };
+}
+
+function fitToView(length: number, depth: number, height: number) {
+  const maxDim = Math.max(length, depth, height);
+  return clamp(maxDim * 0.95, 40, 320);
+}
+
+function makeCamera(view: View, frustumSize: number) {
+  const cam = new THREE.OrthographicCamera(
+    -frustumSize, frustumSize, frustumSize, -frustumSize,
+    0.1, 4000
+  );
+
+  if (view === "top") {
+    cam.position.set(0, 600, 0.001);
+  } else if (view === "front") {
+    cam.position.set(0, 220, 600);
+  } else if (view === "detail") {
+    cam.position.set(420, 280, 420);
+  } else {
+    cam.position.set(520, 360, 520); // iso
+  }
+
+  cam.lookAt(0, 0, 0);
+  cam.updateProjectionMatrix();
+  return cam;
+}
+
+function normType(t: string) {
+  return String(t || "").trim().toLowerCase();
+}
+
+function normNotes(n: string | undefined) {
+  return String(n || "").trim().toLowerCase();
+}
+
+function has(notes: string, ...phrases: string[]) {
+  return phrases.some((p) => notes.includes(p));
+}
+
+function addBox(
+  group: THREE.Group,
+  w: number,
+  h: number,
+  d: number,
+  x: number,
+  y: number,
+  z: number,
+  mat: THREE.Material
+) {
+  const geom = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(x, y, z);
+  group.add(mesh);
+  return geom;
+}
+
+/**
+ * Notes-driven features (simple heuristics, safe defaults):
+ * - "lower shelf", "bottom shelf", "shelf" -> adds a shelf panel for table/bench/workbench
+ * - "apron" -> adds apron rails (unless notes include "no apron")
+ * - "drawer" -> adds a simple drawer box under top (front-facing)
+ * - "taper" / "tapered legs" -> visually tapers legs using mesh scaling
+ * - "feet" -> adds small feet blocks for planter/cabinet
+ *
+ * This is NOT photoreal; it's an improving proxy model based on customer intent.
+ */
+function buildModel(args: {
+  projectType: string;
+  dims: BuildDims;
+  options: BuildOptions;
+  notes?: string;
+}) {
+  const group = new THREE.Group();
+  const notes = normNotes(args.notes);
+
+  // Interpret dims consistently:
+  // lengthIn => X (long)
+  // widthIn  => Z (depth)
+  // heightIn => Y (overall height)
+  const length = clamp(safeIn(args.dims.lengthIn, 60), 12, 240);
+  const depth  = clamp(safeIn(args.dims.widthIn, 30), 10, 240);
+  const height = clamp(safeIn(args.dims.heightIn, 30), 10, 240);
+
+  const topThickness = clamp(safeIn(args.dims.topThicknessIn ?? 1.5, 1.5), 0.5, 6);
+
+  const sheen = finishSheen(args.options.finish);
+  const woodMat = new THREE.MeshStandardMaterial({
+    color: woodColor(args.options.woodSpecies),
+    roughness: sheen.roughness,
+    metalness: sheen.metalness,
+  });
+
+  const darkMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.85,
+    metalness: 0.05,
+  });
+
+  const t = normType(args.projectType);
+
+  // Shared thickness defaults (inches-as-units)
+  const boardT = clamp(Math.min(depth, length) * 0.035, 0.6, 1.25); // panel/board thickness
+  const legSize = clamp(Math.min(depth, length) * 0.06, 1.5, 4.0);
+
+  // Helpers
+  const xMin = -length / 2;
+  const xMax =  length / 2;
+  const zMin = -depth  / 2;
+  const zMax =  depth  / 2;
+
+  const geoms: THREE.BufferGeometry[] = [];
+
+  const isTable = t.includes("table");
+  const isBench = t.includes("bench");
+  const isWorkbench = t.includes("workbench");
+
+  // --- TABLE / BENCH / WORKBENCH (top + 4 legs) ---
+  if (isTable || isBench || isWorkbench) {
+    const topY = height - topThickness / 2;
+
+    // Top
+    geoms.push(addBox(group, length, topThickness, depth, 0, topY, 0, woodMat));
+
+    // Legs
+    const legH = Math.max(2, height - topThickness);
+    const inset = clamp(legSize * 0.65, 1.25, 4.5);
+
+    const lx1 = xMin + inset + legSize / 2;
+    const lx2 = xMax - inset - legSize / 2;
+    const lz1 = zMin + inset + legSize / 2;
+    const lz2 = zMax - inset - legSize / 2;
+
+    const legY = legH / 2;
+
+    const legGeom = new THREE.BoxGeometry(legSize, legH, legSize);
+
+    function addLeg(x: number, z: number) {
+      const mesh = new THREE.Mesh(legGeom, darkMat);
+      mesh.position.set(x, legY, z);
+
+      // Notes: tapered legs (visual taper using non-uniform scale)
+      if (has(notes, "taper", "tapered leg", "tapered legs")) {
+        // slightly narrower at the top by scaling X/Z a bit (simple proxy)
+        // Using scale affects the whole mesh uniformly; we fake taper by scaling and adding a small "cap"
+        mesh.scale.set(0.88, 1, 0.88);
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(legSize * 0.92, legSize * 0.18, legSize * 0.92), darkMat);
+        cap.position.set(x, legH - (legSize * 0.09), z);
+        group.add(cap);
+        geoms.push(cap.geometry as THREE.BufferGeometry);
+      }
+
+      group.add(mesh);
+    }
+
+    addLeg(lx1, lz1);
+    addLeg(lx2, lz1);
+    addLeg(lx1, lz2);
+    addLeg(lx2, lz2);
+
+    geoms.push(legGeom);
+
+    // Notes: apron rails (default on workbench, optional on table/bench)
+    const wantsApron = isWorkbench || (has(notes, "apron") && !has(notes, "no apron", "noapron"));
+    if (wantsApron) {
+      const apronH = clamp(height * 0.12, 2, 6);
+      const apronY = height - topThickness - apronH / 2;
+
+      // Front/back rails (along X)
+      geoms.push(addBox(group, length - inset * 2, apronH, boardT, 0, apronY, zMax - inset - boardT / 2, darkMat));
+      geoms.push(addBox(group, length - inset * 2, apronH, boardT, 0, apronY, zMin + inset + boardT / 2, darkMat));
+
+      // Left/right rails (along Z)
+      geoms.push(addBox(group, boardT, apronH, depth - inset * 2, xMin + inset + boardT / 2, apronY, 0, darkMat));
+      geoms.push(addBox(group, boardT, apronH, depth - inset * 2, xMax - inset - boardT / 2, apronY, 0, darkMat));
+    }
+
+    // Notes: lower shelf / bottom shelf
+    const wantsShelf = isWorkbench || has(notes, "lower shelf", "bottom shelf") || (has(notes, "shelf") && !has(notes, "no shelf"));
+    if (wantsShelf) {
+      const shelfY = clamp(legH * 0.28, 6, legH - 8);
+      const shelfT = clamp(boardT, 0.6, 1.5);
+      geoms.push(addBox(group, length - inset * 2 - legSize * 0.2, shelfT, depth - inset * 2 - legSize * 0.2, 0, shelfY, 0, woodMat));
+    }
+
+    // Notes: drawer (simple centered drawer under top, front-facing)
+    if (has(notes, "drawer", "drawers")) {
+      const drawerH = clamp(height * 0.18, 3, 8);
+      const drawerW = clamp(length * 0.35, 10, length - 10);
+      const drawerD = clamp(depth * 0.45, 8, depth - 6);
+      const drawerY = height - topThickness - drawerH / 2 - 1.2;
+      const drawerZ = zMax - drawerD / 2 - 1.2;
+
+      geoms.push(addBox(group, drawerW, drawerH, drawerD, 0, drawerY, drawerZ, darkMat));
+
+      // drawer face
+      const faceT = clamp(boardT * 0.8, 0.4, 1.1);
+      geoms.push(addBox(group, drawerW * 0.96, drawerH * 0.92, faceT, 0, drawerY, zMax - 0.6, woodMat));
+    }
+
+    // Simple stretcher for workbench feel
+    if (isWorkbench) {
+      const stretcherH = clamp(legSize * 0.45, 0.8, 2.0);
+      const stretcherY = clamp(legH * 0.35, 6, legH - 4);
+      geoms.push(addBox(group, length - inset * 2 - legSize, stretcherH, legSize * 0.6, 0, stretcherY, 0, darkMat));
+    }
+  }
+
+  // --- SHELF (two uprights + shelves) ---
+  else if (t.includes("shelf")) {
+    const sideT = boardT;
+    const shelfT = boardT;
+
+    // Uprights (left/right)
+    const upH = height;
+    const upY = upH / 2;
+    const upX = length / 2 - sideT / 2;
+
+    geoms.push(addBox(group, sideT, upH, depth, -upX, upY, 0, woodMat));
+    geoms.push(addBox(group, sideT, upH, depth,  upX, upY, 0, woodMat));
+
+    // Shelves: bottom, mid, top
+    const insideL = Math.max(8, length - sideT * 2);
+    const shelfCount = has(notes, "5 shelf", "five shelf") ? 5 : has(notes, "4 shelf", "four shelf") ? 4 : 3;
+
+    for (let i = 0; i < shelfCount; i++) {
+      const frac = (i + 1) / (shelfCount + 1);
+      const y = clamp(frac * (height - shelfT) + shelfT / 2, shelfT / 2, height - shelfT / 2);
+      geoms.push(addBox(group, insideL, shelfT, depth, 0, y, 0, woodMat));
+    }
+  }
+
+  // --- CABINET (box with shelf + back) ---
+  else if (t.includes("cabinet")) {
+    const wallT = clamp(boardT, 0.6, 1.25);
+    const shelfT = wallT;
+    const insideL = Math.max(10, length - wallT * 2);
+    const insideD = Math.max(8, depth - wallT * 2);
+
+    geoms.push(addBox(group, length, wallT, depth, 0, wallT / 2, 0, woodMat));                        // bottom
+    geoms.push(addBox(group, length, wallT, depth, 0, height - wallT / 2, 0, woodMat));               // top
+    geoms.push(addBox(group, wallT, height, depth, -length / 2 + wallT / 2, height / 2, 0, woodMat)); // left
+    geoms.push(addBox(group, wallT, height, depth,  length / 2 - wallT / 2, height / 2, 0, woodMat)); // right
+    geoms.push(addBox(group, length, height, wallT, 0, height / 2, -depth / 2 + wallT / 2, woodMat)); // back
+
+    // Shelf count from notes
+    const shelves = has(notes, "2 shelf", "two shelf") ? 2 : has(notes, "3 shelf", "three shelf") ? 3 : 1;
+    for (let i = 0; i < shelves; i++) {
+      const frac = (i + 1) / (shelves + 1);
+      const y = clamp(frac * (height - shelfT) + shelfT / 2, shelfT / 2, height - shelfT / 2);
+      geoms.push(addBox(group, insideL, shelfT, insideD, 0, y, wallT / 2, woodMat));
+    }
+
+    // Notes: feet
+    if (has(notes, "feet", "legs")) {
+      const foot = clamp(wallT * 1.2, 0.8, 2.2);
+      const fy = foot / 2;
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMax - foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMax - foot, darkMat));
+    }
+  }
+
+  // --- PLANTER BOX (open top, 4 walls + bottom) ---
+  else if (t.includes("planter")) {
+    const wallT = clamp(boardT, 0.6, 1.5);
+    const bottomT = wallT;
+
+    geoms.push(addBox(group, length, bottomT, depth, 0, bottomT / 2, 0, woodMat)); // bottom
+
+    const wallH = Math.max(8, height - bottomT);
+    const wallY = bottomT + wallH / 2;
+
+    // front/back
+    geoms.push(addBox(group, length, wallH, wallT, 0, wallY,  depth / 2 - wallT / 2, woodMat));
+    geoms.push(addBox(group, length, wallH, wallT, 0, wallY, -depth / 2 + wallT / 2, woodMat));
+
+    // left/right
+    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2, -length / 2 + wallT / 2, wallY, 0, woodMat));
+    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2,  length / 2 - wallT / 2, wallY, 0, woodMat));
+
+    // Notes: feet
+    if (has(notes, "feet", "legs", "stand")) {
+      const foot = clamp(wallT * 1.25, 0.8, 2.4);
+      const fy = foot / 2;
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMin + foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMin + foot, fy, zMax - foot, darkMat));
+      geoms.push(addBox(group, foot, foot, foot, xMax - foot, fy, zMax - foot, darkMat));
+    }
+  }
+
+  // --- DEFAULT (fallback block) ---
+  else {
+    geoms.push(addBox(group, length, height, depth, 0, height / 2, 0, woodMat));
+  }
+
+  return { group, length, depth, height, geoms };
+}
+
+export async function renderBuildPreviewPng(args: {
+  view: View;
+  projectType: string;
+  title?: string;
+  notes?: string;
+  dims: BuildDims;
+  options: BuildOptions;
+  width?: number;
+  height?: number;
+}) {
+  const W = args.width ?? 1200;
+  const H = args.height ?? 800;
+
+  // Scene
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b1220);
+
+  // Lights
+  const hemi = new THREE.HemisphereLight(0xBBD7FF, 0x101827, 0.95);
+  scene.add(hemi);
+
+  const key = new THREE.DirectionalLight(0xFFFFFF, 1.05);
+  key.position.set(240, 280, 200);
+  scene.add(key);
+
+  const rim = new THREE.DirectionalLight(0xA78BFA, 0.55);

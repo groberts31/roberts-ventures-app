@@ -3,12 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import { estimateBuild } from "../lib/buildPricing";
 import { renderBuildPreviewPng } from "../lib/render3d";
 import {
-  addRevision,
+  addCustomerNote,
+  compileNotes,
   getBuild,
   markSubmitted,
-  upsertBuild,
   type BuildSubmission,
   type RenderJob,
+  upsertBuild,
 } from "../lib/buildsStore";
 
 function fmt(iso: string) {
@@ -25,7 +26,7 @@ export default function BuildPreview() {
   const { id } = useParams();
   const [build, setBuild] = useState<BuildSubmission | null>(null);
 
-  // Customer refinement fields (new)
+  // Customer refinement fields
   const [changeRequest, setChangeRequest] = useState("");
   const [extraNotes, setExtraNotes] = useState("");
 
@@ -36,18 +37,16 @@ export default function BuildPreview() {
 
   const version = useMemo(() => build?.versions?.[0] ?? null, [build]);
 
-  // Render queue: ONE image at a time (real Three.js PNG render -> dataUrl)
+  // Render queue: ONE image at a time
   useEffect(() => {
     if (!build || !version) return;
 
-    // Always run from latest stored build (avoids stale closures)
     const latest0 = getBuild(build.id) ?? build;
     const lv0 = latest0.versions?.[0];
     if (!lv0) return;
 
     const renders0 = lv0.renders || [];
 
-    // 1) If nothing is currently rendering, promote FIRST queued -> rendering
     const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
     let target: RenderJob | null = currentlyRendering;
 
@@ -57,9 +56,7 @@ export default function BuildPreview() {
       if (firstQueued) {
         const startedAt = new Date().toISOString();
         const updatedRenders = renders0.map((r) =>
-          r.renderId === firstQueued.renderId
-            ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob)
-            : r
+          r.renderId === firstQueued.renderId ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob) : r
         );
 
         const nextV = { ...lv0, renders: updatedRenders };
@@ -78,12 +75,10 @@ export default function BuildPreview() {
 
     if (!target) return;
 
-    // 2) Complete ONLY the single target render (no parallel)
     let cancelled = false;
 
     const run = async () => {
       try {
-        // short delay so UI shows "Rendering…" before completion
         await new Promise((res) => setTimeout(res, 450));
         if (cancelled) return;
 
@@ -95,11 +90,13 @@ export default function BuildPreview() {
 
         const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
 
+        const notesCompiled = compileNotes(lv.inputsSnapshot.notesLog, lv.inputsSnapshot.notes);
+
         const png = await renderBuildPreviewPng({
           projectType: lv.inputsSnapshot.type,
           view: target!.view,
           title,
-          notes: lv.inputsSnapshot.notes || "",
+          notes: notesCompiled,
           dims: lv.inputsSnapshot.dims,
           options: lv.inputsSnapshot.options,
           width: 1200,
@@ -110,7 +107,6 @@ export default function BuildPreview() {
 
         const updatedRenders = (lv.renders || []).map((x) => {
           if (x.renderId !== target!.renderId) return x;
-
           return {
             ...x,
             status: "complete" as const,
@@ -151,7 +147,6 @@ export default function BuildPreview() {
         console.error(e);
         if (cancelled) return;
 
-        // Mark target as failed
         const latest = getBuild(build.id);
         if (!latest) return;
 
@@ -178,13 +173,15 @@ export default function BuildPreview() {
     return () => {
       cancelled = true;
     };
-  }, [build?.id, build?.updatedAt, version?.versionId]); // keep queue moving after each render update
+  }, [build?.id, build?.updatedAt, version?.versionId]);
 
   if (!build || !version) {
     return (
       <div className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
         <h3 className="h3">Build not found</h3>
-        <Link className="btn btn-primary" to="/builds/new">Start a Build</Link>
+        <Link className="btn btn-primary" to="/builds/new">
+          Start a Build
+        </Link>
       </div>
     );
   }
@@ -192,6 +189,9 @@ export default function BuildPreview() {
   const v = version;
   const b = build;
   const est = v.estimatePublic;
+
+  const notesLog = v.inputsSnapshot.notesLog || [];
+  const compiledNotes = compileNotes(notesLog, v.inputsSnapshot.notes);
 
   function submit() {
     const next = markSubmitted(b.id);
@@ -209,24 +209,12 @@ export default function BuildPreview() {
       return;
     }
 
-    // Combine prior notes + new notes (preserves context for the renderer)
-    const prevNotes = String(b.project?.notes || "").trim();
-    const combinedNotes = [prevNotes, add].filter(Boolean).join("\n\n---\n\n");
-
-    const next = addRevision(
-      b.id,
-      req || "Customer provided additional details",
-      {
-        notes: combinedNotes,
-      }
-    );
-
+    const next = addCustomerNote(b.id, req, add);
     if (!next) {
       alert("Could not save changes. Please refresh and try again.");
       return;
     }
 
-    // Clear inputs + update state; new version will re-queue renders automatically
     setChangeRequest("");
     setExtraNotes("");
     setBuild(next);
@@ -237,7 +225,9 @@ export default function BuildPreview() {
     <div className="stack page" style={{ gap: 16 }}>
       <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
         <div style={{ display: "grid", gap: 8 }}>
-          <h1 className="h2" style={{ margin: 0, fontWeight: 950 }}>Build Preview</h1>
+          <h1 className="h2" style={{ margin: 0, fontWeight: 950 }}>
+            Build Preview
+          </h1>
           <div className="muted" style={{ fontWeight: 850 }}>
             Created: {fmt(build.createdAt)} • Status: <span className="badge">{build.status.toUpperCase()}</span>
           </div>
@@ -251,37 +241,102 @@ export default function BuildPreview() {
             {v.inputsSnapshot.type} — {v.inputsSnapshot.dims.lengthIn}" × {v.inputsSnapshot.dims.widthIn}" × {v.inputsSnapshot.dims.heightIn}"
           </div>
           <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
-            Wood: {v.inputsSnapshot.options.woodSpecies} • Finish: {v.inputsSnapshot.options.finish} • Joinery: {v.inputsSnapshot.options.joinery}
+            Wood: {v.inputsSnapshot.options.woodSpecies} • Finish: {v.inputsSnapshot.options.finish} • Joinery:{" "}
+            {v.inputsSnapshot.options.joinery}
           </div>
 
-          {String(v.inputsSnapshot.notes || "").trim() ? (
+          {compiledNotes ? (
             <div className="panel" style={{ padding: 12, borderRadius: 12, marginTop: 10 }}>
-              <div className="label">Notes on file</div>
+              <div className="label">Notes on file (used to improve the model)</div>
               <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 6 }}>
-                {v.inputsSnapshot.notes}
+                {compiledNotes}
               </div>
             </div>
           ) : null}
 
           <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-            <Link className="btn btn-ghost" to="/builds/new">Start Another</Link>
-            <Link className="btn btn-ghost" to="/builds/portal">Build Portal</Link>
+            <Link className="btn btn-ghost" to="/builds/new">
+              Start Another
+            </Link>
+            <Link className="btn btn-ghost" to="/builds/portal">
+              Build Portal
+            </Link>
             <button className="btn btn-primary" onClick={submit} style={{ fontWeight: 950 }}>
               Submit for Review
             </button>
           </div>
 
           <div className="muted" style={{ fontWeight: 850, marginTop: 10 }}>
-            After submitting you’ll get a 6-digit Access Code to view your build in the portal.
+            After submitting you’ll get a 6-digit Access Code to view your build in the Build Portal.
           </div>
+        </div>
+
+        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+          <div style={{ fontWeight: 950, color: "#0f172a" }}>Refine this build (add details)</div>
+          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+            Add specific details and we’ll regenerate previews. Examples: “tapered legs”, “lower shelf”, “drawer”, “apron”, “feet”, “2 shelves”.
+          </div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <label style={{ display: "grid", gap: 6 }}>
+              <span className="label">What would you like changed?</span>
+              <input
+                className="field"
+                value={changeRequest}
+                onChange={(e) => setChangeRequest(e.target.value)}
+                placeholder="Example: Add a lower shelf and tapered legs"
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              <span className="label">Extra notes (used by the renderer)</span>
+              <textarea
+                className="field"
+                rows={4}
+                value={extraNotes}
+                onChange={(e) => setExtraNotes(e.target.value)}
+                placeholder="Example: drawer centered on front, apron on all sides, rounded corners, etc."
+              />
+            </label>
+
+            <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+              <button className="btn btn-primary" onClick={submitRefinement} style={{ fontWeight: 950 }}>
+                Save refinement + regenerate previews →
+              </button>
+            </div>
+          </div>
+
+          {Array.isArray(notesLog) && notesLog.length ? (
+            <div className="panel" style={{ padding: 12, borderRadius: 12, marginTop: 12 }}>
+              <div className="label">Notes timeline</div>
+              <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+                Notes are saved in separate chunks so Admin can remove any later if needed.
+              </div>
+
+              <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+                {notesLog.map((n) => (
+                  <div key={n.noteId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+                    <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <div style={{ fontWeight: 950, color: "#0f172a" }}>
+                        {String(n.kind).toUpperCase()} • {String(n.author).toUpperCase()}
+                        <span className="badge" style={{ marginLeft: 8 }}>{fmt(n.createdAt)}</span>
+                      </div>
+                      <div className="muted" style={{ fontWeight: 850 }}>
+                        Note ID: <span className="badge">{String(n.noteId).slice(-8).toUpperCase()}</span>
+                      </div>
+                    </div>
+                    <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{n.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
           <div style={{ fontWeight: 950, color: "#0f172a" }}>Estimate (public)</div>
           {!est ? (
-            <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
-              Estimating… (will populate as render previews complete)
-            </div>
+            <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>Estimating… (will populate as render previews complete)</div>
           ) : (
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
               <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
@@ -297,45 +352,6 @@ export default function BuildPreview() {
             </div>
           )}
         </div>
-
-        {/* NEW: Customer refinement panel */}
-        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
-          <div style={{ fontWeight: 950, color: "#0f172a" }}>Refine this build (add details for better renders)</div>
-          <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
-            Add more information any time — we’ll save a new revision and regenerate previews. Helpful examples:
-            “lower shelf”, “drawer”, “tapered legs”, “apron”, “feet”, “no apron”, “no shelf”, “2 shelves”, etc.
-          </div>
-
-          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-            <label style={{ display: "grid", gap: 6 }}>
-              <span className="label">What do you want changed?</span>
-              <textarea
-                className="field"
-                rows={3}
-                value={changeRequest}
-                onChange={(e) => setChangeRequest(e.target.value)}
-                placeholder='Example: "Add a lower shelf and a single center drawer."'
-              />
-            </label>
-
-            <label style={{ display: "grid", gap: 6 }}>
-              <span className="label">Extra notes (used by the renderer)</span>
-              <textarea
-                className="field"
-                rows={4}
-                value={extraNotes}
-                onChange={(e) => setExtraNotes(e.target.value)}
-                placeholder='Example: "Tapered legs, no apron, shelf 8 inches off the floor, rounded corners."'
-              />
-            </label>
-
-            <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-              <button className="btn btn-primary" onClick={submitRefinement} style={{ fontWeight: 950 }}>
-                Save details & regenerate renders →
-              </button>
-            </div>
-          </div>
-        </div>
       </section>
 
       <section className="stack" style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
@@ -349,9 +365,7 @@ export default function BuildPreview() {
             <article key={r.renderId} className="panel card" style={{ padding: 12, display: "grid", gap: 10 }}>
               <div style={{ fontWeight: 950, color: "#0f172a" }}>
                 View: {String(r.view).toUpperCase()}
-                <span className="badge" style={{ marginLeft: 8 }}>
-                  {r.status.toUpperCase()}
-                </span>
+                <span className="badge" style={{ marginLeft: 8 }}>{r.status.toUpperCase()}</span>
               </div>
 
               <div
