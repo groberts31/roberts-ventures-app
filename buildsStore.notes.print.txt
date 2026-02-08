@@ -37,6 +37,11 @@ export type RenderJob = {
   };
 };
 
+/**
+ * Canonical structured note items.
+ * We keep legacy `notes?: string` as a backwards-compat compiled blob,
+ * but `notesLog` is the ONLY structured source of truth.
+ */
 export type NoteAuthor = "customer" | "admin";
 export type NoteKind = "initial" | "change" | "refinement" | "note";
 
@@ -57,11 +62,10 @@ export type BuildVersion = {
     dims: BuildDims;
     options: BuildOptions;
 
-    // Legacy field kept for backwards compatibility ONLY.
-    // Going forward: we keep this EMPTY to prevent duplicate/phantom notes.
+    // legacy compiled string (keep for backwards compatibility)
     notes?: string;
 
-    // Canonical notes source of truth
+    // canonical structured notes (single definition!)
     notesLog?: NoteItem[];
   };
   renders: RenderJob[];
@@ -95,10 +99,10 @@ export type BuildSubmission = {
     dims: BuildDims;
     options: BuildOptions;
 
-    // Legacy compiled string (we keep it EMPTY going forward)
+    // legacy compiled string (still used by UI + renderer as fallback)
     notes?: string;
 
-    // Canonical structured notes
+    // canonical structured notes
     notesLog?: NoteItem[];
 
     refPhotos?: { name: string; type: string; dataUrl: string }[];
@@ -122,103 +126,8 @@ function uid() {
   return (crypto as any).randomUUID?.() ?? (Math.random().toString(16).slice(2) + Date.now().toString(16));
 }
 
-/**
- * If an old build exists with only legacy `notes` and no `notesLog`,
- * migrate it into a single structured "initial" note.
- */
-function ensureNotesLog(legacyNotes?: string, existing?: NoteItem[], createdAtHint?: string): NoteItem[] {
-  const log = Array.isArray(existing) ? existing.filter(Boolean) : [];
-  if (log.length) return log;
-
-  const text = String(legacyNotes || "").trim();
-  if (!text) return [];
-
-  return [
-    {
-      noteId: uid(),
-      createdAt: createdAtHint || new Date().toISOString(),
-      author: "customer",
-      kind: "initial",
-      text,
-    },
-  ];
-}
-
-function normalizeBuild(b: any): BuildSubmission | null {
-  if (!b || typeof b !== "object") return null;
-
-  const createdAt = String(b.createdAt || new Date().toISOString());
-  const project = b.project || {};
-
-  const legacyProjectNotes = String(project.notes || "").trim();
-  const projectNotesLog = ensureNotesLog(legacyProjectNotes, project.notesLog, createdAt);
-
-  const versions = Array.isArray(b.versions) ? b.versions : [];
-  const nextVersions: BuildVersion[] = versions.map((v: any) => {
-    const inputs = v?.inputsSnapshot || {};
-    const vCreatedAt = String(v?.createdAt || createdAt);
-
-    // Old builds may have inputsSnapshot.notes (compiled blob) but no notesLog.
-    const legacyVNotes = String(inputs.notes ?? legacyProjectNotes ?? "").trim();
-    const vNotesLog = ensureNotesLog(legacyVNotes, inputs.notesLog ?? projectNotesLog, vCreatedAt);
-
-    return {
-      ...v,
-      createdAt: vCreatedAt,
-      inputsSnapshot: {
-        type: String(inputs.type || project.type || ""),
-        dims: inputs.dims || project.dims,
-        options: inputs.options || project.options,
-
-        // IMPORTANT: going forward we keep legacy notes empty to avoid duplication.
-        // We only keep it for old builds that still have it.
-        notes: String(inputs.notes || "").includes("\n---\n") ? "" : "",
-
-        notesLog: vNotesLog,
-      },
-      renders: Array.isArray(v?.renders) ? v.renders : [],
-    } as BuildVersion;
-  });
-
-  const out: BuildSubmission = {
-    ...b,
-    createdAt,
-    updatedAt: String(b.updatedAt || createdAt),
-    status: (b.status || "draft") as BuildStatus,
-    customer: b.customer || { name: "", phone: "", email: "" },
-    project: {
-      ...project,
-      type: String(project.type || ""),
-      dims: project.dims,
-      options: project.options,
-
-      // IMPORTANT: going forward we keep legacy notes empty (canonical is notesLog)
-      notes: "",
-
-      notesLog: projectNotesLog,
-      refPhotos: Array.isArray(project.refPhotos) ? project.refPhotos : [],
-    },
-    versions: nextVersions,
-  };
-
-  return out;
-}
-
-/**
- * Compile notes for display + renderer.
- * We do NOT prepend legacy notes anymore (we keep legacy notes empty going forward).
- * This prevents "remove last note" from appearing to do nothing.
- */
-export function compileNotes(notesLog?: NoteItem[], _legacyNotes?: string) {
-  const items = Array.isArray(notesLog) ? notesLog : [];
-  return items
-    .map((n) => String(n?.text || "").trim())
-    .filter(Boolean)
-    .join("\n\n---\n\n");
-}
-
 export function normalizePhone(p: string) {
-  return String(p || "").replace(/\D+/g, "");
+  return String(p || "").replace(/\\D+/g, "");
 }
 
 export function makeAccessCode() {
@@ -227,8 +136,7 @@ export function makeAccessCode() {
 
 export function readBuilds(): BuildSubmission[] {
   const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
-  const raw = (Array.isArray(arr) ? arr : []).filter(Boolean);
-  return raw.map(normalizeBuild).filter(Boolean) as BuildSubmission[];
+  return (Array.isArray(arr) ? arr : []).filter(Boolean);
 }
 
 export function writeBuilds(items: BuildSubmission[]) {
@@ -254,6 +162,23 @@ export function deleteBuild(id: string) {
   writeBuilds(all);
 }
 
+/**
+ * Compile notes for display + renderer.
+ * - If legacy `notes` exists, it stays at the top.
+ * - Structured notes follow in time order.
+ */
+export function compileNotes(notesLog?: NoteItem[], legacyNotes?: string) {
+  const head = String(legacyNotes || "").trim();
+  const items = Array.isArray(notesLog) ? notesLog : [];
+
+  const body = items
+    .map((n) => String(n?.text || "").trim())
+    .filter(Boolean)
+    .join("\\n\\n---\\n\\n");
+
+  return [head, body].filter(Boolean).join("\\n\\n---\\n\\n");
+}
+
 export function createDraftBuild(args: {
   customer: BuildCustomer;
   type: string;
@@ -266,7 +191,6 @@ export function createDraftBuild(args: {
 
   const baseNotes = String(args.notes || "").trim();
 
-  // canonical notesLog (and legacy notes stays empty)
   const notesLog: NoteItem[] = baseNotes
     ? [
         {
@@ -286,7 +210,7 @@ export function createDraftBuild(args: {
       type: args.type,
       dims: args.dims,
       options: args.options,
-      notes: "",
+      notes: baseNotes,
       notesLog,
     },
     renders: [
@@ -306,7 +230,7 @@ export function createDraftBuild(args: {
       type: args.type,
       dims: args.dims,
       options: args.options,
-      notes: "",
+      notes: baseNotes,
       notesLog,
       refPhotos: [],
     },
@@ -317,21 +241,20 @@ export function createDraftBuild(args: {
   return build;
 }
 
+/**
+ * Creates a new version with renders re-queued.
+ * IMPORTANT: carries notesLog forward via project snapshot.
+ */
 export function addRevision(
   id: string,
   customerChangeRequest: string,
   patch?: Partial<BuildSubmission["project"]>
 ) {
-  const b0 = getBuild(id);
-  if (!b0) return null;
-
-  const b = normalizeBuild(b0);
+  const b = getBuild(id);
   if (!b) return null;
 
   const now = new Date().toISOString();
   const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
-
-  const mergedNotesLog = ensureNotesLog("", mergedProject.notesLog, b.createdAt);
 
   const version: BuildVersion = {
     versionId: uid(),
@@ -341,8 +264,8 @@ export function addRevision(
       type: mergedProject.type,
       dims: mergedProject.dims,
       options: mergedProject.options,
-      notes: "",
-      notesLog: mergedNotesLog,
+      notes: mergedProject.notes || "",
+      notesLog: Array.isArray(mergedProject.notesLog) ? mergedProject.notesLog : [],
     },
     renders: [
       { renderId: uid(), view: "iso", status: "queued" },
@@ -355,7 +278,7 @@ export function addRevision(
   const next: BuildSubmission = {
     ...b,
     updatedAt: now,
-    project: { ...mergedProject, notes: "", notesLog: mergedNotesLog },
+    project: mergedProject,
     versions: [version, ...b.versions],
   };
 
@@ -363,15 +286,15 @@ export function addRevision(
   return next;
 }
 
+/**
+ * Adds customer-provided notes in structured form and triggers a new version + renders.
+ */
 export function addCustomerNote(id: string, changeRequest?: string, extraNotes?: string) {
-  const b0 = getBuild(id);
-  if (!b0) return null;
-
-  const b = normalizeBuild(b0);
+  const b = getBuild(id);
   if (!b) return null;
 
   const now = new Date().toISOString();
-  const prevLog = ensureNotesLog("", b.project.notesLog, b.createdAt);
+  const prevLog = Array.isArray(b.project.notesLog) ? b.project.notesLog : [];
 
   const nextLog: NoteItem[] = [...prevLog];
 
@@ -398,22 +321,27 @@ export function addCustomerNote(id: string, changeRequest?: string, extraNotes?:
     });
   }
 
+  const compiled = compileNotes(nextLog, b.project.notes);
+
+  // keep legacy notes updated for backwards compatibility / visibility
   return addRevision(id, "Customer provided additional details", {
     notesLog: nextLog,
-    notes: "",
+    notes: compiled,
   });
 }
 
+/**
+ * Removes the last NOTE authored by customer (change/refinement/note/initial) and triggers re-render.
+ * This is what your customer button will call.
+ */
 export function removeLastCustomerNote(id: string) {
-  const b0 = getBuild(id);
-  if (!b0) return null;
-
-  const b = normalizeBuild(b0);
+  const b = getBuild(id);
   if (!b) return null;
 
-  const prevLog = ensureNotesLog("", b.project.notesLog, b.createdAt);
+  const prevLog = Array.isArray(b.project.notesLog) ? b.project.notesLog : [];
   if (!prevLog.length) return b;
 
+  // remove last customer-authored entry
   let idx = -1;
   for (let i = prevLog.length - 1; i >= 0; i--) {
     if (prevLog[i]?.author === "customer") {
@@ -424,10 +352,11 @@ export function removeLastCustomerNote(id: string) {
   if (idx < 0) return b;
 
   const nextLog = prevLog.slice(0, idx).concat(prevLog.slice(idx + 1));
+  const compiled = compileNotes(nextLog, b.project.notes);
 
   return addRevision(id, "Customer removed last note", {
     notesLog: nextLog,
-    notes: "",
+    notes: compiled,
   });
 }
 
@@ -451,7 +380,7 @@ export function markSubmitted(id: string) {
 
 export function findBuildsByPhoneAndCode(phone: string, code: string) {
   const p = normalizePhone(phone);
-  const c = String(code || "").replace(/\D+/g, "");
+  const c = String(code || "").replace(/\\D+/g, "");
   if (!p || c.length < 6) return [];
   return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
 }

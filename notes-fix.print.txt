@@ -1,0 +1,578 @@
+===== src/lib/buildsStore.ts =====
+     1	export type BuildStatus = "draft" | "submitted" | "reviewing" | "quote_sent" | "approved" | "in_build" | "complete";
+     2	
+     3	export type BuildCustomer = {
+     4	  name: string;
+     5	  phone: string;
+     6	  email: string;
+     7	  address?: string;
+     8	};
+     9	
+    10	export type BuildDims = {
+    11	  lengthIn: number;
+    12	  widthIn: number;
+    13	  heightIn: number;
+    14	  topThicknessIn?: number;
+    15	};
+    16	
+    17	export type BuildOptions = {
+    18	  woodSpecies: "Pine" | "Oak" | "Walnut" | "Maple" | "Poplar" | "Plywood";
+    19	  finish: "Natural" | "Stain" | "Paint" | "Poly";
+    20	  joinery: "Screws" | "Pocket Holes" | "Mortise & Tenon" | "Dowels";
+    21	};
+    22	
+    23	export type RenderStatus = "queued" | "rendering" | "complete" | "failed";
+    24	
+    25	export type RenderJob = {
+    26	  renderId: string;
+    27	  view: "iso" | "front" | "top" | "detail";
+    28	  status: RenderStatus;
+    29	  imageDataUrl?: string;
+    30	  startedAt?: string;
+    31	  finishedAt?: string;
+    32	  estimatePublic?: {
+    33	    total: number;
+    34	    rangeLow?: number;
+    35	    rangeHigh?: number;
+    36	    label?: string;
+    37	  };
+    38	};
+    39	
+    40	/**
+    41	 * Canonical structured note items.
+    42	 * We keep legacy `notes?: string` as a backwards-compat compiled blob,
+    43	 * but `notesLog` is the ONLY structured source of truth.
+    44	 */
+    45	export type NoteAuthor = "customer" | "admin";
+    46	export type NoteKind = "initial" | "change" | "refinement" | "note";
+    47	
+    48	export type NoteItem = {
+    49	  noteId: string;
+    50	  createdAt: string;
+    51	  author: NoteAuthor;
+    52	  kind: NoteKind;
+    53	  text: string;
+    54	};
+    55	
+    56	export type BuildVersion = {
+    57	  versionId: string;
+    58	  createdAt: string;
+    59	  customerChangeRequest?: string;
+    60	  inputsSnapshot: {
+    61	    type: string;
+    62	    dims: BuildDims;
+    63	    options: BuildOptions;
+    64	
+    65	    // legacy compiled string (keep for backwards compatibility)
+    66	    notes?: string;
+    67	
+    68	    // canonical structured notes (single definition!)
+    69	    notesLog?: NoteItem[];
+    70	  };
+    71	  renders: RenderJob[];
+    72	
+    73	  estimatePublic?: {
+    74	    total: number;
+    75	    rangeLow?: number;
+    76	    rangeHigh?: number;
+    77	    materials: number;
+    78	    labor: number;
+    79	    overhead: number;
+    80	    finish: number;
+    81	  };
+    82	
+    83	  estimateInternal?: any;
+    84	  generatedPackage?: any;
+    85	};
+    86	
+    87	export type BuildSubmission = {
+    88	  id: string;
+    89	  createdAt: string;
+    90	  updatedAt: string;
+    91	
+    92	  status: BuildStatus;
+    93	  accessCode?: string;
+    94	
+    95	  customer: BuildCustomer;
+    96	
+    97	  project: {
+    98	    type: string;
+    99	    dims: BuildDims;
+   100	    options: BuildOptions;
+   101	
+   102	    // legacy compiled string (still used by UI + renderer as fallback)
+   103	    notes?: string;
+   104	
+   105	    // canonical structured notes
+   106	    notesLog?: NoteItem[];
+   107	
+   108	    refPhotos?: { name: string; type: string; dataUrl: string }[];
+   109	  };
+   110	
+   111	  versions: BuildVersion[];
+   112	};
+   113	
+   114	const KEY = "rv_build_submissions";
+   115	
+   116	function safeParse<T>(raw: string | null, fallback: T): T {
+   117	  try {
+   118	    if (!raw) return fallback;
+   119	    return JSON.parse(raw) as T;
+   120	  } catch {
+   121	    return fallback;
+   122	  }
+   123	}
+   124	
+   125	function uid() {
+   126	  return (crypto as any).randomUUID?.() ?? (Math.random().toString(16).slice(2) + Date.now().toString(16));
+   127	}
+   128	
+   129	export function normalizePhone(p: string) {
+   130	  return String(p || "").replace(/\\D+/g, "");
+   131	}
+   132	
+   133	export function makeAccessCode() {
+   134	  return String(Math.floor(100000 + Math.random() * 900000));
+   135	}
+   136	
+   137	export function readBuilds(): BuildSubmission[] {
+   138	  const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
+   139	  return (Array.isArray(arr) ? arr : []).filter(Boolean);
+   140	}
+   141	
+   142	export function writeBuilds(items: BuildSubmission[]) {
+   143	  localStorage.setItem(KEY, JSON.stringify(items));
+   144	}
+   145	
+   146	export function getBuild(id: string): BuildSubmission | null {
+   147	  const all = readBuilds();
+   148	  const found = all.find((b) => String(b.id) === String(id));
+   149	  return found || null;
+   150	}
+   151	
+   152	export function upsertBuild(next: BuildSubmission) {
+   153	  const all = readBuilds();
+   154	  const idx = all.findIndex((b) => String(b.id) === String(next.id));
+   155	  if (idx >= 0) all[idx] = next;
+   156	  else all.unshift(next);
+   157	  writeBuilds(all);
+   158	}
+   159	
+   160	export function deleteBuild(id: string) {
+   161	  const all = readBuilds().filter((b) => String(b.id) !== String(id));
+   162	  writeBuilds(all);
+   163	}
+   164	
+   165	/**
+   166	 * Compile notes for display + renderer.
+   167	 * - If legacy `notes` exists, it stays at the top.
+   168	 * - Structured notes follow in time order.
+   169	 */
+   170	export function compileNotes(notesLog?: NoteItem[], legacyNotes?: string) {
+   171	  const head = String(legacyNotes || "").trim();
+   172	  const items = Array.isArray(notesLog) ? notesLog : [];
+   173	
+   174	  const body = items
+   175	    .map((n) => String(n?.text || "").trim())
+   176	    .filter(Boolean)
+   177	    .join("\\n\\n---\\n\\n");
+   178	
+   179	  return [head, body].filter(Boolean).join("\\n\\n---\\n\\n");
+   180	}
+   181	
+   182	export function createDraftBuild(args: {
+   183	  customer: BuildCustomer;
+   184	  type: string;
+   185	  dims: BuildDims;
+   186	  options: BuildOptions;
+   187	  notes?: string;
+   188	}): BuildSubmission {
+   189	  const now = new Date().toISOString();
+   190	  const id = uid();
+   191	
+   192	  const baseNotes = String(args.notes || "").trim();
+   193	
+   194	  const notesLog: NoteItem[] = baseNotes
+   195	    ? [
+   196	        {
+   197	          noteId: uid(),
+   198	          createdAt: now,
+   199	          author: "customer",
+   200	          kind: "initial",
+   201	          text: baseNotes,
+   202	        },
+   203	      ]
+   204	    : [];
+   205	
+   206	  const version: BuildVersion = {
+   207	    versionId: uid(),
+   208	    createdAt: now,
+   209	    inputsSnapshot: {
+   210	      type: args.type,
+   211	      dims: args.dims,
+   212	      options: args.options,
+   213	      notes: baseNotes,
+   214	      notesLog,
+   215	    },
+   216	    renders: [
+   217	      { renderId: uid(), view: "iso", status: "queued" },
+   218	      { renderId: uid(), view: "front", status: "queued" },
+   219	      { renderId: uid(), view: "top", status: "queued" },
+   220	    ],
+   221	  };
+   222	
+   223	  const build: BuildSubmission = {
+   224	    id,
+   225	    createdAt: now,
+   226	    updatedAt: now,
+   227	    status: "draft",
+   228	    customer: args.customer,
+   229	    project: {
+   230	      type: args.type,
+   231	      dims: args.dims,
+   232	      options: args.options,
+   233	      notes: baseNotes,
+   234	      notesLog,
+   235	      refPhotos: [],
+   236	    },
+   237	    versions: [version],
+   238	  };
+   239	
+   240	  upsertBuild(build);
+   241	  return build;
+   242	}
+   243	
+   244	/**
+   245	 * Creates a new version with renders re-queued.
+   246	 * IMPORTANT: carries notesLog forward via project snapshot.
+   247	 */
+   248	export function addRevision(
+   249	  id: string,
+   250	  customerChangeRequest: string,
+   251	  patch?: Partial<BuildSubmission["project"]>
+   252	) {
+   253	  const b = getBuild(id);
+   254	  if (!b) return null;
+   255	
+   256	  const now = new Date().toISOString();
+   257	  const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
+   258	
+   259	  const version: BuildVersion = {
+   260	    versionId: uid(),
+   261	    createdAt: now,
+   262	    customerChangeRequest,
+   263	    inputsSnapshot: {
+   264	      type: mergedProject.type,
+   265	      dims: mergedProject.dims,
+   266	      options: mergedProject.options,
+   267	      notes: mergedProject.notes || "",
+   268	      notesLog: Array.isArray(mergedProject.notesLog) ? mergedProject.notesLog : [],
+   269	    },
+   270	    renders: [
+   271	      { renderId: uid(), view: "iso", status: "queued" },
+   272	      { renderId: uid(), view: "front", status: "queued" },
+   273	      { renderId: uid(), view: "top", status: "queued" },
+   274	      { renderId: uid(), view: "detail", status: "queued" },
+   275	    ],
+   276	  };
+   277	
+   278	  const next: BuildSubmission = {
+   279	    ...b,
+   280	    updatedAt: now,
+   281	    project: mergedProject,
+   282	    versions: [version, ...b.versions],
+   283	  };
+   284	
+   285	  upsertBuild(next);
+   286	  return next;
+   287	}
+   288	
+   289	/**
+   290	 * Adds customer-provided notes in structured form and triggers a new version + renders.
+   291	 */
+   292	export function addCustomerNote(id: string, changeRequest?: string, extraNotes?: string) {
+   293	  const b = getBuild(id);
+   294	  if (!b) return null;
+   295	
+   296	  const now = new Date().toISOString();
+   297	  const prevLog = Array.isArray(b.project.notesLog) ? b.project.notesLog : [];
+   298	
+   299	  const nextLog: NoteItem[] = [...prevLog];
+   300	
+   301	  const req = String(changeRequest || "").trim();
+   302	  const add = String(extraNotes || "").trim();
+   303	
+   304	  if (req) {
+   305	    nextLog.push({
+   306	      noteId: uid(),
+   307	      createdAt: now,
+   308	      author: "customer",
+   309	      kind: "change",
+   310	      text: req,
+   311	    });
+   312	  }
+   313	
+   314	  if (add) {
+   315	    nextLog.push({
+   316	      noteId: uid(),
+   317	      createdAt: now,
+   318	      author: "customer",
+   319	      kind: "refinement",
+   320	      text: add,
+   321	    });
+   322	  }
+   323	
+   324	  const compiled = compileNotes(nextLog, b.project.notes);
+   325	
+   326	  // keep legacy notes updated for backwards compatibility / visibility
+   327	  return addRevision(id, "Customer provided additional details", {
+   328	    notesLog: nextLog,
+   329	    notes: compiled,
+   330	  });
+   331	}
+   332	
+   333	/**
+   334	 * Removes the last NOTE authored by customer (change/refinement/note/initial) and triggers re-render.
+   335	 * This is what your customer button will call.
+   336	 */
+   337	export function removeLastCustomerNote(id: string) {
+   338	  const b = getBuild(id);
+   339	  if (!b) return null;
+   340	
+   341	  const prevLog = Array.isArray(b.project.notesLog) ? b.project.notesLog : [];
+   342	  if (!prevLog.length) return b;
+   343	
+   344	  // remove last customer-authored entry
+   345	  let idx = -1;
+   346	  for (let i = prevLog.length - 1; i >= 0; i--) {
+   347	    if (prevLog[i]?.author === "customer") {
+   348	      idx = i;
+   349	      break;
+   350	    }
+   351	  }
+   352	  if (idx < 0) return b;
+   353	
+   354	  const nextLog = prevLog.slice(0, idx).concat(prevLog.slice(idx + 1));
+   355	  const compiled = compileNotes(nextLog, b.project.notes);
+   356	
+   357	  return addRevision(id, "Customer removed last note", {
+   358	    notesLog: nextLog,
+   359	    notes: compiled,
+   360	  });
+   361	}
+   362	
+   363	export function markSubmitted(id: string) {
+   364	  const b = getBuild(id);
+   365	  if (!b) return null;
+   366	
+   367	  const now = new Date().toISOString();
+   368	  const accessCode = b.accessCode && String(b.accessCode).trim().length >= 6 ? b.accessCode : makeAccessCode();
+   369	
+   370	  const next: BuildSubmission = {
+   371	    ...b,
+   372	    updatedAt: now,
+   373	    status: b.status === "draft" ? "submitted" : b.status,
+   374	    accessCode,
+   375	  };
+   376	
+   377	  upsertBuild(next);
+   378	  return next;
+   379	}
+   380	
+   381	export function findBuildsByPhoneAndCode(phone: string, code: string) {
+   382	  const p = normalizePhone(phone);
+   383	  const c = String(code || "").replace(/\\D+/g, "");
+   384	  if (!p || c.length < 6) return [];
+   385	  return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
+   386	}
+   387	
+   388	export function findBuildsByNameAndPhone(name: string, phone: string) {
+   389	  const n = String(name || "").trim().toLowerCase();
+   390	  const p = normalizePhone(phone);
+   391	  if (!n || p.length < 7) return [];
+   392	  return readBuilds().filter((b) => {
+   393	    const bn = String(b.customer?.name || "").trim().toLowerCase();
+   394	    const bp = normalizePhone(b.customer?.phone || "");
+   395	    return bn.includes(n) && bp.endsWith(p.slice(-7));
+   396	  });
+   397	}
+
+===== src/pages/admin/AdminBuildDetail.tsx =====
+     1	import { useEffect, useMemo, useState } from "react";
+     2	import { Link, useParams } from "react-router-dom";
+     3	import { getBuild, upsertBuild, removeLastCustomerNote, compileNotes, type BuildSubmission } from "../../lib/buildsStore";
+     4	import { estimateBuild } from "../../lib/buildPricing";
+     5	import { toast } from "../../lib/toast";
+     6	
+     7	function fmt(iso: string) {
+     8	  const d = new Date(iso);
+     9	  if (Number.isNaN(d.getTime())) return iso;
+    10	  return d.toLocaleString();
+    11	}
+    12	
+    13	function money(n: number) {
+    14	  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+    15	}
+    16	
+    17	export default function AdminBuildDetail() {
+    18	  const { id } = useParams();
+    19	  const [build, setBuild] = useState<BuildSubmission | null>(null);
+    20	
+    21	  useEffect(() => {
+    22	    if (!id) return;
+    23	    setBuild(getBuild(id));
+    24	  }, [id]);
+    25	
+    26	  const v = useMemo(() => build?.versions?.[0] ?? null, [build]);
+    27	
+    28	  if (!build || !v) {
+    29	    return (
+    30	      <div className="panel card card-center" style={{ maxWidth: 980, margin: "0 auto" }}>
+    31	        <h3 className="h3">Build not found</h3>
+    32	        <Link className="btn btn-primary" to="/admin/builds">Back</Link>
+    33	      </div>
+    34	    );
+    35	  }
+    36	
+    37	  const b = build;
+    38	  const vv = v;
+    39	
+    40	  function setStatus(status: BuildSubmission["status"]) {
+    41	    const next: BuildSubmission = { ...b, status, updatedAt: new Date().toISOString() };
+    42	    upsertBuild(next);
+    43	    setBuild(next);
+    44	    toast("Build status updated.", "success", "Saved", 1600);
+    45	  }
+    46	
+    47	  function recalcEstimate() {
+    48	    const est = estimateBuild(vv.inputsSnapshot.dims, vv.inputsSnapshot.options);
+    49	
+    50	    const nextV = {
+    51	      ...vv,
+    52	      estimatePublic: {
+    53	        total: est.total,
+    54	        rangeLow: est.rangeLow,
+    55	        rangeHigh: est.rangeHigh,
+    56	        materials: est.materials,
+    57	        labor: est.labor,
+    58	        overhead: est.overhead,
+    59	        finish: est.finish,
+    60	      },
+    61	    };
+    62	
+    63	    const next: BuildSubmission = { ...b, updatedAt: new Date().toISOString(), versions: [nextV, ...b.versions.slice(1)] };
+    64	    upsertBuild(next);
+    65	    setBuild(next);
+    66	    toast("Estimate recalculated.", "success", "Saved", 1600);
+    67	  }
+    68	
+    69	  function removeLastCustomerNoteAdmin() {
+    70	    if (!confirm("Remove the most recent customer note and regenerate previews?")) return;
+    71	    const next = removeLastCustomerNote(b.id);
+    72	    if (!next) {
+    73	      toast("Could not remove note.", "error", "Error", 1800);
+    74	      return;
+    75	    }
+    76	    setBuild(next);
+    77	    toast("Removed last customer note. Previews re-queued.", "success", "Saved", 1800);
+    78	  }
+    79	
+    80	  const notesLog = ((vv.inputsSnapshot as any).notesLog || []) as any[];
+    81	  const compiledNotes = compileNotes(notesLog, vv.inputsSnapshot.notes);
+    82	
+    83	  return (
+    84	    <div className="stack page" style={{ gap: 16 }}>
+    85	      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+    86	        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+    87	          <div style={{ display: "grid", gap: 6 }}>
+    88	            <h1 className="h2" style={{ margin: 0 }}>Admin — Build Detail</h1>
+    89	            <div className="muted" style={{ fontWeight: 850 }}>
+    90	              Build: <span className="badge">{String(build.id).slice(-8).toUpperCase()}</span> • Created: {fmt(build.createdAt)} • Updated: {fmt(build.updatedAt)}
+    91	            </div>
+    92	            <div className="muted" style={{ fontWeight: 850 }}>
+    93	              Customer: <strong>{build.customer?.name || "—"}</strong> • {build.customer?.phone || "—"} • {build.customer?.email || "—"}
+    94	            </div>
+    95	            <div className="muted" style={{ fontWeight: 850 }}>
+    96	              Type: {build.project?.type || "—"} • Dims: {build.project?.dims?.lengthIn ?? "—"}×{build.project?.dims?.widthIn ?? "—"}×{build.project?.dims?.heightIn ?? "—"} in
+    97	            </div>
+    98	          </div>
+    99	
+   100	          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   101	            <Link className="btn btn-ghost" to="/admin/builds">Back</Link>
+   102	            <Link className="btn btn-ghost" to={`/builds/${build.id}`}>Open customer preview</Link>
+   103	          </div>
+   104	        </div>
+   105	
+   106	        <div className="row" style={{ gap: 8, flexWrap: "wrap", marginTop: 12, justifyContent: "center" }}>
+   107	          <span className="badge" style={{ fontWeight: 950 }}>Status: {String(build.status).toUpperCase()}</span>
+   108	          <button className="btn btn-ghost" onClick={() => setStatus("reviewing")}>Reviewing</button>
+   109	          <button className="btn btn-ghost" onClick={() => setStatus("quote_sent")}>Quote Sent</button>
+   110	          <button className="btn btn-ghost" onClick={() => setStatus("approved")}>Approved</button>
+   111	          <button className="btn btn-ghost" onClick={() => setStatus("in_build")}>In Build</button>
+   112	          <button className="btn btn-ghost" onClick={() => setStatus("complete")}>Complete</button>
+   113	        </div>
+   114	
+   115	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   116	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Notes (compiled)</div>
+   117	          {compiledNotes ? (
+   118	            <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{compiledNotes}</div>
+   119	          ) : (
+   120	            <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>No notes</div>
+   121	          )}
+   122	
+   123	          <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+   124	            <button className="btn btn-ghost" onClick={removeLastCustomerNoteAdmin} style={{ fontWeight: 950 }}>
+   125	              Remove last customer note
+   126	            </button>
+   127	          </div>
+   128	        </div>
+   129	
+   130	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   131	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Public estimate (what customer sees)</div>
+   132	          {!v.estimatePublic ? (
+   133	            <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
+   134	              No estimate saved yet. Click “Recalculate Estimate”.
+   135	            </div>
+   136	          ) : (
+   137	            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   138	              <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   139	                <span className="badge rate-bright">Total: {money(v.estimatePublic.total)}</span>
+   140	                <span className="badge">Range: {money(v.estimatePublic.rangeLow || v.estimatePublic.total)} – {money(v.estimatePublic.rangeHigh || v.estimatePublic.total)}</span>
+   141	              </div>
+   142	              <div className="muted" style={{ fontWeight: 850 }}>
+   143	                Materials {money(v.estimatePublic.materials)} • Labor {money(v.estimatePublic.labor)} • Finish {money(v.estimatePublic.finish)} • Overhead {money(v.estimatePublic.overhead)}
+   144	              </div>
+   145	            </div>
+   146	          )}
+   147	
+   148	          <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+   149	            <button className="btn btn-primary" onClick={recalcEstimate}>Recalculate Estimate</button>
+   150	          </div>
+   151	        </div>
+   152	
+   153	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   154	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Renders (latest version)</div>
+   155	          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+   156	            {(v.renders || []).map((r) => (
+   157	              <div key={r.renderId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+   158	                <div style={{ fontWeight: 950 }}>{String(r.view).toUpperCase()} <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span></div>
+   159	                <div style={{ marginTop: 8, width: "100%", height: 140, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(15,23,42,0.16)" }}>
+   160	                  {r.imageDataUrl ? (
+   161	                    <img src={r.imageDataUrl} alt="render" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+   162	                  ) : (
+   163	                    <div className="card-center" style={{ width: "100%", height: "100%" }}>
+   164	                      <div className="muted" style={{ fontWeight: 850 }}>No image yet</div>
+   165	                    </div>
+   166	                  )}
+   167	                </div>
+   168	                <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
+   169	                  {r.estimatePublic ? `Render est: ${money(r.estimatePublic.total)}` : "Render est: —"}
+   170	                </div>
+   171	              </div>
+   172	            ))}
+   173	          </div>
+   174	        </div>
+   175	      </section>
+   176	    </div>
+   177	  );
+   178	}
