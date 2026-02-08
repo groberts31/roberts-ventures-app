@@ -11,71 +11,67 @@ html, body, #root {
   height: 100%;
 }
 
-/* ================= THEME ================= */
+/* ================= THEME TOKENS ================= */
+/* Default theme = light (your app can toggle by setting html[data-theme="dark"]) */
 
 :root {
-  /* LIGHT (default) */
-  --text-main: #050b18;      /* strong readable slate */
+  /* Text */
+  --text-main:   #050b18;
   --text-strong: #020617;
-  --text-soft: #0f172a;
-  --text-muted: #1f2937;
+  --text-soft:   #0f172a;
+  --text-muted:  #475569;
 
-  --border: rgba(15, 23, 42, 0.14);
-
-  --accent: #1d4ed8;
+  /* Borders + accents */
+  --border:  rgba(15, 23, 42, 0.14);
+  --accent:  #1d4ed8;
   --accent2: #60a5fa;
 
-  --head-accent: #0ea5e9;    /* bright cyan header accent (light) */
-  --sub-accent:  #7c3aed;    /* bright violet subtext (light) */
-  --shadow-soft: 0 10px 26px rgba(0,0,0,0.10);
-  --shadow-hover: 0 16px 42px rgba(29,78,216,0.22);
+  /* Surfaces */
+  --panel-bg:   rgba(255,255,255,0.97);
+  --field-bg:   rgba(255,255,255,0.98);
+  --badge-bg:   rgba(255,255,255,0.96);
+  --btn-bg:     rgba(255,255,255,0.98);
 
+  /* Radii + shadows */
   --radius-lg: 16px;
   --radius-md: 12px;
-
-  /* Surfaces */
-  --panel-bg: rgba(255,255,255,0.97);
-  --panel-bg-2: rgba(255,255,255,0.94);
-  --field-bg: rgba(255,255,255,0.98);
-  --badge-bg: rgba(255,255,255,0.96);
-  --btn-bg: rgba(255,255,255,0.98);
+  --shadow-soft:  0 10px 26px rgba(0,0,0,0.10);
+  --shadow-hover: 0 16px 42px rgba(29,78,216,0.22);
 }
 
-/* DARK (Stay Lit or when enabled) */
+/* Dark theme overrides */
 html[data-theme="dark"] {
-  --text-main: #f8fafc;      /* near-white */
+  --text-main:   #f8fafc;
   --text-strong: #ffffff;
-  --text-soft: #f1f5f9;
-  --text-muted: rgba(226,232,240,0.88);
+  --text-soft:   rgba(241,245,249,0.92);
+  --text-muted:  rgba(226,232,240,0.82);
 
-  --border: rgba(148,163,184,0.20);
-
-  --accent: #60a5fa;
+  --border:  rgba(148,163,184,0.22);
+  --accent:  #60a5fa;
   --accent2: #22d3ee;
 
-
-  --head-accent: #22d3ee;    /* bright cyan header accent (dark) */
-  --sub-accent:  #a78bfa;    /* bright violet subtext (dark) */
-  --shadow-soft: 0 12px 32px rgba(0,0,0,0.45);
-  --shadow-hover: 0 18px 52px rgba(34,211,238,0.20);
-
-  /* Surfaces */
-  --panel-bg: rgba(2,6,23,0.84);
-  --panel-bg-2: rgba(2,6,23,0.78);
+  --panel-bg: rgba(2,6,23,0.86);
   --field-bg: rgba(2,6,23,0.72);
   --badge-bg: rgba(2,6,23,0.72);
-  --btn-bg: rgba(2,6,23,0.72);
-}
+  --btn-bg:   rgba(2,6,23,0.72);
 
+  --shadow-soft:  0 12px 32px rgba(0,0,0,0.45);
+  --shadow-hover: 0 18px 52px rgba(34,211,238,0.20);
+}
 
 /* ================= BASE ================= */
 
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, Inter, Arial;
+  -webkit-font-smoothing: antialiased;
+
   color: var(--text-main);
   background-color: #f8fbff;
-  -webkit-font-smoothing: antialiased;
+}
+
+html[data-theme="dark"] body {
+  background-color: #020617;
 }
 
 /* ================= TEXT ================= */
@@ -119,33 +115,11 @@ body {
   font-weight: 600;
 }
 
-.muted { color: var(--text-muted); }
-
-
-
-/* Helpers: bright text you can reuse everywhere */
-.title-accent{
-  color: var(--head-accent);
-  text-shadow: 0 0 18px rgba(34,211,238,0.18);
-  font-weight: 950;
+.muted {
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
-.sub-accent{
-  color: var(--sub-accent);
-  font-weight: 850;
-}
-
-/* Use for rates/prices that should match card description subtext */
-.price-accent{
-  color: var(--sub-accent);
-  font-weight: 950;
-}
-
-/* Use for 2nd navbar brand + links when you want them to match subtext color */
-.nav-sub-accent{
-  color: var(--sub-accent);
-  font-weight: 900;
-}
 /* ================= LAYOUT ================= */
 
 .stack {
@@ -166,7 +140,7 @@ body {
   justify-content: center;
 }
 
-/* ================= CARDS ================= */
+/* ================= CARDS / PANELS ================= */
 
 .panel {
   color: var(--text-main);
@@ -175,13 +149,20 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(16px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
+.card { padding: 18px; }
 
+.card-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
 
-
-/* ================= GLOW VARIANT ================= */
-/* IMPORTANT: selector is .panel.glow-panel so it beats .panel’s box-shadow */
+/* Glow variant stays (optional class you can add anywhere) */
 .panel.glow-panel{
   box-shadow:
     var(--shadow-soft),
@@ -190,7 +171,6 @@ body {
     0 0 120px rgba(167,139,250,0.18);
   border-color: rgba(34,211,238,0.34);
 }
-
 .panel.glow-panel:hover{
   box-shadow:
     var(--shadow-soft),
@@ -200,25 +180,20 @@ body {
   transform: translateY(-1px);
 }
 
-html[data-theme="dark"] .panel.glow-panel{
-  box-shadow:
-    var(--shadow-soft),
-    0 0 32px rgba(34,211,238,0.55),
-    0 0 86px rgba(59,130,246,0.34),
-    0 0 140px rgba(167,139,250,0.22);
-  border-color: rgba(34,211,238,0.44);
-}
-.card {
-  padding: 18px;
+/* Hover lift for desktop */
+@media (hover: hover) and (pointer: fine) {
+  .panel:hover {
+    transform: translateY(-2px);
+    border-color: rgba(96,165,250,0.45);
+    box-shadow:
+      0 18px 40px rgba(29,78,216,0.18),
+      0 0 0 1px rgba(96,165,250,0.18);
+  }
 }
 
-/* Centered card variant */
-.card-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 8px;
+/* Tap feedback for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .panel:active { transform: scale(0.99); }
 }
 
 /* ================= BUTTONS ================= */
@@ -231,19 +206,48 @@ html[data-theme="dark"] .panel.glow-panel{
   color: var(--text-main);
   font-weight: 900;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(29,78,216,0.7);
+  border-color: rgba(96,165,250,0.6);
   box-shadow: var(--shadow-hover);
 }
 
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.98);
+}
+
 .btn-primary {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(90deg, rgba(29,78,216,.95), rgba(96,165,250,.95));
-  color: white;
+  color: #fff;
   border-color: rgba(29,78,216,.6);
+}
+
+/* Subtle animated shine on primary buttons (desktop hover only) */
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 50%;
+  height: 180%;
+  transform: rotate(18deg);
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.22) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transition: left 0.75s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover::after { left: 120%; }
 }
 
 .btn-ghost {
@@ -264,8 +268,8 @@ html[data-theme="dark"] .panel.glow-panel{
 
 .field:focus {
   outline: none;
-  border-color: rgba(29,78,216,.7);
-  box-shadow: 0 0 0 4px rgba(29,78,216,.2);
+  border-color: rgba(96,165,250,.7);
+  box-shadow: 0 0 0 4px rgba(96,165,250,.22);
 }
 
 /* ================= BADGE ================= */
@@ -280,14 +284,8 @@ html[data-theme="dark"] .panel.glow-panel{
   color: var(--text-soft);
 }
 
-/* ================= MOTION / ANIMATION ================= */
+/* ================= PAGE MOTION ================= */
 
-/* Respect users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-}
-
-/* Page fade-in */
 .page {
   animation: pageFade 0.35s ease-out both;
 }
@@ -297,553 +295,7 @@ html[data-theme="dark"] .panel.glow-panel{
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Card hover lift (desktop) + tap feedback (mobile) */
-.panel {
-  color: var(--text-main);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .panel:hover {
-    transform: translateY(-2px);
-    border-color: rgba(29,78,216,0.35);
-    box-shadow: 0 18px 40px rgba(29,78,216,0.18);
-  }
-}
-
-/* Tap feedback for touch devices */
-@media (hover: none) and (pointer: coarse) {
-  .panel:active {
-    transform: scale(0.99);
-  }
-}
-
-/* Button press feel */
-.btn {
-  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
-}
-
-.btn:active {
-  transform: translateY(1px) scale(0.99);
-  filter: brightness(0.98);
-}
-
-/* Futuristic glow ring utility (optional use) */
-.glow {
-  box-shadow:
-    0 0 0 1px rgba(29,78,216,0.18),
-    0 10px 30px rgba(29,78,216,0.18);
-}
-
-/* Subtle animated shine on primary buttons */
-.btn-primary {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary::after {
-  content: "";
-  position: absolute;
-  top: -40%;
-  left: -60%;
-  width: 50%;
-  height: 180%;
-  transform: rotate(18deg);
-  background: linear-gradient(
-    to right,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.22) 50%,
-    rgba(255,255,255,0) 100%
-  );
-  transition: left 0.5s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .btn-primary:hover::after {
-    left: 120%;
-  }
-}
-
-/* ================= FUTURISTIC BOOST ================= */
-
-/* Slower, smoother page transition */
-.page {
-  animation: pageFade 0.55s cubic-bezier(.2,.9,.2,1) both;
-}
-
-@keyframes pageFade {
-  from { opacity: 0; transform: translateY(10px); filter: blur(1px); }
-  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
-}
-
-/* Stronger neon edge and glow */
-.panel {
-  color: var(--text-main);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
-}
-
-/* Subtle moving highlight (gives “future glass” feel) */
-.panel::before {
-  content: "";
-  position: absolute;
-  inset: -40%;
-  background: radial-gradient(circle at 20% 20%, rgba(96,165,250,0.16), rgba(255,255,255,0) 55%);
-  transform: translate3d(-18%, -12%, 0);
-  pointer-events: none;
-  opacity: 0.55;
-  animation: panelGlowDrift 10s ease-in-out infinite;
-}
-
-@keyframes panelGlowDrift {
-  0%   { transform: translate3d(-18%, -12%, 0); opacity: 0.45; }
-  50%  { transform: translate3d(8%, 6%, 0);    opacity: 0.7; }
-  100% { transform: translate3d(-18%, -12%, 0); opacity: 0.45; }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .panel:hover {
-    transform: translateY(-4px);
-    border-color: rgba(96,165,250,0.55);
-    box-shadow:
-      0 18px 46px rgba(29,78,216,0.22),
-      0 0 0 1px rgba(96,165,250,0.22),
-      0 0 32px rgba(96,165,250,0.18);
-  }
-}
-
-/* Buttons: slightly stronger sheen + glow */
-.btn:hover {
-  box-shadow:
-    0 16px 36px rgba(29,78,216,0.22),
-    0 0 0 1px rgba(96,165,250,0.18);
-}
-
-.btn-primary::after {
-  transition: left 0.75s ease;
-}
-
-/* Optional: apply to any element to add “neon ring” */
-.neon {
-  box-shadow:
-    0 0 0 1px rgba(96,165,250,0.22),
-    0 0 28px rgba(96,165,250,0.22);
-}
-
-/* ================================
-   SMART AUTO THEME SYSTEM
-================================ */
-
-/* Default = dark mode (image backgrounds) */
-:root {
-  --text-primary: #e5e7eb;
-  --text-muted: #cbd5f5;
-  --card-bg: rgba(10,10,15,0.85);
-  --card-border: rgba(148,163,184,0.18);
-}
-
-/* Light mode override */
-body.light-mode {
-  --text-primary: #0f172a;
-  --text-muted: #475569;
-  --card-bg: rgba(255,255,255,0.9);
-  --card-border: rgba(2,6,23,0.12);
-}
-
-/* Apply globally */
-body {
-  color: var(--text-primary);
-}
-
-/* Muted text */
-.muted {
-  color: var(--text-muted) !important;
-}
-
-/* Cards / panels */
-.panel.card {
-  background: var(--card-bg) !important;
-  border: 1px solid var(--card-border) !important;
-  backdrop-filter: blur(6px);
-}
-
-/* Headings pop */
-h1, h2, h3, h4 {
-  color: var(--text-primary);
-  text-shadow: 0 0 12px rgba(0,0,0,0.15);
-}
-
-
-
-html[data-theme="dark"] .muted {
-  color: rgba(226,232,240,0.90);
-}
-
-html[data-theme="dark"] .badge {
-  color: rgba(241,245,249,0.95);
-}
-
-
-
-/* ================= MAX CONTRAST OVERRIDES ================= */
-/* These are placed at the END of the file so they win. */
-
-html[data-theme="light"] {
-  --text-main: #020617;          /* near-black */
-  --text-strong: #020617;
-  --text-soft: #0f172a;          /* deep slate */
-  --text-muted: #111827;         /* darker muted (still readable) */
-
-  --border: rgba(2, 6, 23, 0.22);
-  --panel-bg: rgba(255,255,255,0.995);   /* almost pure white */
-  --panel-bg-2: rgba(255,255,255,0.98);
-  --field-bg: rgba(255,255,255,0.995);
-  --badge-bg: rgba(255,255,255,0.995);
-  --btn-bg: rgba(255,255,255,0.995);
-}
-
-html[data-theme="dark"] {
-  --text-main: #ffffff;           /* pure white */
-  --text-strong: #ffffff;
-  --text-soft: rgba(255,255,255,0.92);
-  --text-muted: rgba(255,255,255,0.78);
-
-  --border: rgba(255,255,255,0.22);
-  --panel-bg: rgba(0,0,0,0.88);   /* near-black */
-  --panel-bg-2: rgba(0,0,0,0.80);
-  --field-bg: rgba(0,0,0,0.72);
-  --badge-bg: rgba(0,0,0,0.72);
-  --btn-bg: rgba(0,0,0,0.72);
-}
-
-/* Force panels to clearly separate from background */
-.panel {
-  background: var(--panel-bg) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 18px 44px rgba(0,0,0,0.22) !important;
-}
-
-/* Make ALL common text inside cards obey theme variables */
-.panel, .card, .stack, .page {
-  color: var(--text-main) !important;
-}
-
-.h1, .h2, .h3 {
-  color: var(--text-strong) !important;
-}
-
-.body, .lead {
-  color: var(--text-soft) !important;
-}
-
-.muted, .label {
-  color: var(--text-muted) !important;
-}
-
-/* Inputs / buttons / badges must not fade */
-.field, input, textarea, select {
-  background: var(--field-bg) !important;
-  color: var(--text-main) !important;
-  border-color: var(--border) !important;
-}
-
-.badge {
-  background: var(--badge-bg) !important;
-  color: var(--text-main) !important;
-  border-color: var(--border) !important;
-}
-
-.btn {
-  background: var(--btn-bg) !important;
-  color: var(--text-main) !important;
-  border-color: var(--border) !important;
-}
-
-/* Dark mode: add inner highlight + stronger shadow so text pops */
-html[data-theme="dark"] .panel {
-  box-shadow:
-    0 18px 48px rgba(0,0,0,0.70),
-    0 0 0 1px rgba(255,255,255,0.10) inset !important;
-}
-
-/* Light mode: crisp edges */
-html[data-theme="light"] .panel {
-  box-shadow:
-    0 14px 34px rgba(2,6,23,0.10),
-    0 0 0 1px rgba(2,6,23,0.06) inset !important;
-}
-
-
-/* ================= CARD HEADER NEON ACCENT ================= */
-/* Bright header text across the entire site */
-:root {
-  --header-neon: #22d3ee; /* cyan neon */
-  --header-glow: rgba(34, 211, 238, 0.45);
-}
-
-html[data-theme="dark"] {
-  --header-neon: #38bdf8; /* brighter in dark mode */
-  --header-glow: rgba(56, 189, 248, 0.55);
-}
-
-.h1, .h2, .h3 {
-  color: var(--header-neon) !important;
-  text-shadow:
-    0 0 10px var(--header-glow),
-    0 0 18px rgba(59,130,246,0.22) !important;
-}
-
-/* Keep non-header body text readable */
-.body, .lead {
-  text-shadow: none !important;
-}
-
-
-/* ================= SUBHEADER / SECONDARY TEXT BOOST ================= */
-/* Text directly under headers (usually .muted) should be brighter than body,
-   but dimmer than neon headers. */
-
-:root{
-  --subheader: #334155;        /* slate for light background */
-  --subheader-strong: #1f2937; /* slightly stronger slate */
-  --body-readable: #0f172a;    /* ensure body is readable on light cards */
-}
-
-html[data-theme="dark"]{
-  --subheader: #c7d2fe;        /* soft indigo/ice for dark mode */
-  --subheader-strong: #e0e7ff; /* brighter but not neon */
-  --body-readable: #e5e7eb;    /* readable on dark */
-}
-
-/* Most “text directly under header” in your UI uses .muted */
-.muted{
-  color: var(--subheader) !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.01em;
-}
-
-/* If you want an even stronger “subheader” line, use .muted strong tags */
-.muted b, .muted strong{
-  color: var(--subheader-strong) !important;
-}
-
-/* Keep normal paragraph text readable in both themes */
-.body, .lead{
-  color: var(--body-readable) !important;
-}
-
-
-/* ================= CARD TEXT CONTRAST BOOST (GLOBAL) ================= */
-/* Makes card headers bright, and makes descriptions/subtexts brighter (but not as bright as headers). */
-
-:root{
-  /* Light mode card text */
-  --card-header: #0b5cff;   /* bright electric blue */
-  --card-subtext: #1f2a44;  /* darker but high-contrast slate */
-}
-
-html[data-theme="dark"]{
-  /* Dark mode card text */
-  --card-header: #67e8f9;   /* neon cyan */
-  --card-subtext: #c7d2fe;  /* bright periwinkle */
-}
-
-/* Card headers: bright */
-.panel .h1,
-.panel .h2,
-.panel .h3,
-.panel h1,
-.panel h2,
-.panel h3{
-  color: var(--card-header) !important;
-}
-
-/* Card descriptions/subtexts: brighter but less bright than header */
-.panel .muted,
-.panel .lead,
-.panel .body,
-.panel p,
-.panel li,
-.panel label,
-.panel small{
-  color: var(--card-subtext) !important;
-}
-
-/* Keep badges readable too */
-.panel .badge{
-  color: var(--card-subtext) !important;
-}
-
-/* ================= UNIFIED CARD SUBTEXT COLOR ================= */
-/* All card descriptions use ONE bright, readable color */
-
-:root{
-  /* Light mode */
-  --card-header: #0057ff;     /* strong blue */
-  --card-subtext: #0f172a;    /* very dark slate (high contrast) */
-}
-
-html[data-theme="dark"]{
-  /* Dark mode */
-  --card-header: #67e8f9;     /* neon cyan */
-  --card-subtext: #e0e7ff;    /* bright lavender-white */
-}
-
-/* Headers stay bright */
-.panel .h1,
-.panel .h2,
-.panel .h3,
-.panel h1,
-.panel h2,
-.panel h3{
-  color: var(--card-header) !important;
-}
-
-/* ALL subtext uses same color */
-.panel .muted,
-.panel .lead,
-.panel .body,
-.panel p,
-.panel li,
-.panel span,
-.panel small,
-.panel label{
-  color: var(--card-subtext) !important;
-  opacity: 1 !important;
-}
-
-/* ================= CARD SUBTEXT ONLY (BRIGHT) ================= */
-/* Strictly targets description text under headers */
-
-:root{
-  --card-header: #0057ff;   /* header color */
-  --card-subtext: #0ea5e9;  /* bright neon subtext */
-}
-
-html[data-theme="dark"]{
-  --card-header: #67e8f9;
-  --card-subtext: #c7d2fe;
-}
-
-/* Headers inside cards */
-.panel .h1,
-.panel .h2,
-.panel .h3{
-  color: var(--card-header) !important;
-}
-
-/* ONLY description/subtext */
-.panel .muted,
-.panel .body,
-.panel .lead,
-.panel .description,
-.panel .subtext{
-  color: var(--card-subtext) !important;
-  opacity: 1 !important;
-}
-
-/* Reset normal paragraphs so they don't get forced */
-.panel p:not(.muted):not(.body):not(.lead):not(.description):not(.subtext){
-  color: var(--text-main) !important;
-}
-
-/* ================= STAY LIT 2ND NAVBAR COLORS ================= */
-/* Make 2nd navbar brand + links match card description subtext color */
-
-.staylit-subnav,
-.staylit-subnav * {
-  color: var(--card-subtext) !important;
-}
-
-/* Keep hover/active readable + consistent */
-.staylit-subnav a:hover,
-.staylit-subnav a:focus-visible {
-  opacity: 0.95;
-  text-decoration: none;
-  filter: drop-shadow(0 0 10px rgba(14,165,233,0.25));
-}
-
-.staylit-subnav a[aria-current="page"] {
-  font-weight: 900;
-  background: rgba(14,165,233,0.14);
-  border: 1px solid rgba(14,165,233,0.30);
-  border-radius: 999px;
-  padding: 6px 10px;
-}
-
-
-/* ================= RATES / PRICES ================= */
-
-/* Prices, totals, amounts, estimates */
-.price,
-.rate,
-.amount,
-.total,
-.money,
-.estimate,
-.cart-price,
-.schedule-price {
-  color: var(--card-subtext) !important;
-  font-weight: 800;
-}
-
-/* Any strong text inside cards that looks like pricing */
-.panel strong,
-.panel b {
-  color: var(--card-subtext);
-}
-
-/* ===== Bright subtext (used for card descriptions + rates) ===== */
-.subtext-bright,
-.rate-bright {
-  color: var(--subtext-bright, #a7f3d0) !important; /* fallback */
-  font-weight: 800;
-  text-shadow: 0 0 14px rgba(34,197,94,0.20);
-}
-
-
-/* === CART COUNT BADGE === */
-.cart-count-badge{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  /* Sizing */
-  min-width: 22px;
-  height: 18px;
-  padding: 0 7px;
-
-  /* Look */
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: 0.02em;
-  line-height: 1;
-
-  /* Neon badge styling */
-  color: rgba(248,250,252,0.98);
-  background: linear-gradient(90deg, rgba(56,189,248,0.95), rgba(167,139,250,0.95));
-  border: 1px solid rgba(255,255,255,0.22);
-
-  /* Pop over dark/light */
-  box-shadow:
-    0 0 0 1px rgba(56,189,248,0.12) inset,
-    0 0 14px rgba(56,189,248,0.22),
-    0 0 22px rgba(167,139,250,0.14);
-
-  /* Keeps badge from shrinking */
-  flex-shrink: 0;
-}
-
-/* Slightly calmer in light theme so it doesn’t look “too hot” */
-html[data-theme="light"] .cart-count-badge{
-  box-shadow:
-    0 0 0 1px rgba(29,78,216,0.10) inset,
-    0 0 10px rgba(29,78,216,0.16);
-}
-
-/* When count is 0, make it look “inactive” (still visible) */
-.cart-count-badge:empty{
-  display: none;
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }

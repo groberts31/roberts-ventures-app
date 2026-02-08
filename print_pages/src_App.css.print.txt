@@ -1,0 +1,173 @@
+     1	#root {
+     2	  max-width: 1280px;
+     3	  margin: 0 auto;
+     4	  padding: 2rem;
+     5	  text-align: center;
+     6	}
+     7	
+     8	.logo {
+     9	  height: 6em;
+    10	  padding: 1.5em;
+    11	  will-change: filter;
+    12	  transition: filter 300ms;
+    13	}
+    14	.logo:hover {
+    15	  filter: drop-shadow(0 0 2em #646cffaa);
+    16	}
+    17	.logo.react:hover {
+    18	  filter: drop-shadow(0 0 2em #61dafbaa);
+    19	}
+    20	
+    21	@keyframes logo-spin {
+    22	  from {
+    23	    transform: rotate(0deg);
+    24	  }
+    25	  to {
+    26	    transform: rotate(360deg);
+    27	  }
+    28	}
+    29	
+    30	@media (prefers-reduced-motion: no-preference) {
+    31	  a:nth-of-type(2) .logo {
+    32	    animation: logo-spin infinite 20s linear;
+    33	  }
+    34	}
+    35	
+    36	.card {
+    37	  padding: 2em;
+    38	}
+    39	
+    40	.read-the-docs {
+    41	  color: #888;
+    42	}
+    43	
+    44	/* --- Splash fade-in animation (Home) --- */
+    45	.page-enter {
+    46	  animation: pageEnter 520ms ease-out both;
+    47	}
+    48	
+    49	@keyframes pageEnter {
+    50	  from {
+    51	    opacity: 0;
+    52	    transform: translateY(10px);
+    53	    filter: blur(2px);
+    54	  }
+    55	  to {
+    56	    opacity: 1;
+    57	    transform: translateY(0);
+    58	    filter: blur(0);
+    59	  }
+    60	}
+    61	
+    62	/* Respect accessibility preferences */
+    63	@media (prefers-reduced-motion: reduce) {
+    64	  .page-enter {
+    65	    animation: none;
+    66	  }
+    67	}
+    68	
+    69	
+    70	/* RV: Schedule item styles */
+    71	.schedList {
+    72	  display: grid;
+    73	  gap: 12px;
+    74	  margin-top: 12px;
+    75	}
+    76	
+    77	.schedItem {
+    78	  width: 100%;
+    79	  border-radius: 16px;
+    80	  padding: 14px;
+    81	  border: 1px solid rgba(15, 23, 42, 0.10);
+    82	  background: rgba(255,255,255,0.72);
+    83	  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.10);
+    84	  backdrop-filter: blur(8px);
+    85	}
+    86	
+    87	.schedItem:hover {
+    88	  border-color: rgba(99, 102, 241, 0.25);
+    89	  box-shadow: 0 18px 42px rgba(2, 6, 23, 0.14);
+    90	}
+    91	
+    92	.schedItemTop {
+    93	  display: flex;
+    94	  justify-content: space-between;
+    95	  align-items: flex-start;
+    96	  gap: 12px;
+    97	  flex-wrap: wrap;
+    98	}
+    99	
+   100	.schedItemTitle {
+   101	  display: flex;
+   102	  align-items: center;
+   103	  gap: 10px;
+   104	  flex-wrap: wrap;
+   105	  font-weight: 950;
+   106	  color: #0f172a;
+   107	}
+   108	
+   109	.schedItemMeta {
+   110	  margin-top: 6px;
+   111	  font-weight: 850;
+   112	  opacity: 0.85;
+   113	}
+   114	
+   115	.schedPills {
+   116	  display: flex;
+   117	  gap: 8px;
+   118	  flex-wrap: wrap;
+   119	  margin-top: 8px;
+   120	}
+   121	
+   122	.schedPill {
+   123	  display: inline-flex;
+   124	  align-items: center;
+   125	  justify-content: center;
+   126	  padding: 6px 10px;
+   127	  border-radius: 999px;
+   128	  font-weight: 950;
+   129	  font-size: 12px;
+   130	  border: 1px solid rgba(15, 23, 42, 0.10);
+   131	  background: rgba(255,255,255,0.75);
+   132	}
+   133	
+   134	.schedPillService {
+   135	  background: rgba(79, 70, 229, 0.10);
+   136	  border-color: rgba(79, 70, 229, 0.22);
+   137	  color: #312e81;
+   138	}
+   139	
+   140	.schedPillAddOn {
+   141	  background: rgba(16, 185, 129, 0.10);
+   142	  border-color: rgba(16, 185, 129, 0.22);
+   143	  color: #064e3b;
+   144	}
+   145	
+   146	.schedEstimate {
+   147	  display: inline-flex;
+   148	  align-items: center;
+   149	  justify-content: center;
+   150	  padding: 8px 12px;
+   151	  border-radius: 12px;
+   152	  font-weight: 950;
+   153	  border: 1px solid rgba(15, 23, 42, 0.10);
+   154	  background: rgba(255,255,255,0.80);
+   155	}
+   156	
+   157	.schedQuote {
+   158	  background: rgba(245, 158, 11, 0.14);
+   159	  border-color: rgba(245, 158, 11, 0.22);
+   160	  color: #7c2d12;
+   161	}
+   162	
+   163	.schedFrom {
+   164	  background: rgba(14, 165, 233, 0.12);
+   165	  border-color: rgba(14, 165, 233, 0.22);
+   166	  color: #0c4a6e;
+   167	}
+   168	
+   169	.schedFixed {
+   170	  background: rgba(34, 197, 94, 0.12);
+   171	  border-color: rgba(34, 197, 94, 0.20);
+   172	  color: #14532d;
+   173	}

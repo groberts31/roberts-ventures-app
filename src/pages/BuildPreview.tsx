@@ -321,12 +321,12 @@ export default function BuildPreview() {
             </label>
 
             <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-              <button className="btn btn-primary" onClick={submitRefinement} style={{ fontWeight: 950 }}>
+              <button type="button" className="btn btn-primary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); submitRefinement(); }} style={{ fontWeight: 950 }}>
                 Save refinement + regenerate previews →
               </button>
 
               {canRemoveCustomerNote ? (
-                <button className="btn btn-ghost" onClick={removeLastCustomerNoteClick} style={{ fontWeight: 950 }}>
+                <button type="button" className="btn btn-ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeLastCustomerNoteClick(); }} style={{ fontWeight: 950 }}>
                   Remove my last note
                 </button>
               ) : null}

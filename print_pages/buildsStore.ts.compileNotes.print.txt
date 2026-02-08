@@ -1,0 +1,51 @@
+   190	      ...project,
+   191	      type: String(project.type || ""),
+   192	      dims: project.dims,
+   193	      options: project.options,
+   194	
+   195	      // IMPORTANT: going forward we keep legacy notes empty (canonical is notesLog)
+   196	      notes: "",
+   197	
+   198	      notesLog: projectNotesLog,
+   199	      refPhotos: Array.isArray(project.refPhotos) ? project.refPhotos : [],
+   200	    },
+   201	    versions: nextVersions,
+   202	  };
+   203	
+   204	  return out;
+   205	}
+   206	
+   207	/**
+   208	 * Compile notes for display + renderer.
+   209	 * We do NOT prepend legacy notes anymore (we keep legacy notes empty going forward).
+   210	 * This prevents "remove last note" from appearing to do nothing.
+   211	 */
+   212	export function compileNotes(notesLog?: NoteItem[], _legacyNotes?: string) {
+   213	  const items = Array.isArray(notesLog) ? notesLog : [];
+   214	  return items
+   215	    .map((n) => String(n?.text || "").trim())
+   216	    .filter(Boolean)
+   217	    .join("\n\n---\n\n");
+   218	}
+   219	
+   220	export function normalizePhone(p: string) {
+   221	  return String(p || "").replace(/\D+/g, "");
+   222	}
+   223	
+   224	export function makeAccessCode() {
+   225	  return String(Math.floor(100000 + Math.random() * 900000));
+   226	}
+   227	
+   228	export function readBuilds(): BuildSubmission[] {
+   229	  const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
+   230	  const raw = (Array.isArray(arr) ? arr : []).filter(Boolean);
+   231	  return raw.map(normalizeBuild).filter(Boolean) as BuildSubmission[];
+   232	}
+   233	
+   234	export function writeBuilds(items: BuildSubmission[]) {
+   235	  localStorage.setItem(KEY, JSON.stringify(items));
+   236	}
+   237	
+   238	export function getBuild(id: string): BuildSubmission | null {
+   239	  const all = readBuilds();
+   240	  const found = all.find((b) => String(b.id) === String(id));

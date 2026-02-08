@@ -1,0 +1,849 @@
+     1	/* ================= RESET ================= */
+     2	
+     3	*,
+     4	*::before,
+     5	*::after { box-sizing: border-box; }
+     6	
+     7	html, body, #root {
+     8	  margin: 0;
+     9	  padding: 0;
+    10	  min-height: 100%;
+    11	  height: 100%;
+    12	}
+    13	
+    14	/* ================= THEME ================= */
+    15	
+    16	:root {
+    17	  /* LIGHT (default) */
+    18	  --text-main: #050b18;      /* strong readable slate */
+    19	  --text-strong: #020617;
+    20	  --text-soft: #0f172a;
+    21	  --text-muted: #1f2937;
+    22	
+    23	  --border: rgba(15, 23, 42, 0.14);
+    24	
+    25	  --accent: #1d4ed8;
+    26	  --accent2: #60a5fa;
+    27	
+    28	  --head-accent: #0ea5e9;    /* bright cyan header accent (light) */
+    29	  --sub-accent:  #7c3aed;    /* bright violet subtext (light) */
+    30	  --shadow-soft: 0 10px 26px rgba(0,0,0,0.10);
+    31	  --shadow-hover: 0 16px 42px rgba(29,78,216,0.22);
+    32	
+    33	  --radius-lg: 16px;
+    34	  --radius-md: 12px;
+    35	
+    36	  /* Surfaces */
+    37	  --panel-bg: rgba(255,255,255,0.97);
+    38	  --panel-bg-2: rgba(255,255,255,0.94);
+    39	  --field-bg: rgba(255,255,255,0.98);
+    40	  --badge-bg: rgba(255,255,255,0.96);
+    41	  --btn-bg: rgba(255,255,255,0.98);
+    42	}
+    43	
+    44	/* DARK (Stay Lit or when enabled) */
+    45	html[data-theme="dark"] {
+    46	  --text-main: #f8fafc;      /* near-white */
+    47	  --text-strong: #ffffff;
+    48	  --text-soft: #f1f5f9;
+    49	  --text-muted: rgba(226,232,240,0.88);
+    50	
+    51	  --border: rgba(148,163,184,0.20);
+    52	
+    53	  --accent: #60a5fa;
+    54	  --accent2: #22d3ee;
+    55	
+    56	
+    57	  --head-accent: #22d3ee;    /* bright cyan header accent (dark) */
+    58	  --sub-accent:  #a78bfa;    /* bright violet subtext (dark) */
+    59	  --shadow-soft: 0 12px 32px rgba(0,0,0,0.45);
+    60	  --shadow-hover: 0 18px 52px rgba(34,211,238,0.20);
+    61	
+    62	  /* Surfaces */
+    63	  --panel-bg: rgba(2,6,23,0.84);
+    64	  --panel-bg-2: rgba(2,6,23,0.78);
+    65	  --field-bg: rgba(2,6,23,0.72);
+    66	  --badge-bg: rgba(2,6,23,0.72);
+    67	  --btn-bg: rgba(2,6,23,0.72);
+    68	}
+    69	
+    70	
+    71	/* ================= BASE ================= */
+    72	
+    73	body {
+    74	  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    75	    "Segoe UI", Roboto, Inter, Arial;
+    76	  color: var(--text-main);
+    77	  background-color: #f8fbff;
+    78	  -webkit-font-smoothing: antialiased;
+    79	}
+    80	
+    81	/* ================= TEXT ================= */
+    82	
+    83	.h1 {
+    84	  font-size: clamp(28px, 3vw, 44px);
+    85	  font-weight: 900;
+    86	  letter-spacing: -0.03em;
+    87	  color: var(--text-strong);
+    88	}
+    89	
+    90	.h2 {
+    91	  font-size: clamp(20px, 2vw, 28px);
+    92	  font-weight: 850;
+    93	  color: var(--text-strong);
+    94	}
+    95	
+    96	.h3 {
+    97	  font-size: 16px;
+    98	  font-weight: 900;
+    99	  color: var(--text-strong);
+   100	}
+   101	
+   102	.h1-accent {
+   103	  background: linear-gradient(90deg, var(--accent), var(--accent2));
+   104	  -webkit-background-clip: text;
+   105	  color: transparent;
+   106	}
+   107	
+   108	.lead {
+   109	  font-size: 16px;
+   110	  line-height: 1.6;
+   111	  color: var(--text-soft);
+   112	  font-weight: 600;
+   113	}
+   114	
+   115	.body {
+   116	  font-size: 14.5px;
+   117	  line-height: 1.6;
+   118	  color: var(--text-soft);
+   119	  font-weight: 600;
+   120	}
+   121	
+   122	.muted { color: var(--text-muted); }
+   123	
+   124	
+   125	
+   126	/* Helpers: bright text you can reuse everywhere */
+   127	.title-accent{
+   128	  color: var(--head-accent);
+   129	  text-shadow: 0 0 18px rgba(34,211,238,0.18);
+   130	  font-weight: 950;
+   131	}
+   132	
+   133	.sub-accent{
+   134	  color: var(--sub-accent);
+   135	  font-weight: 850;
+   136	}
+   137	
+   138	/* Use for rates/prices that should match card description subtext */
+   139	.price-accent{
+   140	  color: var(--sub-accent);
+   141	  font-weight: 950;
+   142	}
+   143	
+   144	/* Use for 2nd navbar brand + links when you want them to match subtext color */
+   145	.nav-sub-accent{
+   146	  color: var(--sub-accent);
+   147	  font-weight: 900;
+   148	}
+   149	/* ================= LAYOUT ================= */
+   150	
+   151	.stack {
+   152	  display: grid;
+   153	  gap: 14px;
+   154	}
+   155	
+   156	.row {
+   157	  display: flex;
+   158	  align-items: center;
+   159	  gap: 12px;
+   160	  flex-wrap: wrap;
+   161	}
+   162	
+   163	.center {
+   164	  text-align: center;
+   165	  align-items: center;
+   166	  justify-content: center;
+   167	}
+   168	
+   169	/* ================= CARDS ================= */
+   170	
+   171	.panel {
+   172	  color: var(--text-main);
+   173	  background: var(--panel-bg);
+   174	  border: 1px solid var(--border);
+   175	  border-radius: var(--radius-lg);
+   176	  box-shadow: var(--shadow-soft);
+   177	  backdrop-filter: blur(16px);
+   178	}
+   179	
+   180	
+   181	
+   182	
+   183	/* ================= GLOW VARIANT ================= */
+   184	/* IMPORTANT: selector is .panel.glow-panel so it beats .panel’s box-shadow */
+   185	.panel.glow-panel{
+   186	  box-shadow:
+   187	    var(--shadow-soft),
+   188	    0 0 28px rgba(34,211,238,0.45),
+   189	    0 0 72px rgba(59,130,246,0.28),
+   190	    0 0 120px rgba(167,139,250,0.18);
+   191	  border-color: rgba(34,211,238,0.34);
+   192	}
+   193	
+   194	.panel.glow-panel:hover{
+   195	  box-shadow:
+   196	    var(--shadow-soft),
+   197	    0 0 34px rgba(34,211,238,0.55),
+   198	    0 0 92px rgba(59,130,246,0.34),
+   199	    0 0 150px rgba(167,139,250,0.22);
+   200	  transform: translateY(-1px);
+   201	}
+   202	
+   203	html[data-theme="dark"] .panel.glow-panel{
+   204	  box-shadow:
+   205	    var(--shadow-soft),
+   206	    0 0 32px rgba(34,211,238,0.55),
+   207	    0 0 86px rgba(59,130,246,0.34),
+   208	    0 0 140px rgba(167,139,250,0.22);
+   209	  border-color: rgba(34,211,238,0.44);
+   210	}
+   211	.card {
+   212	  padding: 18px;
+   213	}
+   214	
+   215	/* Centered card variant */
+   216	.card-center {
+   217	  display: flex;
+   218	  flex-direction: column;
+   219	  align-items: center;
+   220	  text-align: center;
+   221	  gap: 8px;
+   222	}
+   223	
+   224	/* ================= BUTTONS ================= */
+   225	
+   226	.btn {
+   227	  padding: 10px 14px;
+   228	  border-radius: var(--radius-md);
+   229	  border: 1px solid var(--border);
+   230	  background: var(--btn-bg);
+   231	  color: var(--text-main);
+   232	  font-weight: 900;
+   233	  cursor: pointer;
+   234	  transition: all .2s ease;
+   235	}
+   236	
+   237	.btn:hover {
+   238	  transform: translateY(-1px);
+   239	  border-color: rgba(29,78,216,0.7);
+   240	  box-shadow: var(--shadow-hover);
+   241	}
+   242	
+   243	.btn-primary {
+   244	  background: linear-gradient(90deg, rgba(29,78,216,.95), rgba(96,165,250,.95));
+   245	  color: white;
+   246	  border-color: rgba(29,78,216,.6);
+   247	}
+   248	
+   249	.btn-ghost {
+   250	  background: color-mix(in srgb, var(--btn-bg) 82%, transparent);
+   251	}
+   252	
+   253	/* ================= INPUTS ================= */
+   254	
+   255	.field {
+   256	  width: 100%;
+   257	  padding: 10px 12px;
+   258	  border-radius: var(--radius-md);
+   259	  border: 1px solid var(--border);
+   260	  background: var(--field-bg);
+   261	  color: var(--text-main);
+   262	  font-weight: 600;
+   263	}
+   264	
+   265	.field:focus {
+   266	  outline: none;
+   267	  border-color: rgba(29,78,216,.7);
+   268	  box-shadow: 0 0 0 4px rgba(29,78,216,.2);
+   269	}
+   270	
+   271	/* ================= BADGE ================= */
+   272	
+   273	.badge {
+   274	  padding: 5px 12px;
+   275	  border-radius: 999px;
+   276	  border: 1px solid var(--border);
+   277	  background: var(--badge-bg);
+   278	  font-size: 12px;
+   279	  font-weight: 900;
+   280	  color: var(--text-soft);
+   281	}
+   282	
+   283	/* ================= MOTION / ANIMATION ================= */
+   284	
+   285	/* Respect users who prefer reduced motion */
+   286	@media (prefers-reduced-motion: reduce) {
+   287	  * { animation: none !important; transition: none !important; }
+   288	}
+   289	
+   290	/* Page fade-in */
+   291	.page {
+   292	  animation: pageFade 0.35s ease-out both;
+   293	}
+   294	
+   295	@keyframes pageFade {
+   296	  from { opacity: 0; transform: translateY(6px); }
+   297	  to   { opacity: 1; transform: translateY(0); }
+   298	}
+   299	
+   300	/* Card hover lift (desktop) + tap feedback (mobile) */
+   301	.panel {
+   302	  color: var(--text-main);
+   303	  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+   304	}
+   305	
+   306	@media (hover: hover) and (pointer: fine) {
+   307	  .panel:hover {
+   308	    transform: translateY(-2px);
+   309	    border-color: rgba(29,78,216,0.35);
+   310	    box-shadow: 0 18px 40px rgba(29,78,216,0.18);
+   311	  }
+   312	}
+   313	
+   314	/* Tap feedback for touch devices */
+   315	@media (hover: none) and (pointer: coarse) {
+   316	  .panel:active {
+   317	    transform: scale(0.99);
+   318	  }
+   319	}
+   320	
+   321	/* Button press feel */
+   322	.btn {
+   323	  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
+   324	}
+   325	
+   326	.btn:active {
+   327	  transform: translateY(1px) scale(0.99);
+   328	  filter: brightness(0.98);
+   329	}
+   330	
+   331	/* Futuristic glow ring utility (optional use) */
+   332	.glow {
+   333	  box-shadow:
+   334	    0 0 0 1px rgba(29,78,216,0.18),
+   335	    0 10px 30px rgba(29,78,216,0.18);
+   336	}
+   337	
+   338	/* Subtle animated shine on primary buttons */
+   339	.btn-primary {
+   340	  position: relative;
+   341	  overflow: hidden;
+   342	}
+   343	
+   344	.btn-primary::after {
+   345	  content: "";
+   346	  position: absolute;
+   347	  top: -40%;
+   348	  left: -60%;
+   349	  width: 50%;
+   350	  height: 180%;
+   351	  transform: rotate(18deg);
+   352	  background: linear-gradient(
+   353	    to right,
+   354	    rgba(255,255,255,0) 0%,
+   355	    rgba(255,255,255,0.22) 50%,
+   356	    rgba(255,255,255,0) 100%
+   357	  );
+   358	  transition: left 0.5s ease;
+   359	}
+   360	
+   361	@media (hover: hover) and (pointer: fine) {
+   362	  .btn-primary:hover::after {
+   363	    left: 120%;
+   364	  }
+   365	}
+   366	
+   367	/* ================= FUTURISTIC BOOST ================= */
+   368	
+   369	/* Slower, smoother page transition */
+   370	.page {
+   371	  animation: pageFade 0.55s cubic-bezier(.2,.9,.2,1) both;
+   372	}
+   373	
+   374	@keyframes pageFade {
+   375	  from { opacity: 0; transform: translateY(10px); filter: blur(1px); }
+   376	  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+   377	}
+   378	
+   379	/* Stronger neon edge and glow */
+   380	.panel {
+   381	  color: var(--text-main);
+   382	  position: relative;
+   383	  overflow: hidden;
+   384	  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+   385	}
+   386	
+   387	/* Subtle moving highlight (gives “future glass” feel) */
+   388	.panel::before {
+   389	  content: "";
+   390	  position: absolute;
+   391	  inset: -40%;
+   392	  background: radial-gradient(circle at 20% 20%, rgba(96,165,250,0.16), rgba(255,255,255,0) 55%);
+   393	  transform: translate3d(-18%, -12%, 0);
+   394	  pointer-events: none;
+   395	  opacity: 0.55;
+   396	  animation: panelGlowDrift 10s ease-in-out infinite;
+   397	}
+   398	
+   399	@keyframes panelGlowDrift {
+   400	  0%   { transform: translate3d(-18%, -12%, 0); opacity: 0.45; }
+   401	  50%  { transform: translate3d(8%, 6%, 0);    opacity: 0.7; }
+   402	  100% { transform: translate3d(-18%, -12%, 0); opacity: 0.45; }
+   403	}
+   404	
+   405	@media (hover: hover) and (pointer: fine) {
+   406	  .panel:hover {
+   407	    transform: translateY(-4px);
+   408	    border-color: rgba(96,165,250,0.55);
+   409	    box-shadow:
+   410	      0 18px 46px rgba(29,78,216,0.22),
+   411	      0 0 0 1px rgba(96,165,250,0.22),
+   412	      0 0 32px rgba(96,165,250,0.18);
+   413	  }
+   414	}
+   415	
+   416	/* Buttons: slightly stronger sheen + glow */
+   417	.btn:hover {
+   418	  box-shadow:
+   419	    0 16px 36px rgba(29,78,216,0.22),
+   420	    0 0 0 1px rgba(96,165,250,0.18);
+   421	}
+   422	
+   423	.btn-primary::after {
+   424	  transition: left 0.75s ease;
+   425	}
+   426	
+   427	/* Optional: apply to any element to add “neon ring” */
+   428	.neon {
+   429	  box-shadow:
+   430	    0 0 0 1px rgba(96,165,250,0.22),
+   431	    0 0 28px rgba(96,165,250,0.22);
+   432	}
+   433	
+   434	/* ================================
+   435	   SMART AUTO THEME SYSTEM
+   436	================================ */
+   437	
+   438	/* Default = dark mode (image backgrounds) */
+   439	:root {
+   440	  --text-primary: #e5e7eb;
+   441	  --text-muted: #cbd5f5;
+   442	  --card-bg: rgba(10,10,15,0.85);
+   443	  --card-border: rgba(148,163,184,0.18);
+   444	}
+   445	
+   446	/* Light mode override */
+   447	body.light-mode {
+   448	  --text-primary: #0f172a;
+   449	  --text-muted: #475569;
+   450	  --card-bg: rgba(255,255,255,0.9);
+   451	  --card-border: rgba(2,6,23,0.12);
+   452	}
+   453	
+   454	/* Apply globally */
+   455	body {
+   456	  color: var(--text-primary);
+   457	}
+   458	
+   459	/* Muted text */
+   460	.muted {
+   461	  color: var(--text-muted) !important;
+   462	}
+   463	
+   464	/* Cards / panels */
+   465	.panel.card {
+   466	  background: var(--card-bg) !important;
+   467	  border: 1px solid var(--card-border) !important;
+   468	  backdrop-filter: blur(6px);
+   469	}
+   470	
+   471	/* Headings pop */
+   472	h1, h2, h3, h4 {
+   473	  color: var(--text-primary);
+   474	  text-shadow: 0 0 12px rgba(0,0,0,0.15);
+   475	}
+   476	
+   477	
+   478	
+   479	html[data-theme="dark"] .muted {
+   480	  color: rgba(226,232,240,0.90);
+   481	}
+   482	
+   483	html[data-theme="dark"] .badge {
+   484	  color: rgba(241,245,249,0.95);
+   485	}
+   486	
+   487	
+   488	
+   489	/* ================= MAX CONTRAST OVERRIDES ================= */
+   490	/* These are placed at the END of the file so they win. */
+   491	
+   492	html[data-theme="light"] {
+   493	  --text-main: #020617;          /* near-black */
+   494	  --text-strong: #020617;
+   495	  --text-soft: #0f172a;          /* deep slate */
+   496	  --text-muted: #111827;         /* darker muted (still readable) */
+   497	
+   498	  --border: rgba(2, 6, 23, 0.22);
+   499	  --panel-bg: rgba(255,255,255,0.995);   /* almost pure white */
+   500	  --panel-bg-2: rgba(255,255,255,0.98);
+   501	  --field-bg: rgba(255,255,255,0.995);
+   502	  --badge-bg: rgba(255,255,255,0.995);
+   503	  --btn-bg: rgba(255,255,255,0.995);
+   504	}
+   505	
+   506	html[data-theme="dark"] {
+   507	  --text-main: #ffffff;           /* pure white */
+   508	  --text-strong: #ffffff;
+   509	  --text-soft: rgba(255,255,255,0.92);
+   510	  --text-muted: rgba(255,255,255,0.78);
+   511	
+   512	  --border: rgba(255,255,255,0.22);
+   513	  --panel-bg: rgba(0,0,0,0.88);   /* near-black */
+   514	  --panel-bg-2: rgba(0,0,0,0.80);
+   515	  --field-bg: rgba(0,0,0,0.72);
+   516	  --badge-bg: rgba(0,0,0,0.72);
+   517	  --btn-bg: rgba(0,0,0,0.72);
+   518	}
+   519	
+   520	/* Force panels to clearly separate from background */
+   521	.panel {
+   522	  background: var(--panel-bg) !important;
+   523	  border: 1px solid var(--border) !important;
+   524	  box-shadow: 0 18px 44px rgba(0,0,0,0.22) !important;
+   525	}
+   526	
+   527	/* Make ALL common text inside cards obey theme variables */
+   528	.panel, .card, .stack, .page {
+   529	  color: var(--text-main) !important;
+   530	}
+   531	
+   532	.h1, .h2, .h3 {
+   533	  color: var(--text-strong) !important;
+   534	}
+   535	
+   536	.body, .lead {
+   537	  color: var(--text-soft) !important;
+   538	}
+   539	
+   540	.muted, .label {
+   541	  color: var(--text-muted) !important;
+   542	}
+   543	
+   544	/* Inputs / buttons / badges must not fade */
+   545	.field, input, textarea, select {
+   546	  background: var(--field-bg) !important;
+   547	  color: var(--text-main) !important;
+   548	  border-color: var(--border) !important;
+   549	}
+   550	
+   551	.badge {
+   552	  background: var(--badge-bg) !important;
+   553	  color: var(--text-main) !important;
+   554	  border-color: var(--border) !important;
+   555	}
+   556	
+   557	.btn {
+   558	  background: var(--btn-bg) !important;
+   559	  color: var(--text-main) !important;
+   560	  border-color: var(--border) !important;
+   561	}
+   562	
+   563	/* Dark mode: add inner highlight + stronger shadow so text pops */
+   564	html[data-theme="dark"] .panel {
+   565	  box-shadow:
+   566	    0 18px 48px rgba(0,0,0,0.70),
+   567	    0 0 0 1px rgba(255,255,255,0.10) inset !important;
+   568	}
+   569	
+   570	/* Light mode: crisp edges */
+   571	html[data-theme="light"] .panel {
+   572	  box-shadow:
+   573	    0 14px 34px rgba(2,6,23,0.10),
+   574	    0 0 0 1px rgba(2,6,23,0.06) inset !important;
+   575	}
+   576	
+   577	
+   578	/* ================= CARD HEADER NEON ACCENT ================= */
+   579	/* Bright header text across the entire site */
+   580	:root {
+   581	  --header-neon: #22d3ee; /* cyan neon */
+   582	  --header-glow: rgba(34, 211, 238, 0.45);
+   583	}
+   584	
+   585	html[data-theme="dark"] {
+   586	  --header-neon: #38bdf8; /* brighter in dark mode */
+   587	  --header-glow: rgba(56, 189, 248, 0.55);
+   588	}
+   589	
+   590	.h1, .h2, .h3 {
+   591	  color: var(--header-neon) !important;
+   592	  text-shadow:
+   593	    0 0 10px var(--header-glow),
+   594	    0 0 18px rgba(59,130,246,0.22) !important;
+   595	}
+   596	
+   597	/* Keep non-header body text readable */
+   598	.body, .lead {
+   599	  text-shadow: none !important;
+   600	}
+   601	
+   602	
+   603	/* ================= SUBHEADER / SECONDARY TEXT BOOST ================= */
+   604	/* Text directly under headers (usually .muted) should be brighter than body,
+   605	   but dimmer than neon headers. */
+   606	
+   607	:root{
+   608	  --subheader: #334155;        /* slate for light background */
+   609	  --subheader-strong: #1f2937; /* slightly stronger slate */
+   610	  --body-readable: #0f172a;    /* ensure body is readable on light cards */
+   611	}
+   612	
+   613	html[data-theme="dark"]{
+   614	  --subheader: #c7d2fe;        /* soft indigo/ice for dark mode */
+   615	  --subheader-strong: #e0e7ff; /* brighter but not neon */
+   616	  --body-readable: #e5e7eb;    /* readable on dark */
+   617	}
+   618	
+   619	/* Most “text directly under header” in your UI uses .muted */
+   620	.muted{
+   621	  color: var(--subheader) !important;
+   622	  font-weight: 800 !important;
+   623	  letter-spacing: 0.01em;
+   624	}
+   625	
+   626	/* If you want an even stronger “subheader” line, use .muted strong tags */
+   627	.muted b, .muted strong{
+   628	  color: var(--subheader-strong) !important;
+   629	}
+   630	
+   631	/* Keep normal paragraph text readable in both themes */
+   632	.body, .lead{
+   633	  color: var(--body-readable) !important;
+   634	}
+   635	
+   636	
+   637	/* ================= CARD TEXT CONTRAST BOOST (GLOBAL) ================= */
+   638	/* Makes card headers bright, and makes descriptions/subtexts brighter (but not as bright as headers). */
+   639	
+   640	:root{
+   641	  /* Light mode card text */
+   642	  --card-header: #0b5cff;   /* bright electric blue */
+   643	  --card-subtext: #1f2a44;  /* darker but high-contrast slate */
+   644	}
+   645	
+   646	html[data-theme="dark"]{
+   647	  /* Dark mode card text */
+   648	  --card-header: #67e8f9;   /* neon cyan */
+   649	  --card-subtext: #c7d2fe;  /* bright periwinkle */
+   650	}
+   651	
+   652	/* Card headers: bright */
+   653	.panel .h1,
+   654	.panel .h2,
+   655	.panel .h3,
+   656	.panel h1,
+   657	.panel h2,
+   658	.panel h3{
+   659	  color: var(--card-header) !important;
+   660	}
+   661	
+   662	/* Card descriptions/subtexts: brighter but less bright than header */
+   663	.panel .muted,
+   664	.panel .lead,
+   665	.panel .body,
+   666	.panel p,
+   667	.panel li,
+   668	.panel label,
+   669	.panel small{
+   670	  color: var(--card-subtext) !important;
+   671	}
+   672	
+   673	/* Keep badges readable too */
+   674	.panel .badge{
+   675	  color: var(--card-subtext) !important;
+   676	}
+   677	
+   678	/* ================= UNIFIED CARD SUBTEXT COLOR ================= */
+   679	/* All card descriptions use ONE bright, readable color */
+   680	
+   681	:root{
+   682	  /* Light mode */
+   683	  --card-header: #0057ff;     /* strong blue */
+   684	  --card-subtext: #0f172a;    /* very dark slate (high contrast) */
+   685	}
+   686	
+   687	html[data-theme="dark"]{
+   688	  /* Dark mode */
+   689	  --card-header: #67e8f9;     /* neon cyan */
+   690	  --card-subtext: #e0e7ff;    /* bright lavender-white */
+   691	}
+   692	
+   693	/* Headers stay bright */
+   694	.panel .h1,
+   695	.panel .h2,
+   696	.panel .h3,
+   697	.panel h1,
+   698	.panel h2,
+   699	.panel h3{
+   700	  color: var(--card-header) !important;
+   701	}
+   702	
+   703	/* ALL subtext uses same color */
+   704	.panel .muted,
+   705	.panel .lead,
+   706	.panel .body,
+   707	.panel p,
+   708	.panel li,
+   709	.panel span,
+   710	.panel small,
+   711	.panel label{
+   712	  color: var(--card-subtext) !important;
+   713	  opacity: 1 !important;
+   714	}
+   715	
+   716	/* ================= CARD SUBTEXT ONLY (BRIGHT) ================= */
+   717	/* Strictly targets description text under headers */
+   718	
+   719	:root{
+   720	  --card-header: #0057ff;   /* header color */
+   721	  --card-subtext: #0ea5e9;  /* bright neon subtext */
+   722	}
+   723	
+   724	html[data-theme="dark"]{
+   725	  --card-header: #67e8f9;
+   726	  --card-subtext: #c7d2fe;
+   727	}
+   728	
+   729	/* Headers inside cards */
+   730	.panel .h1,
+   731	.panel .h2,
+   732	.panel .h3{
+   733	  color: var(--card-header) !important;
+   734	}
+   735	
+   736	/* ONLY description/subtext */
+   737	.panel .muted,
+   738	.panel .body,
+   739	.panel .lead,
+   740	.panel .description,
+   741	.panel .subtext{
+   742	  color: var(--card-subtext) !important;
+   743	  opacity: 1 !important;
+   744	}
+   745	
+   746	/* Reset normal paragraphs so they don't get forced */
+   747	.panel p:not(.muted):not(.body):not(.lead):not(.description):not(.subtext){
+   748	  color: var(--text-main) !important;
+   749	}
+   750	
+   751	/* ================= STAY LIT 2ND NAVBAR COLORS ================= */
+   752	/* Make 2nd navbar brand + links match card description subtext color */
+   753	
+   754	.staylit-subnav,
+   755	.staylit-subnav * {
+   756	  color: var(--card-subtext) !important;
+   757	}
+   758	
+   759	/* Keep hover/active readable + consistent */
+   760	.staylit-subnav a:hover,
+   761	.staylit-subnav a:focus-visible {
+   762	  opacity: 0.95;
+   763	  text-decoration: none;
+   764	  filter: drop-shadow(0 0 10px rgba(14,165,233,0.25));
+   765	}
+   766	
+   767	.staylit-subnav a[aria-current="page"] {
+   768	  font-weight: 900;
+   769	  background: rgba(14,165,233,0.14);
+   770	  border: 1px solid rgba(14,165,233,0.30);
+   771	  border-radius: 999px;
+   772	  padding: 6px 10px;
+   773	}
+   774	
+   775	
+   776	/* ================= RATES / PRICES ================= */
+   777	
+   778	/* Prices, totals, amounts, estimates */
+   779	.price,
+   780	.rate,
+   781	.amount,
+   782	.total,
+   783	.money,
+   784	.estimate,
+   785	.cart-price,
+   786	.schedule-price {
+   787	  color: var(--card-subtext) !important;
+   788	  font-weight: 800;
+   789	}
+   790	
+   791	/* Any strong text inside cards that looks like pricing */
+   792	.panel strong,
+   793	.panel b {
+   794	  color: var(--card-subtext);
+   795	}
+   796	
+   797	/* ===== Bright subtext (used for card descriptions + rates) ===== */
+   798	.subtext-bright,
+   799	.rate-bright {
+   800	  color: var(--subtext-bright, #a7f3d0) !important; /* fallback */
+   801	  font-weight: 800;
+   802	  text-shadow: 0 0 14px rgba(34,197,94,0.20);
+   803	}
+   804	
+   805	
+   806	/* === CART COUNT BADGE === */
+   807	.cart-count-badge{
+   808	  display: inline-flex;
+   809	  align-items: center;
+   810	  justify-content: center;
+   811	
+   812	  /* Sizing */
+   813	  min-width: 22px;
+   814	  height: 18px;
+   815	  padding: 0 7px;
+   816	
+   817	  /* Look */
+   818	  border-radius: 999px;
+   819	  font-size: 11px;
+   820	  font-weight: 950;
+   821	  letter-spacing: 0.02em;
+   822	  line-height: 1;
+   823	
+   824	  /* Neon badge styling */
+   825	  color: rgba(248,250,252,0.98);
+   826	  background: linear-gradient(90deg, rgba(56,189,248,0.95), rgba(167,139,250,0.95));
+   827	  border: 1px solid rgba(255,255,255,0.22);
+   828	
+   829	  /* Pop over dark/light */
+   830	  box-shadow:
+   831	    0 0 0 1px rgba(56,189,248,0.12) inset,
+   832	    0 0 14px rgba(56,189,248,0.22),
+   833	    0 0 22px rgba(167,139,250,0.14);
+   834	
+   835	  /* Keeps badge from shrinking */
+   836	  flex-shrink: 0;
+   837	}
+   838	
+   839	/* Slightly calmer in light theme so it doesn’t look “too hot” */
+   840	html[data-theme="light"] .cart-count-badge{
+   841	  box-shadow:
+   842	    0 0 0 1px rgba(29,78,216,0.10) inset,
+   843	    0 0 10px rgba(29,78,216,0.16);
+   844	}
+   845	
+   846	/* When count is 0, make it look “inactive” (still visible) */
+   847	.cart-count-badge:empty{
+   848	  display: none;
+   849	}

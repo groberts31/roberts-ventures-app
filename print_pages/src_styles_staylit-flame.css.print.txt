@@ -1,0 +1,20 @@
+     1	@keyframes slFlameFlickerNav {
+     2	  0%   { transform: translateY(0px)   rotate(-10deg) scale(1.00) translateZ(0); filter: drop-shadow(0 0 8px rgba(251,191,36,0.8)); opacity: .92; }
+     3	  12%  { transform: translateY(-3px)  rotate( 12deg) scale(1.15) translateZ(0); filter: drop-shadow(0 0 14px rgba(245,158,11,0.95)); opacity: 1; }
+     4	  28%  { transform: translateY(-5px)  rotate( -8deg) scale(1.22) translateZ(0); filter: drop-shadow(0 0 18px rgba(251,146,60,0.95)); opacity: .98; }
+     5	  45%  { transform: translateY(-2px)  rotate( 10deg) scale(1.12) translateZ(0); filter: drop-shadow(0 0 12px rgba(253,186,116,0.9)); opacity: 1; }
+     6	  63%  { transform: translateY(-6px)  rotate(-12deg) scale(1.24) translateZ(0); filter: drop-shadow(0 0 20px rgba(251,113,133,0.45)); opacity: .92; }
+     7	  78%  { transform: translateY(-4px)  rotate(  8deg) scale(1.18) translateZ(0); filter: drop-shadow(0 0 16px rgba(251,191,36,0.95)); opacity: 1; }
+     8	  92%  { transform: translateY(-1px)  rotate( -6deg) scale(1.08) translateZ(0); filter: drop-shadow(0 0 10px rgba(253,186,116,0.85)); opacity: .96; }
+     9	  100% { transform: translateY(0px)   rotate(-10deg) scale(1.00) translateZ(0); filter: drop-shadow(0 0 8px rgba(251,191,36,0.8)); opacity: .92; }
+    10	}
+    11	
+    12	.slFlameNav {
+    13	  display: inline-block;
+    14	  transform-origin: 50% 85%;
+    15	  animation: slFlameFlickerNav 0.9s infinite;
+    16	  will-change: transform, filter, opacity;
+    17	  margin-right: 8px;
+    18	  color: #fbbf24;
+    19	  -webkit-text-fill-color: #fbbf24; /* prevents gradient/transparent inheritance */
+    20	}

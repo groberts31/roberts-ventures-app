@@ -1,0 +1,468 @@
+     1	export type BuildStatus = "draft" | "submitted" | "reviewing" | "quote_sent" | "approved" | "in_build" | "complete";
+     2	
+     3	export type BuildCustomer = {
+     4	  name: string;
+     5	  phone: string;
+     6	  email: string;
+     7	  address?: string;
+     8	};
+     9	
+    10	export type BuildDims = {
+    11	  lengthIn: number;
+    12	  widthIn: number;
+    13	  heightIn: number;
+    14	  topThicknessIn?: number;
+    15	};
+    16	
+    17	export type BuildOptions = {
+    18	  woodSpecies: "Pine" | "Oak" | "Walnut" | "Maple" | "Poplar" | "Plywood";
+    19	  finish: "Natural" | "Stain" | "Paint" | "Poly";
+    20	  joinery: "Screws" | "Pocket Holes" | "Mortise & Tenon" | "Dowels";
+    21	};
+    22	
+    23	export type RenderStatus = "queued" | "rendering" | "complete" | "failed";
+    24	
+    25	export type RenderJob = {
+    26	  renderId: string;
+    27	  view: "iso" | "front" | "top" | "detail";
+    28	  status: RenderStatus;
+    29	  imageDataUrl?: string;
+    30	  startedAt?: string;
+    31	  finishedAt?: string;
+    32	  estimatePublic?: {
+    33	    total: number;
+    34	    rangeLow?: number;
+    35	    rangeHigh?: number;
+    36	    label?: string;
+    37	  };
+    38	};
+    39	
+    40	export type NoteAuthor = "customer" | "admin";
+    41	export type NoteKind = "initial" | "change" | "refinement" | "note";
+    42	
+    43	export type NoteItem = {
+    44	  noteId: string;
+    45	  createdAt: string;
+    46	  author: NoteAuthor;
+    47	  kind: NoteKind;
+    48	  text: string;
+    49	};
+    50	
+    51	export type BuildVersion = {
+    52	  versionId: string;
+    53	  createdAt: string;
+    54	  customerChangeRequest?: string;
+    55	  inputsSnapshot: {
+    56	    type: string;
+    57	    dims: BuildDims;
+    58	    options: BuildOptions;
+    59	
+    60	    // Legacy field kept for backwards compatibility ONLY.
+    61	    // Going forward: we keep this EMPTY to prevent duplicate/phantom notes.
+    62	    notes?: string;
+    63	
+    64	    // Canonical notes source of truth
+    65	    notesLog?: NoteItem[];
+    66	  };
+    67	  renders: RenderJob[];
+    68	
+    69	  estimatePublic?: {
+    70	    total: number;
+    71	    rangeLow?: number;
+    72	    rangeHigh?: number;
+    73	    materials: number;
+    74	    labor: number;
+    75	    overhead: number;
+    76	    finish: number;
+    77	  };
+    78	
+    79	  estimateInternal?: any;
+    80	  generatedPackage?: any;
+    81	};
+    82	
+    83	export type BuildSubmission = {
+    84	  id: string;
+    85	  createdAt: string;
+    86	  updatedAt: string;
+    87	
+    88	  status: BuildStatus;
+    89	  accessCode?: string;
+    90	
+    91	  customer: BuildCustomer;
+    92	
+    93	  project: {
+    94	    type: string;
+    95	    dims: BuildDims;
+    96	    options: BuildOptions;
+    97	
+    98	    // Legacy compiled string (we keep it EMPTY going forward)
+    99	    notes?: string;
+   100	
+   101	    // Canonical structured notes
+   102	    notesLog?: NoteItem[];
+   103	
+   104	    refPhotos?: { name: string; type: string; dataUrl: string }[];
+   105	  };
+   106	
+   107	  versions: BuildVersion[];
+   108	};
+   109	
+   110	const KEY = "rv_build_submissions";
+   111	
+   112	function safeParse<T>(raw: string | null, fallback: T): T {
+   113	  try {
+   114	    if (!raw) return fallback;
+   115	    return JSON.parse(raw) as T;
+   116	  } catch {
+   117	    return fallback;
+   118	  }
+   119	}
+   120	
+   121	function uid() {
+   122	  return (crypto as any).randomUUID?.() ?? (Math.random().toString(16).slice(2) + Date.now().toString(16));
+   123	}
+   124	
+   125	/**
+   126	 * If an old build exists with only legacy `notes` and no `notesLog`,
+   127	 * migrate it into a single structured "initial" note.
+   128	 */
+   129	function ensureNotesLog(legacyNotes?: string, existing?: NoteItem[], createdAtHint?: string): NoteItem[] {
+   130	  const log = Array.isArray(existing) ? existing.filter(Boolean) : [];
+   131	  if (log.length) return log;
+   132	
+   133	  const text = String(legacyNotes || "").trim();
+   134	  if (!text) return [];
+   135	
+   136	  return [
+   137	    {
+   138	      noteId: uid(),
+   139	      createdAt: createdAtHint || new Date().toISOString(),
+   140	      author: "customer",
+   141	      kind: "initial",
+   142	      text,
+   143	    },
+   144	  ];
+   145	}
+   146	
+   147	function normalizeBuild(b: any): BuildSubmission | null {
+   148	  if (!b || typeof b !== "object") return null;
+   149	
+   150	  const createdAt = String(b.createdAt || new Date().toISOString());
+   151	  const project = b.project || {};
+   152	
+   153	  const legacyProjectNotes = String(project.notes || "").trim();
+   154	  const projectNotesLog = ensureNotesLog(legacyProjectNotes, project.notesLog, createdAt);
+   155	
+   156	  const versions = Array.isArray(b.versions) ? b.versions : [];
+   157	  const nextVersions: BuildVersion[] = versions.map((v: any) => {
+   158	    const inputs = v?.inputsSnapshot || {};
+   159	    const vCreatedAt = String(v?.createdAt || createdAt);
+   160	
+   161	    // Old builds may have inputsSnapshot.notes (compiled blob) but no notesLog.
+   162	    const legacyVNotes = String(inputs.notes ?? legacyProjectNotes ?? "").trim();
+   163	    const vNotesLog = ensureNotesLog(legacyVNotes, inputs.notesLog ?? projectNotesLog, vCreatedAt);
+   164	
+   165	    return {
+   166	      ...v,
+   167	      createdAt: vCreatedAt,
+   168	      inputsSnapshot: {
+   169	        type: String(inputs.type || project.type || ""),
+   170	        dims: inputs.dims || project.dims,
+   171	        options: inputs.options || project.options,
+   172	
+   173	        // IMPORTANT: going forward we keep legacy notes empty to avoid duplication.
+   174	        // We only keep it for old builds that still have it.
+   175	        notes: String(inputs.notes || "").includes("\n---\n") ? "" : "",
+   176	
+   177	        notesLog: vNotesLog,
+   178	      },
+   179	      renders: Array.isArray(v?.renders) ? v.renders : [],
+   180	    } as BuildVersion;
+   181	  });
+   182	
+   183	  const out: BuildSubmission = {
+   184	    ...b,
+   185	    createdAt,
+   186	    updatedAt: String(b.updatedAt || createdAt),
+   187	    status: (b.status || "draft") as BuildStatus,
+   188	    customer: b.customer || { name: "", phone: "", email: "" },
+   189	    project: {
+   190	      ...project,
+   191	      type: String(project.type || ""),
+   192	      dims: project.dims,
+   193	      options: project.options,
+   194	
+   195	      // IMPORTANT: going forward we keep legacy notes empty (canonical is notesLog)
+   196	      notes: "",
+   197	
+   198	      notesLog: projectNotesLog,
+   199	      refPhotos: Array.isArray(project.refPhotos) ? project.refPhotos : [],
+   200	    },
+   201	    versions: nextVersions,
+   202	  };
+   203	
+   204	  return out;
+   205	}
+   206	
+   207	/**
+   208	 * Compile notes for display + renderer.
+   209	 * We do NOT prepend legacy notes anymore (we keep legacy notes empty going forward).
+   210	 * This prevents "remove last note" from appearing to do nothing.
+   211	 */
+   212	export function compileNotes(notesLog?: NoteItem[], _legacyNotes?: string) {
+   213	  const items = Array.isArray(notesLog) ? notesLog : [];
+   214	  return items
+   215	    .map((n) => String(n?.text || "").trim())
+   216	    .filter(Boolean)
+   217	    .join("\n\n---\n\n");
+   218	}
+   219	
+   220	export function normalizePhone(p: string) {
+   221	  return String(p || "").replace(/\D+/g, "");
+   222	}
+   223	
+   224	export function makeAccessCode() {
+   225	  return String(Math.floor(100000 + Math.random() * 900000));
+   226	}
+   227	
+   228	export function readBuilds(): BuildSubmission[] {
+   229	  const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
+   230	  const raw = (Array.isArray(arr) ? arr : []).filter(Boolean);
+   231	  return raw.map(normalizeBuild).filter(Boolean) as BuildSubmission[];
+   232	}
+   233	
+   234	export function writeBuilds(items: BuildSubmission[]) {
+   235	  localStorage.setItem(KEY, JSON.stringify(items));
+   236	}
+   237	
+   238	export function getBuild(id: string): BuildSubmission | null {
+   239	  const all = readBuilds();
+   240	  const found = all.find((b) => String(b.id) === String(id));
+   241	  return found || null;
+   242	}
+   243	
+   244	export function upsertBuild(next: BuildSubmission) {
+   245	  const all = readBuilds();
+   246	  const idx = all.findIndex((b) => String(b.id) === String(next.id));
+   247	  if (idx >= 0) all[idx] = next;
+   248	  else all.unshift(next);
+   249	  writeBuilds(all);
+   250	}
+   251	
+   252	export function deleteBuild(id: string) {
+   253	  const all = readBuilds().filter((b) => String(b.id) !== String(id));
+   254	  writeBuilds(all);
+   255	}
+   256	
+   257	export function createDraftBuild(args: {
+   258	  customer: BuildCustomer;
+   259	  type: string;
+   260	  dims: BuildDims;
+   261	  options: BuildOptions;
+   262	  notes?: string;
+   263	}): BuildSubmission {
+   264	  const now = new Date().toISOString();
+   265	  const id = uid();
+   266	
+   267	  const baseNotes = String(args.notes || "").trim();
+   268	
+   269	  // canonical notesLog (and legacy notes stays empty)
+   270	  const notesLog: NoteItem[] = baseNotes
+   271	    ? [
+   272	        {
+   273	          noteId: uid(),
+   274	          createdAt: now,
+   275	          author: "customer",
+   276	          kind: "initial",
+   277	          text: baseNotes,
+   278	        },
+   279	      ]
+   280	    : [];
+   281	
+   282	  const version: BuildVersion = {
+   283	    versionId: uid(),
+   284	    createdAt: now,
+   285	    inputsSnapshot: {
+   286	      type: args.type,
+   287	      dims: args.dims,
+   288	      options: args.options,
+   289	      notes: "",
+   290	      notesLog,
+   291	    },
+   292	    renders: [
+   293	      { renderId: uid(), view: "iso", status: "queued" },
+   294	      { renderId: uid(), view: "front", status: "queued" },
+   295	      { renderId: uid(), view: "top", status: "queued" },
+   296	    ],
+   297	  };
+   298	
+   299	  const build: BuildSubmission = {
+   300	    id,
+   301	    createdAt: now,
+   302	    updatedAt: now,
+   303	    status: "draft",
+   304	    customer: args.customer,
+   305	    project: {
+   306	      type: args.type,
+   307	      dims: args.dims,
+   308	      options: args.options,
+   309	      notes: "",
+   310	      notesLog,
+   311	      refPhotos: [],
+   312	    },
+   313	    versions: [version],
+   314	  };
+   315	
+   316	  upsertBuild(build);
+   317	  return build;
+   318	}
+   319	
+   320	export function addRevision(
+   321	  id: string,
+   322	  customerChangeRequest: string,
+   323	  patch?: Partial<BuildSubmission["project"]>
+   324	) {
+   325	  const b0 = getBuild(id);
+   326	  if (!b0) return null;
+   327	
+   328	  const b = normalizeBuild(b0);
+   329	  if (!b) return null;
+   330	
+   331	  const now = new Date().toISOString();
+   332	  const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
+   333	
+   334	  const mergedNotesLog = ensureNotesLog("", mergedProject.notesLog, b.createdAt);
+   335	
+   336	  const version: BuildVersion = {
+   337	    versionId: uid(),
+   338	    createdAt: now,
+   339	    customerChangeRequest,
+   340	    inputsSnapshot: {
+   341	      type: mergedProject.type,
+   342	      dims: mergedProject.dims,
+   343	      options: mergedProject.options,
+   344	      notes: "",
+   345	      notesLog: mergedNotesLog,
+   346	    },
+   347	    renders: [
+   348	      { renderId: uid(), view: "iso", status: "queued" },
+   349	      { renderId: uid(), view: "front", status: "queued" },
+   350	      { renderId: uid(), view: "top", status: "queued" },
+   351	      { renderId: uid(), view: "detail", status: "queued" },
+   352	    ],
+   353	  };
+   354	
+   355	  const next: BuildSubmission = {
+   356	    ...b,
+   357	    updatedAt: now,
+   358	    project: { ...mergedProject, notes: "", notesLog: mergedNotesLog },
+   359	    versions: [version, ...b.versions],
+   360	  };
+   361	
+   362	  upsertBuild(next);
+   363	  return next;
+   364	}
+   365	
+   366	export function addCustomerNote(id: string, changeRequest?: string, extraNotes?: string) {
+   367	  const b0 = getBuild(id);
+   368	  if (!b0) return null;
+   369	
+   370	  const b = normalizeBuild(b0);
+   371	  if (!b) return null;
+   372	
+   373	  const now = new Date().toISOString();
+   374	  const prevLog = ensureNotesLog("", b.project.notesLog, b.createdAt);
+   375	
+   376	  const nextLog: NoteItem[] = [...prevLog];
+   377	
+   378	  const req = String(changeRequest || "").trim();
+   379	  const add = String(extraNotes || "").trim();
+   380	
+   381	  if (req) {
+   382	    nextLog.push({
+   383	      noteId: uid(),
+   384	      createdAt: now,
+   385	      author: "customer",
+   386	      kind: "change",
+   387	      text: req,
+   388	    });
+   389	  }
+   390	
+   391	  if (add) {
+   392	    nextLog.push({
+   393	      noteId: uid(),
+   394	      createdAt: now,
+   395	      author: "customer",
+   396	      kind: "refinement",
+   397	      text: add,
+   398	    });
+   399	  }
+   400	
+   401	  return addRevision(id, "Customer provided additional details", {
+   402	    notesLog: nextLog,
+   403	    notes: "",
+   404	  });
+   405	}
+   406	
+   407	export function removeLastCustomerNote(id: string) {
+   408	  const b0 = getBuild(id);
+   409	  if (!b0) return null;
+   410	
+   411	  const b = normalizeBuild(b0);
+   412	  if (!b) return null;
+   413	
+   414	  const prevLog = ensureNotesLog("", b.project.notesLog, b.createdAt);
+   415	  if (!prevLog.length) return b;
+   416	
+   417	  let idx = -1;
+   418	  for (let i = prevLog.length - 1; i >= 0; i--) {
+   419	    if (prevLog[i]?.author === "customer") {
+   420	      idx = i;
+   421	      break;
+   422	    }
+   423	  }
+   424	  if (idx < 0) return b;
+   425	
+   426	  const nextLog = prevLog.slice(0, idx).concat(prevLog.slice(idx + 1));
+   427	
+   428	  return addRevision(id, "Customer removed last note", {
+   429	    notesLog: nextLog,
+   430	    notes: "",
+   431	  });
+   432	}
+   433	
+   434	export function markSubmitted(id: string) {
+   435	  const b = getBuild(id);
+   436	  if (!b) return null;
+   437	
+   438	  const now = new Date().toISOString();
+   439	  const accessCode = b.accessCode && String(b.accessCode).trim().length >= 6 ? b.accessCode : makeAccessCode();
+   440	
+   441	  const next: BuildSubmission = {
+   442	    ...b,
+   443	    updatedAt: now,
+   444	    status: b.status === "draft" ? "submitted" : b.status,
+   445	    accessCode,
+   446	  };
+   447	
+   448	  upsertBuild(next);
+   449	  return next;
+   450	}
+   451	
+   452	export function findBuildsByPhoneAndCode(phone: string, code: string) {
+   453	  const p = normalizePhone(phone);
+   454	  const c = String(code || "").replace(/\D+/g, "");
+   455	  if (!p || c.length < 6) return [];
+   456	  return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
+   457	}
+   458	
+   459	export function findBuildsByNameAndPhone(name: string, phone: string) {
+   460	  const n = String(name || "").trim().toLowerCase();
+   461	  const p = normalizePhone(phone);
+   462	  if (!n || p.length < 7) return [];
+   463	  return readBuilds().filter((b) => {
+   464	    const bn = String(b.customer?.name || "").trim().toLowerCase();
+   465	    const bp = normalizePhone(b.customer?.phone || "");
+   466	    return bn.includes(n) && bp.endsWith(p.slice(-7));
+   467	  });
+   468	}

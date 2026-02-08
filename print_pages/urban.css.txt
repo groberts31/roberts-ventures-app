@@ -1,0 +1,221 @@
+     1	/* =========================================================
+     2	   ROBERTS VENTURES — DARK NEON URBAN THEME (GLOBAL)
+     3	   ========================================================= */
+     4	
+     5	:root{
+     6	  --rv-bg-main: #05070f;
+     7	  --rv-bg-card: rgba(8,12,24,.82);
+     8	  --rv-bg-glass: rgba(15,23,42,.72);
+     9	
+    10	  --rv-text-main: #f8fafc;
+    11	  --rv-text-soft: rgba(248,250,252,.78);
+    12	  --rv-text-muted: rgba(248,250,252,.55);
+    13	
+    14	  --rv-neon-blue: #38bdf8;
+    15	  --rv-neon-violet: #a78bfa;
+    16	  --rv-neon-pink: #f472b6;
+    17	  --rv-neon-green: #22c55e;
+    18	
+    19	  --rv-radius: 18px;
+    20	
+    21	  --rv-glow-soft: 0 0 18px rgba(56,189,248,.25);
+    22	  --rv-glow-med: 0 0 30px rgba(167,139,250,.35);
+    23	  --rv-glow-hard: 0 0 45px rgba(56,189,248,.45);
+    24	}
+    25	
+    26	/* =========================
+    27	   BASE
+    28	   ========================= */
+    29	
+    30	html, body{
+    31	  background: var(--rv-bg-main);
+    32	  color: var(--rv-text-main);
+    33	  letter-spacing: .01em;
+    34	  text-rendering: geometricPrecision;
+    35	  -webkit-font-smoothing: antialiased;
+    36	}
+    37	
+    38	body{
+    39	  font-weight: 650;
+    40	}
+    41	
+    42	/* =========================
+    43	   TEXT
+    44	   ========================= */
+    45	
+    46	p, li, span{
+    47	  color: var(--rv-text-soft);
+    48	  line-height: 1.7;
+    49	}
+    50	
+    51	.muted{
+    52	  color: var(--rv-text-muted) !important;
+    53	  font-weight: 700;
+    54	}
+    55	
+    56	/* =========================
+    57	   HEADINGS
+    58	   ========================= */
+    59	
+    60	h1, h2, h3, h4,
+    61	.h1, .h2, .h3{
+    62	  color: var(--rv-text-main);
+    63	  letter-spacing: .06em;
+    64	  text-transform: uppercase;
+    65	  line-height: 1.1;
+    66	}
+    67	
+    68	h1, .h1{
+    69	  font-weight: 980;
+    70	  text-shadow: var(--rv-glow-med);
+    71	}
+    72	
+    73	h2, .h2{
+    74	  font-weight: 950;
+    75	  text-shadow: var(--rv-glow-soft);
+    76	}
+    77	
+    78	h3, .h3{
+    79	  font-weight: 900;
+    80	}
+    81	
+    82	/* =========================
+    83	   NEON TITLES
+    84	   ========================= */
+    85	
+    86	.rv-urban-title{
+    87	  font-weight: 980;
+    88	  letter-spacing: .12em;
+    89	  background: linear-gradient(
+    90	    90deg,
+    91	    var(--rv-neon-blue),
+    92	    var(--rv-neon-violet),
+    93	    var(--rv-neon-pink)
+    94	  );
+    95	  -webkit-background-clip: text;
+    96	  -webkit-text-fill-color: transparent;
+    97	  filter: drop-shadow(var(--rv-glow-hard));
+    98	}
+    99	
+   100	/* =========================
+   101	   CARDS / PANELS
+   102	   ========================= */
+   103	
+   104	.panel.card{
+   105	  background: var(--rv-bg-card) !important;
+   106	  backdrop-filter: blur(10px);
+   107	  border: 1px solid rgba(148,163,184,.12);
+   108	  border-radius: var(--rv-radius);
+   109	  box-shadow:
+   110	    0 12px 35px rgba(0,0,0,.6),
+   111	    var(--rv-glow-soft);
+   112	}
+   113	
+   114	/* =========================
+   115	   BADGES
+   116	   ========================= */
+   117	
+   118	.badge{
+   119	  font-weight: 900;
+   120	  letter-spacing: .12em;
+   121	  text-transform: uppercase;
+   122	  background: linear-gradient(
+   123	    90deg,
+   124	    rgba(56,189,248,.18),
+   125	    rgba(167,139,250,.18)
+   126	  );
+   127	  border: 1px solid rgba(56,189,248,.35);
+   128	  box-shadow: var(--rv-glow-soft);
+   129	  color: var(--rv-text-main);
+   130	}
+   131	
+   132	/* =========================
+   133	   BUTTONS
+   134	   ========================= */
+   135	
+   136	.btn{
+   137	  font-weight: 900;
+   138	  letter-spacing: .04em;
+   139	  border-radius: 999px;
+   140	}
+   141	
+   142	.btn-primary{
+   143	  background: linear-gradient(
+   144	    90deg,
+   145	    #2563eb,
+   146	    #7c3aed
+   147	  );
+   148	  border: none;
+   149	  color: white;
+   150	  box-shadow: var(--rv-glow-med);
+   151	}
+   152	
+   153	.btn-primary:hover{
+   154	  transform: translateY(-1px) scale(1.03);
+   155	  box-shadow: var(--rv-glow-hard);
+   156	}
+   157	
+   158	.btn-ghost{
+   159	  color: var(--rv-neon-blue);
+   160	  border: 1px solid rgba(56,189,248,.35);
+   161	}
+   162	
+   163	/* =========================
+   164	   NAV LINKS
+   165	   ========================= */
+   166	
+   167	.nav-link{
+   168	  color: var(--rv-text-soft) !important;
+   169	  font-weight: 850 !important;
+   170	  letter-spacing: .04em;
+   171	}
+   172	
+   173	.nav-link:hover{
+   174	  color: var(--rv-neon-blue) !important;
+   175	  box-shadow: var(--rv-glow-soft);
+   176	}
+   177	
+   178	.nav-link.active{
+   179	  background: linear-gradient(
+   180	    90deg,
+   181	    rgba(56,189,248,.25),
+   182	    rgba(167,139,250,.25)
+   183	  ) !important;
+   184	
+   185	  color: white !important;
+   186	  box-shadow: var(--rv-glow-med);
+   187	}
+   188	
+   189	/* =========================
+   190	   INPUTS / FORMS
+   191	   ========================= */
+   192	
+   193	input, select, textarea{
+   194	  background: rgba(15,23,42,.9);
+   195	  color: var(--rv-text-main);
+   196	  border: 1px solid rgba(148,163,184,.25);
+   197	}
+   198	
+   199	input:focus, select:focus, textarea:focus{
+   200	  outline: none;
+   201	  border-color: var(--rv-neon-blue);
+   202	  box-shadow: var(--rv-glow-soft);
+   203	}
+   204	
+   205	/* =========================
+   206	   FOOTER
+   207	   ========================= */
+   208	
+   209	footer{
+   210	  background: rgba(2,6,23,.9);
+   211	  color: var(--rv-text-muted);
+   212	}
+   213	
+   214	/* =========================
+   215	   ICONS / EMOJIS GLOW
+   216	   ========================= */
+   217	
+   218	h1 span, h2 span, .h1 span, .h2 span,
+   219	.slFlameNav{
+   220	  filter: drop-shadow(0 0 12px rgba(56,189,248,.5));
+   221	}

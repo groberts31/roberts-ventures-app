@@ -1,0 +1,178 @@
+     1	import { useEffect, useMemo, useState } from "react";
+     2	import { Link, useParams } from "react-router-dom";
+     3	import { getBuild, upsertBuild, removeLastCustomerNote, compileNotes, type BuildSubmission } from "../../lib/buildsStore";
+     4	import { estimateBuild } from "../../lib/buildPricing";
+     5	import { toast } from "../../lib/toast";
+     6	
+     7	function fmt(iso: string) {
+     8	  const d = new Date(iso);
+     9	  if (Number.isNaN(d.getTime())) return iso;
+    10	  return d.toLocaleString();
+    11	}
+    12	
+    13	function money(n: number) {
+    14	  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+    15	}
+    16	
+    17	export default function AdminBuildDetail() {
+    18	  const { id } = useParams();
+    19	  const [build, setBuild] = useState<BuildSubmission | null>(null);
+    20	
+    21	  useEffect(() => {
+    22	    if (!id) return;
+    23	    setBuild(getBuild(id));
+    24	  }, [id]);
+    25	
+    26	  const v = useMemo(() => build?.versions?.[0] ?? null, [build]);
+    27	
+    28	  if (!build || !v) {
+    29	    return (
+    30	      <div className="panel card card-center" style={{ maxWidth: 980, margin: "0 auto" }}>
+    31	        <h3 className="h3">Build not found</h3>
+    32	        <Link className="btn btn-primary" to="/admin/builds">Back</Link>
+    33	      </div>
+    34	    );
+    35	  }
+    36	
+    37	  const b = build;
+    38	  const vv = v;
+    39	
+    40	  function setStatus(status: BuildSubmission["status"]) {
+    41	    const next: BuildSubmission = { ...b, status, updatedAt: new Date().toISOString() };
+    42	    upsertBuild(next);
+    43	    setBuild(next);
+    44	    toast("Build status updated.", "success", "Saved", 1600);
+    45	  }
+    46	
+    47	  function recalcEstimate() {
+    48	    const est = estimateBuild(vv.inputsSnapshot.dims, vv.inputsSnapshot.options);
+    49	
+    50	    const nextV = {
+    51	      ...vv,
+    52	      estimatePublic: {
+    53	        total: est.total,
+    54	        rangeLow: est.rangeLow,
+    55	        rangeHigh: est.rangeHigh,
+    56	        materials: est.materials,
+    57	        labor: est.labor,
+    58	        overhead: est.overhead,
+    59	        finish: est.finish,
+    60	      },
+    61	    };
+    62	
+    63	    const next: BuildSubmission = { ...b, updatedAt: new Date().toISOString(), versions: [nextV, ...b.versions.slice(1)] };
+    64	    upsertBuild(next);
+    65	    setBuild(next);
+    66	    toast("Estimate recalculated.", "success", "Saved", 1600);
+    67	  }
+    68	
+    69	  function removeLastCustomerNoteAdmin() {
+    70	    if (!confirm("Remove the most recent customer note and regenerate previews?")) return;
+    71	    const next = removeLastCustomerNote(b.id);
+    72	    if (!next) {
+    73	      toast("Could not remove note.", "error", "Error", 1800);
+    74	      return;
+    75	    }
+    76	    setBuild(next);
+    77	    toast("Removed last customer note. Previews re-queued.", "success", "Saved", 1800);
+    78	  }
+    79	
+    80	  const notesLog = ((vv.inputsSnapshot as any).notesLog || []) as any[];
+    81	  const compiledNotes = compileNotes(notesLog, vv.inputsSnapshot.notes);
+    82	
+    83	  return (
+    84	    <div className="stack page" style={{ gap: 16 }}>
+    85	      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+    86	        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+    87	          <div style={{ display: "grid", gap: 6 }}>
+    88	            <h1 className="h2" style={{ margin: 0 }}>Admin — Build Detail</h1>
+    89	            <div className="muted" style={{ fontWeight: 850 }}>
+    90	              Build: <span className="badge">{String(build.id).slice(-8).toUpperCase()}</span> • Created: {fmt(build.createdAt)} • Updated: {fmt(build.updatedAt)}
+    91	            </div>
+    92	            <div className="muted" style={{ fontWeight: 850 }}>
+    93	              Customer: <strong>{build.customer?.name || "—"}</strong> • {build.customer?.phone || "—"} • {build.customer?.email || "—"}
+    94	            </div>
+    95	            <div className="muted" style={{ fontWeight: 850 }}>
+    96	              Type: {build.project?.type || "—"} • Dims: {build.project?.dims?.lengthIn ?? "—"}×{build.project?.dims?.widthIn ?? "—"}×{build.project?.dims?.heightIn ?? "—"} in
+    97	            </div>
+    98	          </div>
+    99	
+   100	          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   101	            <Link className="btn btn-ghost" to="/admin/builds">Back</Link>
+   102	            <Link className="btn btn-ghost" to={`/builds/${build.id}`}>Open customer preview</Link>
+   103	          </div>
+   104	        </div>
+   105	
+   106	        <div className="row" style={{ gap: 8, flexWrap: "wrap", marginTop: 12, justifyContent: "center" }}>
+   107	          <span className="badge" style={{ fontWeight: 950 }}>Status: {String(build.status).toUpperCase()}</span>
+   108	          <button className="btn btn-ghost" onClick={() => setStatus("reviewing")}>Reviewing</button>
+   109	          <button className="btn btn-ghost" onClick={() => setStatus("quote_sent")}>Quote Sent</button>
+   110	          <button className="btn btn-ghost" onClick={() => setStatus("approved")}>Approved</button>
+   111	          <button className="btn btn-ghost" onClick={() => setStatus("in_build")}>In Build</button>
+   112	          <button className="btn btn-ghost" onClick={() => setStatus("complete")}>Complete</button>
+   113	        </div>
+   114	
+   115	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   116	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Notes (compiled)</div>
+   117	          {compiledNotes ? (
+   118	            <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{compiledNotes}</div>
+   119	          ) : (
+   120	            <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>No notes</div>
+   121	          )}
+   122	
+   123	          <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+   124	            <button className="btn btn-ghost" onClick={removeLastCustomerNoteAdmin} style={{ fontWeight: 950 }}>
+   125	              Remove last customer note
+   126	            </button>
+   127	          </div>
+   128	        </div>
+   129	
+   130	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   131	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Public estimate (what customer sees)</div>
+   132	          {!v.estimatePublic ? (
+   133	            <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
+   134	              No estimate saved yet. Click “Recalculate Estimate”.
+   135	            </div>
+   136	          ) : (
+   137	            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   138	              <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   139	                <span className="badge rate-bright">Total: {money(v.estimatePublic.total)}</span>
+   140	                <span className="badge">Range: {money(v.estimatePublic.rangeLow || v.estimatePublic.total)} – {money(v.estimatePublic.rangeHigh || v.estimatePublic.total)}</span>
+   141	              </div>
+   142	              <div className="muted" style={{ fontWeight: 850 }}>
+   143	                Materials {money(v.estimatePublic.materials)} • Labor {money(v.estimatePublic.labor)} • Finish {money(v.estimatePublic.finish)} • Overhead {money(v.estimatePublic.overhead)}
+   144	              </div>
+   145	            </div>
+   146	          )}
+   147	
+   148	          <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+   149	            <button className="btn btn-primary" onClick={recalcEstimate}>Recalculate Estimate</button>
+   150	          </div>
+   151	        </div>
+   152	
+   153	        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
+   154	          <div style={{ fontWeight: 950, color: "#0f172a" }}>Renders (latest version)</div>
+   155	          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+   156	            {(v.renders || []).map((r) => (
+   157	              <div key={r.renderId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+   158	                <div style={{ fontWeight: 950 }}>{String(r.view).toUpperCase()} <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span></div>
+   159	                <div style={{ marginTop: 8, width: "100%", height: 140, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(15,23,42,0.16)" }}>
+   160	                  {r.imageDataUrl ? (
+   161	                    <img src={r.imageDataUrl} alt="render" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+   162	                  ) : (
+   163	                    <div className="card-center" style={{ width: "100%", height: "100%" }}>
+   164	                      <div className="muted" style={{ fontWeight: 850 }}>No image yet</div>
+   165	                    </div>
+   166	                  )}
+   167	                </div>
+   168	                <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
+   169	                  {r.estimatePublic ? `Render est: ${money(r.estimatePublic.total)}` : "Render est: —"}
+   170	                </div>
+   171	              </div>
+   172	            ))}
+   173	          </div>
+   174	        </div>
+   175	      </section>
+   176	    </div>
+   177	  );
+   178	}
