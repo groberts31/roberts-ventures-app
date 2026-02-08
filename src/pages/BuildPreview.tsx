@@ -48,85 +48,99 @@ export default function BuildPreview() {
   useEffect(() => {
     if (!build || !version) return;
 
-    const b = build;
-    const v = version;
+    // Always run from the latest stored build (avoids stale closures)
+    const latest0 = getBuild(build.id) ?? build;
+    const lv0 = latest0.versions?.[0];
+    if (!lv0) return;
 
-    let changed = false;
+    const renders0 = lv0.renders || [];
 
-    const nextRenders = v.renders.map((r) => {
-      if (r.status !== "queued") return r;
-      changed = true;
-            return { ...r, status: "rendering" as const, startedAt: new Date().toISOString() } as RenderJob;
-    });
+    // 1) If nothing is currently rendering, promote the FIRST queued render to "rendering"
+    const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
 
-    if (changed) {
-      const next: BuildSubmission = {
-        ...b,
-        updatedAt: new Date().toISOString(),
-        versions: [{ ...v, renders: nextRenders }, ...b.versions.slice(1)],
-      };
-      upsertBuild(next);
-      setBuild(next);
+    let target: RenderJob | null = currentlyRendering;
+
+    if (!target) {
+      const firstQueued = renders0.find((r) => r.status === "queued") ?? null;
+
+      if (firstQueued) {
+        const startedAt = new Date().toISOString();
+        const updatedRenders = renders0.map((r) =>
+          r.renderId === firstQueued.renderId
+            ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob)
+            : r
+        );
+
+        const nextV = { ...lv0, renders: updatedRenders };
+        const nextBuild: BuildSubmission = {
+          ...latest0,
+          updatedAt: new Date().toISOString(),
+          versions: [nextV, ...latest0.versions.slice(1)],
+        };
+
+        upsertBuild(nextBuild);
+        setBuild(nextBuild);
+
+        target = updatedRenders.find((r) => r.renderId === firstQueued.renderId) as RenderJob;
+      }
     }
 
-    // For each "rendering" render, complete it after a short delay.
-    const timers: any[] = [];
-    (v.renders || []).forEach((r, idx) => {
-      if (r.status !== "rendering") return;
+    // If still nothing to do, exit
+    if (!target) return;
 
-      const delay = 700 + idx * 600;
-      timers.push(
-        setTimeout(() => {
-          const latest = getBuild(b.id);
-          if (!latest) return;
-          const lv = latest.versions[0];
-          const est = estimateBuild(lv.inputsSnapshot.dims, lv.inputsSnapshot.options);
+    // 2) Complete ONLY the single "target" render after a short delay
+    const delay = 900;
+    const timer = setTimeout(() => {
+      const latest = getBuild(build.id);
+      if (!latest) return;
 
-          const updatedRenders = (lv.renders || []).map((x) => {
-            if (x.renderId !== r.renderId) return x;
-            const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
-            return {
-              ...x,
-                            status: "complete" as const,
-              finishedAt: new Date().toISOString(),
-              imageDataUrl: svgPlaceholder(x.view, title),
-              estimatePublic: {
-                total: est.total,
-                rangeLow: est.rangeLow,
-                rangeHigh: est.rangeHigh,
-                label: "Est. total (updates per view)",
-              },
-            };
-          });
+      const lv = latest.versions[0];
+      const est = estimateBuild(lv.inputsSnapshot.dims, lv.inputsSnapshot.options);
 
-          // Version-level estimate (public)
-          const nextV = {
-            ...lv,
-            renders: updatedRenders,
-            estimatePublic: {
-              total: est.total,
-              rangeLow: est.rangeLow,
-              rangeHigh: est.rangeHigh,
-              materials: est.materials,
-              labor: est.labor,
-              overhead: est.overhead,
-              finish: est.finish,
-            },
-          };
+      const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
 
-          const nextBuild: BuildSubmission = {
-            ...latest,
-            updatedAt: new Date().toISOString(),
-            versions: [nextV, ...latest.versions.slice(1)],
-          };
+      const updatedRenders = (lv.renders || []).map((x) => {
+        if (x.renderId != target!.renderId) return x;
 
-          upsertBuild(nextBuild);
-          setBuild(nextBuild);
-        }, delay)
-      );
-    });
+        return {
+          ...x,
+          status: "complete" as const,
+          finishedAt: new Date().toISOString(),
+          imageDataUrl: svgPlaceholder(x.view, title),
+          estimatePublic: {
+            total: est.total,
+            rangeLow: est.rangeLow,
+            rangeHigh: est.rangeHigh,
+            label: "Est. total (updates per view)",
+          },
+        };
+      });
 
-    return () => timers.forEach(clearTimeout);
+      const nextV = {
+        ...lv,
+        renders: updatedRenders,
+        estimatePublic: {
+          total: est.total,
+          rangeLow: est.rangeLow,
+          rangeHigh: est.rangeHigh,
+          materials: est.materials,
+          labor: est.labor,
+          overhead: est.overhead,
+          finish: est.finish,
+        },
+      };
+
+      const nextBuild: BuildSubmission = {
+        ...latest,
+        updatedAt: new Date().toISOString(),
+        versions: [nextV, ...latest.versions.slice(1)],
+      };
+
+      upsertBuild(nextBuild);
+      setBuild(nextBuild);
+    }, delay);
+
+    return () => clearTimeout(timer);
   }, [build?.id, version?.versionId]); // intentionally narrow deps
 
   if (!build || !version) {
