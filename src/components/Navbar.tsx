@@ -181,7 +181,10 @@ export default function Navbar() {
               gap: 8,
             }}
           >
-            🛒 Cart: {count}
+            🛒 Cart
+            <span className="cart-count-badge" aria-label={`Cart items: ${count}`}>
+              {count}
+            </span>
           </button>
         </div>
       </div>

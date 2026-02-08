@@ -801,3 +801,49 @@ html[data-theme="dark"]{
   font-weight: 800;
   text-shadow: 0 0 14px rgba(34,197,94,0.20);
 }
+
+
+/* === CART COUNT BADGE === */
+.cart-count-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Sizing */
+  min-width: 22px;
+  height: 18px;
+  padding: 0 7px;
+
+  /* Look */
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  line-height: 1;
+
+  /* Neon badge styling */
+  color: rgba(248,250,252,0.98);
+  background: linear-gradient(90deg, rgba(56,189,248,0.95), rgba(167,139,250,0.95));
+  border: 1px solid rgba(255,255,255,0.22);
+
+  /* Pop over dark/light */
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.12) inset,
+    0 0 14px rgba(56,189,248,0.22),
+    0 0 22px rgba(167,139,250,0.14);
+
+  /* Keeps badge from shrinking */
+  flex-shrink: 0;
+}
+
+/* Slightly calmer in light theme so it doesn’t look “too hot” */
+html[data-theme="light"] .cart-count-badge{
+  box-shadow:
+    0 0 0 1px rgba(29,78,216,0.10) inset,
+    0 0 10px rgba(29,78,216,0.16);
+}
+
+/* When count is 0, make it look “inactive” (still visible) */
+.cart-count-badge:empty{
+  display: none;
+}
