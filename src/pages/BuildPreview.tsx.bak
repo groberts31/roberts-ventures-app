@@ -91,8 +91,7 @@ export default function BuildPreview() {
 
         const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
 
-        // Notes used for rendering (structured log + base notes)
-        const notesCompiled = compileNotes((lv.inputsSnapshot as any).notesLog, lv.inputsSnapshot.notes);
+        const notesCompiled = compileNotes(lv.inputsSnapshot.notesLog, lv.inputsSnapshot.notes);
 
         const png = await renderBuildPreviewPng({
           projectType: lv.inputsSnapshot.type,
@@ -178,6 +177,13 @@ export default function BuildPreview() {
   }, [build?.id, build?.updatedAt, version?.versionId]);
 
   if (!build || !version) {
+  function removeLastCustomerNoteClick() {
+    const next = removeLastCustomerNote(b.id);
+    if (!next) return alert("Could not remove your last note. Please refresh and try again.");
+    setBuild(next);
+    alert("Removed your last note. We\u2019re generating updated previews now.");
+  }
+
     return (
       <div className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
         <h3 className="h3">Build not found</h3>
@@ -190,13 +196,15 @@ export default function BuildPreview() {
 
   const v = version;
   const b = build;
+  const est = v.estimatePublic;
 
-  const notesLog = ((v.inputsSnapshot as any).notesLog || []) as any[];
+  const notesLog = v.inputsSnapshot.notesLog || [];
   const compiledNotes = compileNotes(notesLog, v.inputsSnapshot.notes);
 
-  const canRemoveCustomerNote =
-    Array.isArray(notesLog) &&
-    notesLog.some((n) => String(n?.author || "").toLowerCase() === "customer");
+  const canRemoveCustomerNote = Array.isArray(notesLog)
+    ? notesLog.some(n => String(n?.author||"").toLowerCase()==="customer")
+    : false;
+
 
   function submit() {
     const next = markSubmitted(b.id);
@@ -213,6 +221,10 @@ export default function BuildPreview() {
       alert("Please add a change request and/or extra notes.");
       return;
     }
+    setBuild(next);
+    alert("Last note removed. Re-rendering now.");
+  }
+
 
     const next = addCustomerNote(b.id, req, add);
     if (!next) {
@@ -226,21 +238,6 @@ export default function BuildPreview() {
     alert("Saved! We’re generating updated previews now.");
   }
 
-  function removeLastCustomerNoteClick() {
-    if (!confirm("Remove your most recent note and regenerate previews?")) return;
-
-    const next = removeLastCustomerNote(b.id);
-    if (!next) {
-      alert("Could not remove the last note. Please refresh and try again.");
-      return;
-    }
-
-    setBuild(next);
-    alert("Removed! We’re generating updated previews now.");
-  }
-
-  const est = v.estimatePublic;
-
   return (
     <div className="stack page" style={{ gap: 16 }}>
       <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
@@ -249,17 +246,16 @@ export default function BuildPreview() {
             Build Preview
           </h1>
           <div className="muted" style={{ fontWeight: 850 }}>
-            Created: {fmt(b.createdAt)} • Status: <span className="badge">{String(b.status).toUpperCase()}</span>
+            Created: {fmt(build.createdAt)} • Status: <span className="badge">{build.status.toUpperCase()}</span>
           </div>
           <div className="muted" style={{ fontWeight: 850 }}>
-            Customer: <strong>{b.customer?.name}</strong> • {b.customer?.phone} • {b.customer?.email}
+            Customer: <strong>{build.customer?.name}</strong> • {build.customer?.phone} • {build.customer?.email}
           </div>
         </div>
 
         <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
           <div style={{ fontWeight: 950, color: "#0f172a" }}>
-            {v.inputsSnapshot.type} — {v.inputsSnapshot.dims.lengthIn}" × {v.inputsSnapshot.dims.widthIn}" ×{" "}
-            {v.inputsSnapshot.dims.heightIn}"
+            {v.inputsSnapshot.type} — {v.inputsSnapshot.dims.lengthIn}" × {v.inputsSnapshot.dims.widthIn}" × {v.inputsSnapshot.dims.heightIn}"
           </div>
           <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
             Wood: {v.inputsSnapshot.options.woodSpecies} • Finish: {v.inputsSnapshot.options.finish} • Joinery:{" "}
@@ -325,11 +321,14 @@ export default function BuildPreview() {
                 Save refinement + regenerate previews →
               </button>
 
-              {canRemoveCustomerNote ? (
-                <button className="btn btn-ghost" onClick={removeLastCustomerNoteClick} style={{ fontWeight: 950 }}>
-                  Remove my last note
-                </button>
-              ) : null}
+              <button
+                className="btn btn-ghost"
+                onClick={removeLastCustomerNoteClick}
+                disabled={!canRemoveCustomerNote}
+                style={{ fontWeight: 950 }}
+              >
+                Remove my last note
+              </button>
             </div>
           </div>
 
@@ -342,21 +341,17 @@ export default function BuildPreview() {
 
               <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
                 {notesLog.map((n) => (
-                  <div key={String(n.noteId)} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+                  <div key={n.noteId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
                     <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                       <div style={{ fontWeight: 950, color: "#0f172a" }}>
-                        {String(n.kind || "NOTE").toUpperCase()} • {String(n.author || "UNKNOWN").toUpperCase()}
-                        <span className="badge" style={{ marginLeft: 8 }}>
-                          {fmt(String(n.createdAt))}
-                        </span>
+                        {String(n.kind).toUpperCase()} • {String(n.author).toUpperCase()}
+                        <span className="badge" style={{ marginLeft: 8 }}>{fmt(n.createdAt)}</span>
                       </div>
                       <div className="muted" style={{ fontWeight: 850 }}>
                         Note ID: <span className="badge">{String(n.noteId).slice(-8).toUpperCase()}</span>
                       </div>
                     </div>
-                    <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>
-                      {String(n.text || "")}
-                    </div>
+                    <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{n.text}</div>
                   </div>
                 ))}
               </div>
@@ -396,7 +391,7 @@ export default function BuildPreview() {
             <article key={r.renderId} className="panel card" style={{ padding: 12, display: "grid", gap: 10 }}>
               <div style={{ fontWeight: 950, color: "#0f172a" }}>
                 View: {String(r.view).toUpperCase()}
-                <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span>
+                <span className="badge" style={{ marginLeft: 8 }}>{r.status.toUpperCase()}</span>
               </div>
 
               <div

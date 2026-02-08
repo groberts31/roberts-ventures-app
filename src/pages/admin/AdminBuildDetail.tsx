@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { compileNotes, getBuild, removeCustomerNote, upsertBuild, type BuildSubmission } from "../../lib/buildsStore";
+import { getBuild, upsertBuild, removeLastCustomerNote, compileNotes, type BuildSubmission } from "../../lib/buildsStore";
 import { estimateBuild } from "../../lib/buildPricing";
 import { toast } from "../../lib/toast";
 
@@ -60,31 +60,24 @@ export default function AdminBuildDetail() {
       },
     };
 
-    const next: BuildSubmission = {
-      ...b,
-      updatedAt: new Date().toISOString(),
-      versions: [nextV, ...b.versions.slice(1)],
-    };
-
+    const next: BuildSubmission = { ...b, updatedAt: new Date().toISOString(), versions: [nextV, ...b.versions.slice(1)] };
     upsertBuild(next);
     setBuild(next);
     toast("Estimate recalculated.", "success", "Saved", 1600);
   }
 
-  function removeNote(noteId: string) {
-    const reason = window.prompt("Reason for removing this customer note? (optional)") || "";
-    const next = removeCustomerNote(b.id, noteId, reason);
-
+  function removeLastCustomerNoteAdmin() {
+    if (!confirm("Remove the most recent customer note and regenerate previews?")) return;
+    const next = removeLastCustomerNote(b.id);
     if (!next) {
       toast("Could not remove note.", "error", "Error", 1800);
       return;
     }
-
     setBuild(next);
-    toast("Note removed. New renders queued.", "success", "Saved", 1800);
+    toast("Removed last customer note. Previews re-queued.", "success", "Saved", 1800);
   }
 
-  const notesLog = vv.inputsSnapshot.notesLog || [];
+  const notesLog = ((vv.inputsSnapshot as any).notesLog || []) as any[];
   const compiledNotes = compileNotes(notesLog, vv.inputsSnapshot.notes);
 
   return (
@@ -120,38 +113,18 @@ export default function AdminBuildDetail() {
         </div>
 
         <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
-          <div style={{ fontWeight: 950, color: "#0f172a" }}>Notes used by renderer (admin view)</div>
-
-          {!compiledNotes ? (
-            <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>No notes on file.</div>
+          <div style={{ fontWeight: 950, color: "#0f172a" }}>Notes (compiled)</div>
+          {compiledNotes ? (
+            <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{compiledNotes}</div>
           ) : (
-            <div className="muted" style={{ fontWeight: 850, marginTop: 8, whiteSpace: "pre-wrap" }}>{compiledNotes}</div>
+            <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>No notes</div>
           )}
 
-          {notesLog.length ? (
-            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-              {notesLog.map((n) => (
-                <div key={n.noteId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
-                  <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                    <div style={{ fontWeight: 950 }}>
-                      {String(n.kind).toUpperCase()} • {String(n.author).toUpperCase()}
-                      <span className="badge" style={{ marginLeft: 8 }}>{fmt(n.createdAt)}</span>
-                    </div>
-
-                    {n.author === "customer" && n.kind === "refinement" ? (
-                      <button className="btn btn-ghost" onClick={() => removeNote(n.noteId)} style={{ fontWeight: 950 }}>
-                        Remove this note
-                      </button>
-                    ) : (
-                      <span className="muted" style={{ fontWeight: 850 }}>Not removable (initial / non-customer)</span>
-                    )}
-                  </div>
-
-                  <div className="muted" style={{ fontWeight: 850, whiteSpace: "pre-wrap", marginTop: 8 }}>{n.text}</div>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <div className="row" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+            <button className="btn btn-ghost" onClick={removeLastCustomerNoteAdmin} style={{ fontWeight: 950 }}>
+              Remove last customer note
+            </button>
+          </div>
         </div>
 
         <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
@@ -164,9 +137,7 @@ export default function AdminBuildDetail() {
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
               <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
                 <span className="badge rate-bright">Total: {money(v.estimatePublic.total)}</span>
-                <span className="badge">
-                  Range: {money(v.estimatePublic.rangeLow || v.estimatePublic.total)} – {money(v.estimatePublic.rangeHigh || v.estimatePublic.total)}
-                </span>
+                <span className="badge">Range: {money(v.estimatePublic.rangeLow || v.estimatePublic.total)} – {money(v.estimatePublic.rangeHigh || v.estimatePublic.total)}</span>
               </div>
               <div className="muted" style={{ fontWeight: 850 }}>
                 Materials {money(v.estimatePublic.materials)} • Labor {money(v.estimatePublic.labor)} • Finish {money(v.estimatePublic.finish)} • Overhead {money(v.estimatePublic.overhead)}
@@ -184,9 +155,7 @@ export default function AdminBuildDetail() {
           <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
             {(v.renders || []).map((r) => (
               <div key={r.renderId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
-                <div style={{ fontWeight: 950 }}>
-                  {String(r.view).toUpperCase()} <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span>
-                </div>
+                <div style={{ fontWeight: 950 }}>{String(r.view).toUpperCase()} <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span></div>
                 <div style={{ marginTop: 8, width: "100%", height: 140, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(15,23,42,0.16)" }}>
                   {r.imageDataUrl ? (
                     <img src={r.imageDataUrl} alt="render" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -201,13 +170,6 @@ export default function AdminBuildDetail() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div className="panel" style={{ padding: 14, borderRadius: 14, marginTop: 12, width: "100%", maxWidth: 1000 }}>
-          <div style={{ fontWeight: 950, color: "#0f172a" }}>Admin-only package (coming next)</div>
-          <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
-            Next upgrade will generate: cut list, materials list, tools list, and step-by-step directions (admin-only), plus PDF export.
           </div>
         </div>
       </section>
