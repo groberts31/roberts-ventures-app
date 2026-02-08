@@ -13,7 +13,7 @@ function safeIn(n: number, fallback: number) {
 }
 
 function woodColor(species: BuildOptions["woodSpecies"]) {
-  // Simple, readable “wood-ish” tones (not photoreal). Upgrade later.
+  // Simple readable tones (non-photoreal). Upgrade later with textures.
   switch (species) {
     case "Pine": return 0xE6D2A6;
     case "Poplar": return 0xD8E0A8;
@@ -26,7 +26,6 @@ function woodColor(species: BuildOptions["woodSpecies"]) {
 }
 
 function finishSheen(finish: BuildOptions["finish"]) {
-  // Slight material feel differences
   if (finish === "Natural") return { roughness: 0.65, metalness: 0.02 };
   if (finish === "Stain") return { roughness: 0.55, metalness: 0.03 };
   if (finish === "Paint") return { roughness: 0.35, metalness: 0.01 };
@@ -34,19 +33,25 @@ function finishSheen(finish: BuildOptions["finish"]) {
   return { roughness: 0.55, metalness: 0.03 };
 }
 
-function makeCamera(view: View, size: number) {
-  // Orthographic camera keeps outputs consistent for “render boxes”
-  const frustum = size;
-  const cam = new THREE.OrthographicCamera(-frustum, frustum, frustum, -frustum, 0.1, 4000);
+function fitToView(length: number, depth: number, height: number) {
+  const maxDim = Math.max(length, depth, height);
+  return clamp(maxDim * 0.95, 40, 320);
+}
+
+function makeCamera(view: View, frustumSize: number) {
+  const cam = new THREE.OrthographicCamera(
+    -frustumSize, frustumSize, frustumSize, -frustumSize,
+    0.1, 4000
+  );
 
   if (view === "top") {
-    cam.position.set(0, 520, 0.001);
+    cam.position.set(0, 600, 0.001);
   } else if (view === "front") {
-    cam.position.set(0, 140, 520);
+    cam.position.set(0, 220, 600);
   } else if (view === "detail") {
-    cam.position.set(260, 220, 260);
+    cam.position.set(420, 280, 420);
   } else {
-    cam.position.set(340, 240, 340);
+    cam.position.set(520, 360, 520); // iso
   }
 
   cam.lookAt(0, 0, 0);
@@ -54,59 +59,185 @@ function makeCamera(view: View, size: number) {
   return cam;
 }
 
-function fitToView(length: number, width: number, height: number) {
-  // Determine a reasonable frustum size based on object dimensions
-  const maxDim = Math.max(length, width, height);
-  return clamp(maxDim * 1.05, 60, 520);
+function normType(t: string) {
+  return String(t || "").trim().toLowerCase();
 }
 
-function makeTableProxy(params: {
-  length: number;
-  depth: number;
-  height: number;
-  topT: number;
-  legT: number;
-  mat: THREE.MeshStandardMaterial;
+function addBox(
+  group: THREE.Group,
+  w: number,
+  h: number,
+  d: number,
+  x: number,
+  y: number,
+  z: number,
+  mat: THREE.Material
+) {
+  const geom = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(x, y, z);
+  group.add(mesh);
+  return geom;
+}
+
+function buildModel(args: {
+  projectType: string;
+  dims: BuildDims;
+  options: BuildOptions;
 }) {
-  const g = new THREE.Group();
+  const group = new THREE.Group();
 
-  const { length, depth, height, topT, legT, mat } = params;
+  // Interpret dims consistently:
+  // lengthIn => X (long)
+  // widthIn  => Z (depth)
+  // heightIn => Y (overall height)
+  const length = clamp(safeIn(args.dims.lengthIn, 60), 12, 240);
+  const depth  = clamp(safeIn(args.dims.widthIn, 30), 10, 240);
+  const height = clamp(safeIn(args.dims.heightIn, 30), 10, 240);
 
-  // Top slab centered at origin X/Z, sitting at the top
-  const topGeom = new THREE.BoxGeometry(length, topT, depth);
-  const top = new THREE.Mesh(topGeom, mat);
-  top.position.set(0, height - topT / 2, 0);
-  g.add(top);
+  const topThickness = clamp(safeIn(args.dims.topThicknessIn ?? 1.5, 1.5), 0.5, 6);
 
-  // Legs only if there is enough height to show them
-  const legHeight = Math.max(0, height - topT);
-  if (legHeight >= 4) {
-    const legGeom = new THREE.BoxGeometry(legT, legHeight, legT);
+  const sheen = finishSheen(args.options.finish);
+  const woodMat = new THREE.MeshStandardMaterial({
+    color: woodColor(args.options.woodSpecies),
+    roughness: sheen.roughness,
+    metalness: sheen.metalness,
+  });
 
-    // Inset a bit so legs aren’t flush to edges (looks more realistic)
-    const insetX = Math.max(legT / 2, Math.min(3.5, length * 0.08));
-    const insetZ = Math.max(legT / 2, Math.min(3.5, depth * 0.08));
+  const darkMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.85,
+    metalness: 0.05,
+  });
 
-    const xL = -length / 2 + insetX;
-    const xR =  length / 2 - insetX;
-    const zF =  depth / 2 - insetZ;
-    const zB = -depth / 2 + insetZ;
+  const t = normType(args.projectType);
 
-    const y = legHeight / 2;
+  // Shared thickness defaults (inches-as-units)
+  const boardT = clamp(Math.min(depth, length) * 0.035, 0.6, 1.25); // panel/board thickness
+  const legSize = clamp(Math.min(depth, length) * 0.06, 1.5, 4.0);
 
-    const leg1 = new THREE.Mesh(legGeom, mat); leg1.position.set(xL, y, zF);
-    const leg2 = new THREE.Mesh(legGeom, mat); leg2.position.set(xR, y, zF);
-    const leg3 = new THREE.Mesh(legGeom, mat); leg3.position.set(xL, y, zB);
-    const leg4 = new THREE.Mesh(legGeom, mat); leg4.position.set(xR, y, zB);
+  // Helpers
+  const xMin = -length / 2;
+  const xMax =  length / 2;
+  const zMin = -depth  / 2;
+  const zMax =  depth  / 2;
 
-    g.add(leg1, leg2, leg3, leg4);
+  const geoms: THREE.BufferGeometry[] = [];
+
+  // --- TABLE / BENCH / WORKBENCH (top + 4 legs) ---
+    // (We will write valid TS below)
+  // NOTE: keep one model per type.
+
+  const isTable = t.includes("table");
+  const isBench = t.includes("bench");
+  const isWorkbench = t.includes("workbench");
+
+  if (isTable || isBench || isWorkbench) {
+    const topY = height - topThickness / 2;
+
+    // Top
+    geoms.push(addBox(group, length, topThickness, depth, 0, topY, 0, woodMat) as any);
+
+    // Legs
+    const legH = Math.max(2, height - topThickness);
+    const inset = clamp(legSize * 0.65, 1.25, 4.5);
+
+    const lx1 = xMin + inset + legSize / 2;
+    const lx2 = xMax - inset - legSize / 2;
+    const lz1 = zMin + inset + legSize / 2;
+    const lz2 = zMax - inset - legSize / 2;
+
+    const legY = legH / 2;
+
+    geoms.push(addBox(group, legSize, legH, legSize, lx1, legY, lz1, darkMat) as any);
+    geoms.push(addBox(group, legSize, legH, legSize, lx2, legY, lz1, darkMat) as any);
+    geoms.push(addBox(group, legSize, legH, legSize, lx1, legY, lz2, darkMat) as any);
+    geoms.push(addBox(group, legSize, legH, legSize, lx2, legY, lz2, darkMat) as any);
+
+    // Simple stretcher for workbench feel (optional but helps “accuracy”)
+    if (isWorkbench) {
+      const stretcherH = clamp(legSize * 0.45, 0.8, 2.0);
+      const stretcherY = clamp(legH * 0.35, 6, legH - 4);
+      geoms.push(addBox(group, length - inset * 2 - legSize, stretcherH, legSize * 0.6, 0, stretcherY, 0, darkMat) as any);
+    }
   }
 
-  return g;
+  // --- SHELF (two uprights + shelves) ---
+  else if (t.includes("shelf")) {
+    const sideT = boardT;
+    const shelfT = boardT;
+
+    // Uprights (left/right)
+    const upH = height;
+    const upY = upH / 2;
+    const upX = length / 2 - sideT / 2;
+
+    geoms.push(addBox(group, sideT, upH, depth, -upX, upY, 0, woodMat) as any);
+    geoms.push(addBox(group, sideT, upH, depth,  upX, upY, 0, woodMat) as any);
+
+    // Shelves: bottom, mid, top (inside the uprights)
+    const insideL = Math.max(8, length - sideT * 2);
+    const shelfZ = 0;
+
+    const shelfCount = 3;
+    for (let i = 0; i < shelfCount; i++) {
+      const frac = (i + 1) / (shelfCount + 1); // 1/4, 2/4, 3/4
+      const y = clamp(frac * (height - shelfT) + shelfT / 2, shelfT / 2, height - shelfT / 2);
+      geoms.push(addBox(group, insideL, shelfT, depth, 0, y, shelfZ, woodMat) as any);
+    }
+  }
+
+  // --- CABINET (box with shelves + back panel feel) ---
+  else if (t.includes("cabinet")) {
+    const wallT = clamp(boardT, 0.6, 1.25);
+    const shelfT = wallT;
+    const insideL = Math.max(10, length - wallT * 2);
+    const insideD = Math.max(8, depth - wallT * 2);
+
+    // Bottom / Top / Sides / Back
+    geoms.push(addBox(group, length, wallT, depth, 0, wallT / 2, 0, woodMat) as any);                 // bottom
+    geoms.push(addBox(group, length, wallT, depth, 0, height - wallT / 2, 0, woodMat) as any);          // top
+    geoms.push(addBox(group, wallT, height, depth, -length / 2 + wallT / 2, height / 2, 0, woodMat) as any); // left
+    geoms.push(addBox(group, wallT, height, depth,  length / 2 - wallT / 2, height / 2, 0, woodMat) as any); // right
+    geoms.push(addBox(group, length, height, wallT, 0, height / 2, -depth / 2 + wallT / 2, woodMat) as any); // back
+
+    // One shelf
+    const shelfY = height * 0.55;
+    geoms.push(addBox(group, insideL, shelfT, insideD, 0, shelfY, wallT / 2, woodMat) as any);
+  }
+
+  // --- PLANTER BOX (open top, 4 walls + bottom) ---
+  else if (t.includes("planter")) {
+    const wallT = clamp(boardT, 0.6, 1.5);
+    const bottomT = wallT;
+
+    // Bottom
+    geoms.push(addBox(group, length, bottomT, depth, 0, bottomT / 2, 0, woodMat) as any);
+
+    // Walls
+    const wallH = Math.max(8, height - bottomT);
+    const wallY = bottomT + wallH / 2;
+
+    // front/back
+    geoms.push(addBox(group, length, wallH, wallT, 0, wallY,  depth / 2 - wallT / 2, woodMat) as any);
+    geoms.push(addBox(group, length, wallH, wallT, 0, wallY, -depth / 2 + wallT / 2, woodMat) as any);
+
+    // left/right
+    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2, -length / 2 + wallT / 2, wallY, 0, woodMat) as any);
+    geoms.push(addBox(group, wallT, wallH, depth - wallT * 2,  length / 2 - wallT / 2, wallY, 0, woodMat) as any);
+  }
+
+  // --- DEFAULT (fallback block) ---
+  else {
+    geoms.push(addBox(group, length, height, depth, 0, height / 2, 0, woodMat) as any);
+  }
+
+  return { group, length, depth, height, geoms };
 }
 
 export async function renderBuildPreviewPng(args: {
   view: View;
+  projectType: string;
   title?: string;
   dims: BuildDims;
   options: BuildOptions;
@@ -132,28 +263,9 @@ export async function renderBuildPreviewPng(args: {
   rim.position.set(-260, 160, -200);
   scene.add(rim);
 
-  // Dimensions (inches -> scene units)
-  const L = safeIn(args.dims.lengthIn, 48);
-  const D = safeIn(args.dims.widthIn, 24);
-  const Ht = safeIn(args.dims.heightIn, 30);
-
-  const length = clamp(L, 6, 240);
-  const depth  = clamp(D, 6, 240);
-  const height = clamp(Ht, 6, 240);
-
-  const topT = clamp(safeIn(args.dims.topThicknessIn ?? 1.5, 1.5), 0.75, Math.min(6, height * 0.35));
-  const legT = clamp(Math.max(1.25, Math.min(3.0, Math.min(length, depth) * 0.08)), 1.25, 4);
-
-  const sheen = finishSheen(args.options.finish);
-  const mat = new THREE.MeshStandardMaterial({
-    color: woodColor(args.options.woodSpecies),
-    roughness: sheen.roughness,
-    metalness: sheen.metalness,
-  });
-
-  // Model: table-like proxy (top + legs)
-  const model = makeTableProxy({ length, depth, height, topT, legT, mat });
-  scene.add(model);
+  // Model
+  const model = buildModel({ projectType: args.projectType, dims: args.dims, options: args.options });
+  scene.add(model.group);
 
   // Ground
   const ground = new THREE.Mesh(
@@ -164,13 +276,13 @@ export async function renderBuildPreviewPng(args: {
   ground.position.y = 0;
   scene.add(ground);
 
-  const grid = new THREE.GridHelper(1000, 36, 0x334155, 0x1f2a44);
+  const grid = new THREE.GridHelper(1000, 32, 0x334155, 0x1f2a44);
   (grid.material as THREE.Material).transparent = true;
   (grid.material as THREE.Material).opacity = 0.25;
   scene.add(grid);
 
   // Camera
-  const frustumSize = fitToView(length, depth, height);
+  const frustumSize = fitToView(model.length, model.depth, model.height);
   const camera = makeCamera(args.view, frustumSize);
 
   // Renderer (offscreen)
@@ -185,7 +297,7 @@ export async function renderBuildPreviewPng(args: {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(W, H, false);
 
-  // Orthographic aspect fit
+  // Ortho aspect correction
   const aspect = W / H;
   const ortho = camera as THREE.OrthographicCamera;
   const s = frustumSize;
@@ -197,13 +309,14 @@ export async function renderBuildPreviewPng(args: {
 
   renderer.render(scene, camera);
 
-  // Cleanup (important if many renders)
-  renderer.dispose();
-  mat.dispose();
+  // Cleanup
+  model.geoms.forEach((g) => g.dispose());
+
   (ground.geometry as THREE.BufferGeometry).dispose();
   (ground.material as THREE.Material).dispose();
   (grid.geometry as THREE.BufferGeometry).dispose();
   (grid.material as THREE.Material).dispose();
+  renderer.dispose();
 
   return canvas.toDataURL("image/png");
 }
