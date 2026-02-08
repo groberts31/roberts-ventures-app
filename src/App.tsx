@@ -25,6 +25,14 @@ import About from "./pages/About";
 import CustomerPortal from "./pages/CustomerPortal";
 import CustomerRequestDetail from "./pages/CustomerRequestDetail";
 
+
+import Builds from "./pages/Builds";
+import BuildDesigner from "./pages/BuildDesigner";
+import BuildPreview from "./pages/BuildPreview";
+import BuildPortal from "./pages/BuildPortal";
+
+import AdminBuilds from "./pages/admin/AdminBuilds";
+import AdminBuildDetail from "./pages/admin/AdminBuildDetail";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGuard from "./components/admin/AdminGuard";
@@ -107,7 +115,13 @@ export default function App() {
           <Route path="/customer" element={<CustomerPortal />} />
           <Route path="/customer/requests/:id" element={<CustomerRequestDetail />} />
 
-          <Route path="/admin/login" element={<AdminLogin />} />
+          
+          {/* Custom Builds (customer) */}
+          <Route path="/builds" element={<Builds />} />
+          <Route path="/builds/new" element={<BuildDesigner />} />
+          <Route path="/builds/portal" element={<BuildPortal />} />
+          <Route path="/builds/:id" element={<BuildPreview />} />
+<Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"
             element={
@@ -117,7 +131,24 @@ export default function App() {
             }
           />
 
-          {/* IMPORTANT: keep this ABOVE the catch-all 404 route */}
+          
+          <Route
+            path="/admin/builds"
+            element={
+              <AdminGuard>
+                <AdminBuilds />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/builds/:id"
+            element={
+              <AdminGuard>
+                <AdminBuildDetail />
+              </AdminGuard>
+            }
+          />
+{/* IMPORTANT: keep this ABOVE the catch-all 404 route */}
           <Route path="/request-confirmed/:id" element={<RequestConfirmed />} />
 
           <Route

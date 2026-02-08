@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { findRequestsByNameAndPhone, findRequestsByPhoneAndCode, type RVRequest } from "../lib/requestsStore";
+import { useCart } from "../data/requestCart";
 
 function normalizePhone(p: string) {
   return String(p || "").replace(/\D+/g, "");
@@ -20,6 +21,7 @@ function statusLabel(s: string) {
 }
 
 export default function CustomerPortal() {
+  const cart = useCart();
 
   async function copyText(text: string) {
     const v = String(text || "").trim();
@@ -99,7 +101,10 @@ export default function CustomerPortal() {
 
           <button
             className="btn btn-primary"
-            onClick={() => setSearched(true)}
+            onClick={() => {
+              cart.setCustomer({ phone, accessCode: code });
+              setSearched(true);
+            }}
             disabled={normalizePhone(phone).length < 10 || String(code).trim().length < 6}
           >
             Find My Requests

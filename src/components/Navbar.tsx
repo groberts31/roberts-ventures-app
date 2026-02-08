@@ -111,7 +111,11 @@ export default function Navbar() {
             Contact
           </NavLink>
 
-          <NavLink to="/customer" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+                    <NavLink to="/builds" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+            Custom Builds
+          </NavLink>
+
+<NavLink to="/customer" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             Customer Portal
           </NavLink>
 
