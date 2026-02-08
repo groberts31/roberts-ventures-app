@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../data/requestCart";
 import { SERVICES } from "../data/services";
 import { ADD_ONS } from "../data/addOns";
@@ -39,6 +39,10 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+
+function normalizePhone(p?: string) {
+  return String(p || "").replace(/\D+/g, "");
+}
 
 function money(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
@@ -191,6 +195,16 @@ return { ...i, service, estLabel };
     photos: [],
   });
 
+  // Step 2: as soon as the user types a real phone number, scope the cart to that phone
+  // (so the navbar cart count reflects THIS customer, not the last active one).
+  useEffect(() => {
+    const digits = normalizePhone(contact.phone);
+    if (digits.length >= 10) {
+      cart.setCustomer({ phone: contact.phone });
+    }
+  }, [contact.phone]);
+
+
   async function onAddPhotos(files: FileList | null) {
     if (!files || files.length === 0) return;
 
@@ -251,10 +265,17 @@ return { ...i, service, estLabel };
       return;
     }
 
+    const accessCode = makeAccessCode();
+
+    // Step 2: lock the active customer to phone+accessCode at submit time
+    // so future cart reads are isolated to this customer session.
+    cart.setCustomer({ phone: contact.phone, accessCode });
+
+
     const request = {
       createdAt: new Date().toISOString(),
       appointmentStart: selectedSlotISO,
-      accessCode: makeAccessCode(),
+      accessCode,
       customer: {
         name: contact.name,
         phone: contact.phone,
@@ -279,7 +300,6 @@ return { ...i, service, estLabel };
 
     // ✅ Redirect to confirmation page
     window.location.href = `/request-confirmed/${(request as any).id}`;
-    return;alert("Request submitted! (Saved locally for now.)");
 
     cart.clear();
     setSelectedSlotISO("");
