@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { estimateBuild } from "../lib/buildPricing";
+import { renderBuildPreviewPng } from "../lib/render3d";
 import { getBuild, markSubmitted, upsertBuild, type BuildSubmission, type RenderJob } from "../lib/buildsStore";
 
 function fmt(iso: string) {
@@ -11,26 +12,6 @@ function fmt(iso: string) {
 
 function money(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
-}
-
-function svgPlaceholder(view: string, title: string) {
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#0ea5e9" stop-opacity="0.20"/>
-        <stop offset="1" stop-color="#a78bfa" stop-opacity="0.18"/>
-      </linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="rgba(2,6,23,0.85)"/>
-    <rect x="40" y="40" width="1120" height="720" rx="24" fill="url(#g)" stroke="rgba(248,250,252,0.12)" />
-    <text x="80" y="140" fill="rgba(248,250,252,0.92)" font-size="58" font-family="Arial" font-weight="800">${title}</text>
-    <text x="80" y="215" fill="rgba(248,250,252,0.70)" font-size="32" font-family="Arial" font-weight="700">View: ${view}</text>
-    <text x="80" y="270" fill="rgba(248,250,252,0.70)" font-size="28" font-family="Arial" font-weight="700">Preview render placeholder (Three.js upgrade later)</text>
-    <circle cx="1020" cy="240" r="110" fill="rgba(56,189,248,0.12)" stroke="rgba(56,189,248,0.32)" />
-    <circle cx="1070" cy="290" r="70" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.32)" />
-  </svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 export default function BuildPreview() {
@@ -44,20 +25,19 @@ export default function BuildPreview() {
 
   const version = useMemo(() => build?.versions?.[0] ?? null, [build]);
 
-  // Kick off “render jobs” for any queued renders (placeholder implementation).
+  // Render queue: ONE image at a time (real Three.js PNG render -> dataUrl)
   useEffect(() => {
     if (!build || !version) return;
 
-    // Always run from the latest stored build (avoids stale closures)
+    // Always run from latest stored build (avoids stale closures)
     const latest0 = getBuild(build.id) ?? build;
     const lv0 = latest0.versions?.[0];
     if (!lv0) return;
 
     const renders0 = lv0.renders || [];
 
-    // 1) If nothing is currently rendering, promote the FIRST queued render to "rendering"
+    // 1) If nothing is currently rendering, promote FIRST queued -> rendering
     const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
-
     let target: RenderJob | null = currentlyRendering;
 
     if (!target) {
@@ -85,63 +65,107 @@ export default function BuildPreview() {
       }
     }
 
-    // If still nothing to do, exit
     if (!target) return;
 
-    // 2) Complete ONLY the single "target" render after a short delay
-    const delay = 900;
-    const timer = setTimeout(() => {
-      const latest = getBuild(build.id);
-      if (!latest) return;
+    // 2) Complete ONLY the single target render (no parallel)
+    let cancelled = false;
 
-      const lv = latest.versions[0];
-      const est = estimateBuild(lv.inputsSnapshot.dims, lv.inputsSnapshot.options);
+    const run = async () => {
+      try {
+        // short delay so UI shows "Rendering…" before completion
+        await new Promise((res) => setTimeout(res, 450));
+        if (cancelled) return;
 
-      const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
+        const latest = getBuild(build.id);
+        if (!latest) return;
 
-      const updatedRenders = (lv.renders || []).map((x) => {
-        if (x.renderId != target!.renderId) return x;
+        const lv = latest.versions[0];
+        const est = estimateBuild(lv.inputsSnapshot.dims, lv.inputsSnapshot.options);
 
-        return {
-          ...x,
-          status: "complete" as const,
-          finishedAt: new Date().toISOString(),
-          imageDataUrl: svgPlaceholder(x.view, title),
+        const title = `${lv.inputsSnapshot.type} • ${lv.inputsSnapshot.dims.lengthIn}"×${lv.inputsSnapshot.dims.widthIn}"×${lv.inputsSnapshot.dims.heightIn}"`;
+
+        const png = await renderBuildPreviewPng({
+          view: target!.view,
+          title,
+          dims: lv.inputsSnapshot.dims,
+          options: lv.inputsSnapshot.options,
+          width: 1200,
+          height: 800,
+        });
+
+        if (cancelled) return;
+
+        const updatedRenders = (lv.renders || []).map((x) => {
+          if (x.renderId !== target!.renderId) return x;
+
+          return {
+            ...x,
+            status: "complete" as const,
+            finishedAt: new Date().toISOString(),
+            imageDataUrl: png,
+            estimatePublic: {
+              total: est.total,
+              rangeLow: est.rangeLow,
+              rangeHigh: est.rangeHigh,
+              label: "Est. total (updates per view)",
+            },
+          };
+        });
+
+        const nextV = {
+          ...lv,
+          renders: updatedRenders,
           estimatePublic: {
             total: est.total,
             rangeLow: est.rangeLow,
             rangeHigh: est.rangeHigh,
-            label: "Est. total (updates per view)",
+            materials: est.materials,
+            labor: est.labor,
+            overhead: est.overhead,
+            finish: est.finish,
           },
         };
-      });
 
-      const nextV = {
-        ...lv,
-        renders: updatedRenders,
-        estimatePublic: {
-          total: est.total,
-          rangeLow: est.rangeLow,
-          rangeHigh: est.rangeHigh,
-          materials: est.materials,
-          labor: est.labor,
-          overhead: est.overhead,
-          finish: est.finish,
-        },
-      };
+        const nextBuild: BuildSubmission = {
+          ...latest,
+          updatedAt: new Date().toISOString(),
+          versions: [nextV, ...latest.versions.slice(1)],
+        };
 
-      const nextBuild: BuildSubmission = {
-        ...latest,
-        updatedAt: new Date().toISOString(),
-        versions: [nextV, ...latest.versions.slice(1)],
-      };
+        upsertBuild(nextBuild);
+        setBuild(nextBuild);
+      } catch (e) {
+        console.error(e);
+        if (cancelled) return;
 
-      upsertBuild(nextBuild);
-      setBuild(nextBuild);
-    }, delay);
+        // Mark target as failed
+        const latest = getBuild(build.id);
+        if (!latest) return;
 
-    return () => clearTimeout(timer);
-  }, [build?.id, version?.versionId]); // intentionally narrow deps
+        const lv = latest.versions[0];
+        const updatedRenders = (lv.renders || []).map((x) => {
+          if (x.renderId !== target!.renderId) return x;
+          return { ...x, status: "failed" as const, finishedAt: new Date().toISOString() };
+        });
+
+        const nextV = { ...lv, renders: updatedRenders };
+        const nextBuild: BuildSubmission = {
+          ...latest,
+          updatedAt: new Date().toISOString(),
+          versions: [nextV, ...latest.versions.slice(1)],
+        };
+
+        upsertBuild(nextBuild);
+        setBuild(nextBuild);
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [build?.id, build?.updatedAt, version?.versionId]); // keep queue moving after each render update
 
   if (!build || !version) {
     return (
@@ -153,11 +177,11 @@ export default function BuildPreview() {
   }
 
   const v = version;
-    const b = build;
-const est = v.estimatePublic;
+  const b = build;
+  const est = v.estimatePublic;
 
   function submit() {
-        const next = markSubmitted(b.id);
+    const next = markSubmitted(b.id);
     if (!next) return alert("Could not submit. Try again.");
     setBuild(next);
     alert(`Submitted! Your Build Access Code: ${String(next.accessCode || "—")}`);
@@ -223,7 +247,7 @@ const est = v.estimatePublic;
       <section className="stack" style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
         <div className="h3" style={{ margin: 0 }}>Render Previews</div>
         <div className="muted" style={{ fontWeight: 850 }}>
-          Each render has its own estimate box that updates when the render completes.
+          One render runs at a time (queued → rendering → complete). Each render has its own estimate box.
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginTop: 10 }}>
@@ -247,11 +271,21 @@ const est = v.estimatePublic;
                 }}
               >
                 {r.imageDataUrl ? (
-                  <img src={r.imageDataUrl} alt={`${r.view} render`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img
+                    src={r.imageDataUrl}
+                    alt={`${r.view} render`}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
                 ) : (
                   <div className="card-center" style={{ width: "100%", height: "100%", padding: 12 }}>
                     <div className="muted" style={{ fontWeight: 900 }}>
-                      {r.status === "queued" ? "Queued…" : r.status === "rendering" ? "Rendering…" : "No image"}
+                      {r.status === "queued"
+                        ? "Queued…"
+                        : r.status === "rendering"
+                        ? "Rendering…"
+                        : r.status === "failed"
+                        ? "Render failed (will re-run on refresh later)"
+                        : "No image"}
                     </div>
                   </div>
                 )}
@@ -278,7 +312,8 @@ const est = v.estimatePublic;
               </div>
 
               <div className="muted" style={{ fontWeight: 850 }}>
-                {r.startedAt ? `Started: ${fmt(r.startedAt)}` : "Not started yet"}{r.finishedAt ? ` • Finished: ${fmt(r.finishedAt)}` : ""}
+                {r.startedAt ? `Started: ${fmt(r.startedAt)}` : "Not started yet"}
+                {r.finishedAt ? ` • Finished: ${fmt(r.finishedAt)}` : ""}
               </div>
             </article>
           ))}
