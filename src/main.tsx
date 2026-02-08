@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import "./styles/staylit-flame.css";
+import "./styles/theme-override.css";
 import { CartProvider } from "./data/requestCart";
 import { emitToast } from "./components/ToastHost";
 

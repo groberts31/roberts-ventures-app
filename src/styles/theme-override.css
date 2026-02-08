@@ -1,0 +1,54 @@
+/* =========================================================
+   THEME OVERRIDE (loaded LAST)
+   Purpose: ensure src/index.css theme tokens control the app,
+   even when urban.css is present.
+   ========================================================= */
+
+/* 1) Let index.css control base colors instead of urban.css */
+html, body {
+  background: #f8fbff !important;
+  color: var(--text-main) !important;
+}
+
+/* Dark mode base (when html[data-theme="dark"] is set) */
+html[data-theme="dark"] body,
+html[data-theme="dark"] {
+  background: #020617 !important;
+  color: var(--text-main) !important;
+}
+
+/* 2) Restore common text classes to theme tokens */
+.muted { color: var(--text-muted) !important; }
+.body, .lead, p, li, span { color: var(--text-soft) !important; }
+
+/* 3) Restore panels/cards to theme tokens (beats urban.css .panel.card background) */
+.panel,
+.panel.card {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-main) !important;
+}
+
+/* 4) Keep headings consistent with theme tokens */
+.h1, .h2, .h3, h1, h2, h3, h4 {
+  color: var(--text-strong) !important;
+}
+
+/* 5) Buttons/fields/badges use theme tokens (avoid urban glow forcing colors) */
+.btn {
+  background: var(--btn-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border) !important;
+}
+
+.field, input, textarea, select {
+  background: var(--field-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border) !important;
+}
+
+.badge {
+  background: var(--badge-bg) !important;
+  color: var(--text-soft) !important;
+  border-color: var(--border) !important;
+}
