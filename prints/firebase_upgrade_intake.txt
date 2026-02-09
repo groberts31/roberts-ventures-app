@@ -1,0 +1,636 @@
+=== FIREBASE-RELATED FILES (tree) ===
+.env.local
+.firebaserc
+node_modules/firebase/firebase-firestore-compat.js.map
+node_modules/firebase/firebase-app.js.map
+node_modules/firebase/firebase-storage.js.map
+node_modules/firebase/firebase-performance-standalone-compat.js
+node_modules/firebase/firebase-auth-compat.js
+node_modules/firebase/firebase-installations.js.map
+node_modules/firebase/firebase-installations.js
+node_modules/firebase/firebase-auth-web-extension.js.map
+node_modules/firebase/firebase-data-connect.js
+node_modules/firebase/firebase-functions.js.map
+node_modules/firebase/firebase-compat.js.map
+node_modules/firebase/firebase-data-connect.js.map
+node_modules/firebase/firebase-functions.js
+node_modules/firebase/firebase-firestore-compat.js
+node_modules/firebase/firebase-installations-compat.js
+node_modules/firebase/firebase-remote-config.js
+node_modules/firebase/firebase-firestore-pipelines.js
+node_modules/firebase/firebase-messaging-sw.js.map
+node_modules/firebase/firebase-auth-compat.js.map
+node_modules/firebase/firebase-messaging-sw.js
+node_modules/firebase/firebase-app-check-compat.js.map
+node_modules/firebase/firebase-installations-compat.js.map
+node_modules/firebase/firebase-analytics-compat.js
+node_modules/firebase/firebase-database-compat.js.map
+node_modules/firebase/firebase-app-compat.js
+node_modules/firebase/firebase-app.js
+node_modules/firebase/firebase-ai.js.map
+node_modules/firebase/firebase-auth-cordova.js
+node_modules/firebase/firebase-firestore-pipelines.js.map
+node_modules/firebase/firebase-performance-compat.js
+node_modules/firebase/firebase-firestore-lite-pipelines.js
+node_modules/firebase/firebase-messaging-compat.js
+node_modules/firebase/firebase-firestore.js.map
+node_modules/firebase/firebase-firestore-lite.js.map
+node_modules/firebase/firebase-messaging.js.map
+node_modules/firebase/firebase-remote-config.js.map
+node_modules/firebase/firebase-auth-cordova.js.map
+node_modules/firebase/firebase-analytics-compat.js.map
+node_modules/firebase/firebase-auth.js
+node_modules/firebase/firebase-performance-standalone-compat.js.map
+node_modules/firebase/firebase-functions-compat.js.map
+node_modules/firebase/firebase-remote-config-compat.js
+node_modules/firebase/firebase-performance.js
+node_modules/firebase/firebase-database-compat.js
+node_modules/firebase/firebase-performance.js.map
+node_modules/firebase/firebase-database.js.map
+node_modules/firebase/firebase-app-check.js
+node_modules/firebase/firebase-auth-web-extension.js
+node_modules/firebase/firebase-app-check.js.map
+node_modules/firebase/firebase-performance-compat.js.map
+node_modules/firebase/firebase-ai.js
+node_modules/firebase/firebase-firestore-lite.js
+node_modules/firebase/firebase-firestore.js
+node_modules/firebase/firebase-messaging.js
+node_modules/firebase/firebase-messaging-compat.js.map
+node_modules/firebase/firebase-compat.js
+node_modules/firebase/firebase-app-compat.js.map
+node_modules/firebase/firebase-app-check-compat.js
+node_modules/firebase/firebase-functions-compat.js
+node_modules/firebase/firebase-storage-compat.js.map
+node_modules/firebase/firebase-database.js
+node_modules/firebase/firebase-storage.js
+node_modules/firebase/firebase-firestore-lite-pipelines.js.map
+node_modules/firebase/firebase-analytics.js
+node_modules/firebase/firebase-auth.js.map
+node_modules/firebase/firebase-storage-compat.js
+node_modules/firebase/firebase-remote-config-compat.js.map
+node_modules/firebase/firebase-analytics.js.map
+prints/firebase_upgrade_intake.txt
+.env
+firebase.json
+src/data/firebase.ts
+
+=== ENV FILE CONTENTS (redact if you want) ===
+--- .env ---
+VITE_FIREBASE_API_KEY=REDACTED
+VITE_FIREBASE_AUTH_DOMAIN=PASTE_ME
+VITE_FIREBASE_PROJECT_ID=PASTE_ME
+VITE_FIREBASE_STORAGE_BUCKET=PASTE_ME
+VITE_FIREBASE_MESSAGING_SENDER_ID=PASTE_ME
+VITE_FIREBASE_APP_ID=PASTE_ME
+VITE_ADMIN_PASSCODE="0625"
+--- .env.local ---
+
+VITE_ADMIN_PIN=0625
+
+=== buildsStore (top + key parts) ===
+     1	export type BuildStatus = "draft" | "submitted" | "reviewing" | "quote_sent" | "approved" | "in_build" | "complete";
+     2	
+     3	export type BuildCustomer = {
+     4	  name: string;
+     5	  phone: string;
+     6	  email: string;
+     7	  address?: string;
+     8	};
+     9	
+    10	export type BuildDims = {
+    11	  lengthIn: number;
+    12	  widthIn: number;
+    13	  heightIn: number;
+    14	  topThicknessIn?: number;
+    15	};
+    16	
+    17	export type BuildOptions = {
+    18	  woodSpecies: "Pine" | "Oak" | "Walnut" | "Maple" | "Poplar" | "Plywood";
+    19	  finish: "Natural" | "Stain" | "Paint" | "Poly";
+    20	  joinery: "Screws" | "Pocket Holes" | "Mortise & Tenon" | "Dowels";
+    21	};
+    22	
+    23	export type RenderStatus = "queued" | "rendering" | "complete" | "failed";
+    24	
+    25	export type RenderJob = {
+    26	  renderId: string;
+    27	  view: "iso" | "front" | "top" | "detail";
+    28	  status: RenderStatus;
+    29	  imageDataUrl?: string;
+    30	  startedAt?: string;
+    31	  finishedAt?: string;
+    32	  estimatePublic?: {
+    33	    total: number;
+    34	    rangeLow?: number;
+    35	    rangeHigh?: number;
+    36	    label?: string;
+    37	  };
+    38	};
+    39	
+    40	export type NoteAuthor = "customer" | "admin";
+    41	export type NoteKind = "initial" | "change" | "refinement" | "note";
+    42	
+    43	export type NoteItem = {
+    44	  noteId: string;
+    45	  createdAt: string;
+    46	  author: NoteAuthor;
+    47	  kind: NoteKind;
+    48	  text: string;
+    49	};
+    50	
+    51	export type BuildVersion = {
+    52	  versionId: string;
+    53	  createdAt: string;
+    54	  customerChangeRequest?: string;
+    55	  inputsSnapshot: {
+    56	    type: string;
+    57	    dims: BuildDims;
+    58	    options: BuildOptions;
+    59	
+    60	    // Legacy field kept for backwards compatibility ONLY.
+    61	    // Going forward: we keep this EMPTY to prevent duplicate/phantom notes.
+    62	    notes?: string;
+    63	
+    64	    // Canonical notes source of truth
+    65	    notesLog?: NoteItem[];
+    66	  };
+    67	  renders: RenderJob[];
+    68	
+    69	  estimatePublic?: {
+    70	    total: number;
+    71	    rangeLow?: number;
+    72	    rangeHigh?: number;
+    73	    materials: number;
+    74	    labor: number;
+    75	    overhead: number;
+    76	    finish: number;
+    77	  };
+    78	
+    79	  estimateInternal?: any;
+    80	  generatedPackage?: any;
+    81	};
+    82	
+    83	export type BuildSubmission = {
+    84	  id: string;
+    85	  createdAt: string;
+    86	  updatedAt: string;
+    87	
+    88	  status: BuildStatus;
+    89	  accessCode?: string;
+    90	
+    91	  customer: BuildCustomer;
+    92	
+    93	  project: {
+    94	    type: string;
+    95	    dims: BuildDims;
+    96	    options: BuildOptions;
+    97	
+    98	    // Legacy compiled string (we keep it EMPTY going forward)
+    99	    notes?: string;
+   100	
+   101	    // Canonical structured notes
+   102	    notesLog?: NoteItem[];
+   103	
+   104	    refPhotos?: { name: string; type: string; dataUrl: string }[];
+   105	  };
+   106	
+   107	  versions: BuildVersion[];
+   108	};
+   109	
+   110	const KEY = "rv_build_submissions";
+   111	
+   112	function safeParse<T>(raw: string | null, fallback: T): T {
+   113	  try {
+   114	    if (!raw) return fallback;
+   115	    return JSON.parse(raw) as T;
+   116	  } catch {
+   117	    return fallback;
+   118	  }
+   119	}
+   120	
+   121	function uid() {
+   122	  return (crypto as any).randomUUID?.() ?? (Math.random().toString(16).slice(2) + Date.now().toString(16));
+   123	}
+   124	
+   125	/**
+   126	 * If an old build exists with only legacy `notes` and no `notesLog`,
+   127	 * migrate it into a single structured "initial" note.
+   128	 */
+   129	function ensureNotesLog(legacyNotes?: string, existing?: NoteItem[], createdAtHint?: string): NoteItem[] {
+   130	  const log = Array.isArray(existing) ? existing.filter(Boolean) : [];
+   131	  if (log.length) return log;
+   132	
+   133	  const text = String(legacyNotes || "").trim();
+   134	  if (!text) return [];
+   135	
+   136	  return [
+   137	    {
+   138	      noteId: uid(),
+   139	      createdAt: createdAtHint || new Date().toISOString(),
+   140	      author: "customer",
+   141	      kind: "initial",
+   142	      text,
+   143	    },
+   144	  ];
+   145	}
+   146	
+   147	function normalizeBuild(b: any): BuildSubmission | null {
+   148	  if (!b || typeof b !== "object") return null;
+   149	
+   150	  const createdAt = String(b.createdAt || new Date().toISOString());
+   151	  const project = b.project || {};
+   152	
+   153	  const legacyProjectNotes = String(project.notes || "").trim();
+   154	  const projectNotesLog = ensureNotesLog(legacyProjectNotes, project.notesLog, createdAt);
+   155	
+   156	  const versions = Array.isArray(b.versions) ? b.versions : [];
+   157	  const nextVersions: BuildVersion[] = versions.map((v: any) => {
+   158	    const inputs = v?.inputsSnapshot || {};
+   159	    const vCreatedAt = String(v?.createdAt || createdAt);
+   160	
+   161	    // Old builds may have inputsSnapshot.notes (compiled blob) but no notesLog.
+   162	    const legacyVNotes = String(inputs.notes ?? legacyProjectNotes ?? "").trim();
+   163	    const vNotesLog = ensureNotesLog(legacyVNotes, inputs.notesLog ?? projectNotesLog, vCreatedAt);
+   164	
+   165	    return {
+   166	      ...v,
+   167	      createdAt: vCreatedAt,
+   168	      inputsSnapshot: {
+   169	        type: String(inputs.type || project.type || ""),
+   170	        dims: inputs.dims || project.dims,
+   171	        options: inputs.options || project.options,
+   172	
+   173	        // IMPORTANT: going forward we keep legacy notes empty to avoid duplication.
+   174	        // We only keep it for old builds that still have it.
+   175	        notes: String(inputs.notes || "").includes("\n---\n") ? "" : "",
+   176	
+   177	        notesLog: vNotesLog,
+   178	      },
+   179	      renders: Array.isArray(v?.renders) ? v.renders : [],
+   180	    } as BuildVersion;
+   181	  });
+   182	
+   183	  const out: BuildSubmission = {
+   184	    ...b,
+   185	    createdAt,
+   186	    updatedAt: String(b.updatedAt || createdAt),
+   187	    status: (b.status || "draft") as BuildStatus,
+   188	    customer: b.customer || { name: "", phone: "", email: "" },
+   189	    project: {
+   190	      ...project,
+   191	      type: String(project.type || ""),
+   192	      dims: project.dims,
+   193	      options: project.options,
+   194	
+   195	      // IMPORTANT: going forward we keep legacy notes empty (canonical is notesLog)
+   196	      notes: "",
+   197	
+   198	      notesLog: projectNotesLog,
+   199	      refPhotos: Array.isArray(project.refPhotos) ? project.refPhotos : [],
+   200	    },
+   201	    versions: nextVersions,
+   202	  };
+   203	
+   204	  return out;
+   205	}
+   206	
+   207	/**
+   208	 * Compile notes for display + renderer.
+   209	 * We do NOT prepend legacy notes anymore (we keep legacy notes empty going forward).
+   210	 * This prevents "remove last note" from appearing to do nothing.
+   211	 */
+   212	export function compileNotes(notesLog?: NoteItem[], _legacyNotes?: string) {
+   213	  const items = Array.isArray(notesLog) ? notesLog : [];
+   214	  return items
+   215	    .map((n) => String(n?.text || "").trim())
+   216	    .filter(Boolean)
+   217	    .join("\n\n---\n\n");
+   218	}
+   219	
+   220	export function normalizePhone(p: string) {
+
+=== AdminBuilds imports + storage usage ===
+     1	import { useEffect, useMemo, useState } from "react";
+     2	import { Link } from "react-router-dom";
+     3	import { readBuilds, writeBuilds, type BuildSubmission } from "../../lib/buildsStore";
+     4	import { toast } from "../../lib/toast";
+     5	
+     6	function safe(s: any) {
+     7	  return String(s || "").toLowerCase();
+     8	}
+     9	
+    10	function fmt(iso: string) {
+    11	  const d = new Date(iso);
+    12	  if (Number.isNaN(d.getTime())) return iso;
+    13	  return d.toLocaleString();
+    14	}
+    15	
+    16	export default function AdminBuilds() {
+    17	  const [all, setAll] = useState<BuildSubmission[]>([]);
+    18	  const [q, setQ] = useState("");
+    19	
+    20	  // Bulk selection
+    21	  const [selected, setSelected] = useState<Record<string, boolean>>({});
+    22	  const [bulkStatus, setBulkStatus] = useState<BuildSubmission["status"] | "">("");
+    23	
+    24	  function refresh() {
+    25	    setAll(readBuilds());
+    26	  }
+    27	
+    28	  useEffect(() => refresh(), []);
+    29	
+    30	  const filtered = useMemo(() => {
+    31	    const term = q.trim().toLowerCase();
+    32	    if (!term) return all;
+    33	    return all.filter((b) => {
+    34	      const hay = [
+    35	        b.id,
+    36	        b.status,
+    37	        b.createdAt,
+    38	        b.updatedAt,
+    39	        b.customer?.name,
+    40	        b.customer?.phone,
+    41	        b.customer?.email,
+    42	        b.project?.type,
+    43	        b.project?.notes,
+    44	      ]
+    45	        .filter(Boolean)
+    46	        .join(" ")
+    47	        .toLowerCase();
+    48	      return hay.includes(term);
+    49	    });
+    50	  }, [all, q]);
+    51	
+    52	  // IDs visible in the current filter (what Select All should target)
+    53	  const visibleIds = useMemo(() => filtered.map((b) => String(b.id)), [filtered]);
+    54	
+    55	  const selectedIds = useMemo(() => {
+    56	    return visibleIds.filter((id) => Boolean(selected[id]));
+    57	  }, [selected, visibleIds]);
+    58	
+    59	  const allVisibleSelected = useMemo(() => {
+    60	    if (visibleIds.length === 0) return false;
+    61	    return visibleIds.every((id) => Boolean(selected[id]));
+    62	  }, [visibleIds, selected]);
+    63	
+    64	  const anySelected = selectedIds.length > 0;
+    65	
+    66	  function toggleOne(id: string, v: boolean) {
+    67	    setSelected((prev) => ({ ...prev, [id]: v }));
+    68	  }
+    69	
+    70	  function toggleAllVisible(v: boolean) {
+    71	    setSelected((prev) => {
+    72	      const next = { ...prev };
+    73	      for (const id of visibleIds) next[id] = v;
+    74	      return next;
+    75	    });
+    76	  }
+    77	
+    78	  function clearSelection() {
+    79	    setSelected({});
+    80	  }
+    81	
+    82	  function clearAll() {
+    83	    if (!confirm("Delete ALL build submissions stored in this browser? This cannot be undone.")) return;
+    84	    writeBuilds([]);
+    85	    refresh();
+    86	    clearSelection();
+    87	    toast("All build submissions cleared (local only).", "warning", "Cleared", 2400);
+    88	  }
+    89	
+    90	  function applyBulkStatus() {
+    91	    if (!anySelected) {
+    92	      toast("Select at least one build first.", "warning", "Nothing Selected", 2200);
+    93	      return;
+    94	    }
+    95	    const nextStatus = bulkStatus as BuildSubmission["status"];
+    96	    if (!nextStatus) {
+    97	      toast("Choose a status to apply.", "warning", "Missing Status", 2200);
+    98	      return;
+    99	    }
+   100	
+   101	    const nowIso = new Date().toISOString();
+   102	    const ids = new Set(selectedIds);
+   103	
+   104	    const updated = all.map((b) => {
+   105	      const id = String(b.id);
+   106	      if (!ids.has(id)) return b;
+   107	      return {
+   108	        ...b,
+   109	        status: nextStatus as BuildSubmission["status"],
+   110	        updatedAt: nowIso,
+   111	      };
+   112	    });
+   113	
+   114	    writeBuilds(updated);
+   115	    setAll(updated);
+   116	
+   117	    toast(`Updated ${selectedIds.length} build(s) to "${nextStatus}".`, "success", "Bulk Update", 2400);
+   118	
+   119	    setBulkStatus("");
+   120	    clearSelection();
+
+   120	    clearSelection();
+   121	  }
+   122	
+   123	  function bulkDeleteSelected() {
+   124	    if (!anySelected) {
+   125	      toast("Select at least one build first.", "warning", "Nothing Selected", 2200);
+   126	      return;
+   127	    }
+   128	
+   129	    const count = selectedIds.length;
+   130	    const ok = confirm(`Delete ${count} selected build submission(s)? This cannot be undone.`);
+   131	    if (!ok) return;
+   132	
+   133	    const ids = new Set(selectedIds);
+   134	    const next = all.filter((b) => !ids.has(String(b.id)));
+   135	
+   136	    writeBuilds(next);
+   137	    setAll(next);
+   138	
+   139	    toast(`Deleted ${count} build(s).`, "warning", "Bulk Delete", 2400);
+   140	
+   141	    // Clean UI state after delete
+   142	    clearSelection();
+   143	    setBulkStatus("");
+   144	  }
+   145	
+   146	  return (
+   147	    <div className="stack page" style={{ gap: 16 }}>
+   148	      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+   149	        <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+   150	          <div style={{ display: "grid", gap: 6 }}>
+   151	            <h1 className="h2" style={{ margin: 0 }}>Admin — Build Submissions</h1>
+   152	            <div className="muted" style={{ fontWeight: 900 }}>
+   153	              Stored locally in this browser (Firebase later). Customers see renders + public estimate only.
+   154	            </div>
+   155	          </div>
+   156	
+   157	          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   158	            <button className="btn btn-ghost" onClick={refresh}>Refresh</button>
+   159	            <button className="btn btn-ghost" onClick={clearAll}>Clear All</button>
+   160	            <Link className="btn btn-primary" to="/admin">Back to Admin Dashboard</Link>
+   161	          </div>
+   162	        </div>
+   163	
+   164	        <div className="row" style={{ width: "100%", marginTop: 12, gap: 10, flexWrap: "wrap" }}>
+   165	          <input
+   166	            className="field"
+   167	            style={{ flex: 1, minWidth: 240 }}
+   168	            value={q}
+   169	            onChange={(e) => setQ(e.target.value)}
+   170	            placeholder="Search name, phone, email, status, type…"
+   171	          />
+   172	          <span className="badge" style={{ justifyContent: "center" }}>Total: {filtered.length}</span>
+   173	        </div>
+   174	
+   175	        {/* BULK ACTION BAR */}
+   176	        <div
+   177	          className="row"
+   178	          style={{
+   179	            width: "100%",
+   180	            marginTop: 12,
+   181	            gap: 10,
+   182	            flexWrap: "wrap",
+   183	            justifyContent: "space-between",
+   184	            alignItems: "center",
+   185	          }}
+   186	        >
+   187	          <label className="row" style={{ gap: 10, alignItems: "center" }}>
+   188	            <input
+   189	              type="checkbox"
+   190	              checked={allVisibleSelected}
+   191	              onChange={(e) => toggleAllVisible(e.target.checked)}
+   192	            />
+   193	            <span style={{ fontWeight: 900 }}>
+   194	              Select All (filtered)
+   195	            </span>
+   196	            <span className="badge">
+   197	              Selected: {selectedIds.length}
+   198	            </span>
+   199	          </label>
+   200	
+   201	          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+   202	            <select
+   203	              className="field"
+   204	              style={{ width: 220 }}
+   205	              value={bulkStatus}
+   206	              onChange={(e) => setBulkStatus(e.target.value as BuildSubmission["status"] | "")}
+   207	            >
+   208	              <option value="">Bulk status…</option>
+   209	              <option value="draft">DRAFT</option>
+   210	              <option value="submitted">SUBMITTED</option>
+   211	              <option value="reviewing">REVIEWING</option>
+   212	              <option value="quote_sent">QUOTE SENT</option>
+   213	              <option value="approved">APPROVED</option>
+   214	              <option value="in_build">IN BUILD</option>
+   215	              <option value="complete">COMPLETE</option>
+   216	            </select>
+   217	
+   218	            <button className="btn btn-primary" onClick={applyBulkStatus} disabled={!anySelected}>
+   219	              Apply
+   220	            </button>
+   221	
+   222	            <button className="btn btn-ghost" onClick={clearSelection} disabled={!anySelected}>
+   223	              Clear Selection
+   224	            </button>
+   225	
+   226	            <button
+   227	              className="btn"
+   228	              onClick={bulkDeleteSelected}
+   229	              disabled={!anySelected}
+   230	              style={{
+   231	                borderColor: "rgba(220,38,38,0.35)",
+   232	                background: "rgba(220,38,38,0.06)",
+   233	                color: "#7f1d1d",
+   234	                fontWeight: 950,
+   235	              }}
+   236	            >
+   237	              Delete Selected
+   238	            </button>
+   239	          </div>
+   240	        </div>
+   241	      </section>
+   242	
+   243	      {filtered.length === 0 ? (
+   244	        <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto" }}>
+   245	          <h3 className="h3">No build submissions found</h3>
+   246	          <p className="body" style={{ maxWidth: 780 }}>
+   247	            Builds are stored in <code>localStorage</code> on the same device/browser. Once Firebase is connected, these will sync.
+   248	          </p>
+   249	          <Link className="btn btn-ghost" to="/builds/new">Create a test build</Link>
+   250	        </section>
+   251	      ) : (
+   252	        <section className="stack" style={{ maxWidth: 1100, margin: "0 auto" }}>
+   253	          {filtered
+   254	            .slice()
+   255	            .sort((a, b) => safe(b.createdAt).localeCompare(safe(a.createdAt)))
+   256	            .map((b) => {
+   257	              const id = String(b.id);
+   258	              return (
+   259	                <article key={b.id} className="panel card" style={{ padding: 16 }}>
+   260	                  <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+
+=== Vite config ===
+     1	import { defineConfig } from "vite";
+     2	import react from "@vitejs/plugin-react";
+     3	import compression from "vite-plugin-compression";
+     4	import { visualizer } from "rollup-plugin-visualizer";
+     5	
+     6	export default defineConfig(({ mode }) => {
+     7	  const isAnalyze = mode === "analyze";
+     8	
+     9	  return {
+    10	    plugins: [
+    11	      react(),
+    12	
+    13	      // Pre-compress output assets (your host must be configured to serve .br/.gz)
+    14	      compression({
+    15	        algorithm: "brotliCompress",
+    16	        ext: ".br",
+    17	        threshold: 1024,
+    18	      }),
+    19	      compression({
+    20	        algorithm: "gzip",
+    21	        ext: ".gz",
+    22	        threshold: 1024,
+    23	      }),
+    24	
+    25	      // Bundle report: dist/stats.html
+    26	      isAnalyze &&
+    27	        visualizer({
+    28	          filename: "dist/stats.html",
+    29	          open: true,
+    30	          gzipSize: true,
+    31	          brotliSize: true,
+    32	        }),
+    33	    ].filter(Boolean),
+    34	
+    35	    build: {
+    36	      sourcemap: false,
+    37	      rollupOptions: {
+    38	        output: {
+    39	          // Keep heavy libs separated for better caching and faster initial load
+    40	          manualChunks(id: string) {
+    41	            if (!id.includes("node_modules")) return;
+    42	
+    43	            if (id.includes("/three")) return "three";
+    44	            if (id.includes("/firebase")) return "firebase";
+    45	
+    46	            // react stack
+    47	            if (id.includes("/react") || id.includes("/react-dom") || id.includes("/react-router")) {
+    48	              return "react-vendor";
+    49	            }
+    50	
+    51	            return "vendor";
+    52	          },
+    53	        },
+    54	      },
+    55	    },
+    56	  };
+    57	});
+
+=== Firebase dependency versions ===
+{ firebase: '^12.9.0', react: '^19.2.0', router: '^7.13.0' }
