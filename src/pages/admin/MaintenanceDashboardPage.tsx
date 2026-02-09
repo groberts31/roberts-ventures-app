@@ -1,7 +1,6 @@
 import React from "react";
-
-import { isRemoteBuildsEnabled, syncBuildsFromRemote } from "../../lib/buildsSync";
-import { toast } from "../../lib/toast";
+import { readBackupEvents, clearBackupEvents } from "../../lib/backupStore";
+import { backupNow, restoreFromCloud, backupRemoteEnabled, exportLocalBuilds } from "../../lib/backupManager";
 
 type StorageEstimate = {
   quota?: number;
@@ -54,9 +53,13 @@ export default function MaintenanceDashboardPage() {
   const [online, setOnline] = React.useState<boolean>(navigator.onLine);
   const [now, setNow] = React.useState<Date>(new Date());
 
-  const [syncing, setSyncing] = React.useState<boolean>(false);
-  const [syncResult, setSyncResult] = React.useState<null | { enabled: boolean; pushed: number; pulled: number }>(null);
+  // Backup log
+  const [backupEvents, setBackupEvents] = React.useState(() => readBackupEvents());
+  const [busy, setBusy] = React.useState<"" | "backup" | "restore">("");
 
+  function refreshBackupLog() {
+    setBackupEvents(readBackupEvents());
+  }
 
   React.useEffect(() => {
     setLsBytes(getLocalStorageBytes());
@@ -65,7 +68,6 @@ export default function MaintenanceDashboardPage() {
 
     (async () => {
       try {
-        // Supported in most modern browsers; safe to try/catch
         // @ts-ignore
         const r = (await navigator.storage?.estimate?.()) as StorageEstimate | undefined;
         if (!stop && r) setEst(r);
@@ -81,6 +83,8 @@ export default function MaintenanceDashboardPage() {
 
     const t = window.setInterval(() => setNow(new Date()), 1000);
 
+    refreshBackupLog();
+
     return () => {
       stop = true;
       window.removeEventListener("online", on);
@@ -88,29 +92,6 @@ export default function MaintenanceDashboardPage() {
       window.clearInterval(t);
     };
   }, []);
-
-  async function runRemoteSync() {
-    const enabled = isRemoteBuildsEnabled();
-    if (!enabled) {
-      toast("Remote sync is disabled until Firebase env vars are set (not PASTE_ME).", "warning", "Remote Sync", 3200);
-      return;
-    }
-    if (syncing) return;
-    setSyncing(true);
-    try {
-      const r = await syncBuildsFromRemote();
-      setSyncResult(r);
-      if (!r.enabled) {
-        toast("Remote sync is disabled.", "warning", "Remote Sync", 2400);
-      } else {
-        toast(`Remote sync complete. Pushed: ${r.pushed}.`, "success", "Remote Sync", 2600);
-      }
-    } catch (e: any) {
-      toast(String(e?.message || e || "Remote sync failed."), "error", "Remote Sync", 3600);
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   const theme =
     document.documentElement.getAttribute("data-theme") ||
@@ -131,7 +112,88 @@ export default function MaintenanceDashboardPage() {
         usage: est.usage,
       },
     },
+    backups: {
+      remoteEnabled: backupRemoteEnabled(),
+      eventCount: backupEvents.length,
+    },
   };
+
+  const lastEvent = backupEvents[0];
+
+  async function onBackupNow() {
+    if (busy) return;
+    setBusy("backup");
+    try {
+      const res = await backupNow();
+      refreshBackupLog();
+      if (!res.enabled) {
+        alert("Backup skipped: Firebase env not configured (remote disabled).");
+        return;
+      }
+      alert(`Backup complete. Pushed ${res.pushed} build(s). Local count: ${res.localCount}.`);
+    } catch (e: any) {
+      alert(`Backup failed: ${String(e?.message || e || "Unknown error")}`);
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function onRestoreFromCloud() {
+    if (busy) return;
+
+    const ok = confirm(
+      "Restore FROM CLOUD will overwrite the LOCAL builds on this device/browser.\n\nContinue?"
+    );
+    if (!ok) return;
+
+    setBusy("restore");
+    try {
+      const res = await restoreFromCloud();
+      refreshBackupLog();
+
+      if (!res.enabled) {
+        alert("Restore skipped: Firebase env not configured (remote disabled).");
+        return;
+      }
+
+      alert(`Restore complete. Pulled ${res.pulledCount} build(s) from cloud.`);
+    } catch (e: any) {
+      alert(`Restore failed: ${String(e?.message || e || "Unknown error")}`);
+    } finally {
+      setBusy("");
+    }
+  }
+
+  function onClearBackupLog() {
+    const ok = confirm("Clear backup history log for this browser/device?");
+    if (!ok) return;
+    clearBackupEvents();
+    refreshBackupLog();
+    alert("Backup log cleared.");
+  }
+
+  function downloadBackupLog() {
+    downloadJson(
+      `backup-events-${now.toISOString().replace(/[:.]/g, "-")}.json`,
+      {
+        generatedAt: now.toISOString(),
+        events: backupEvents,
+        remoteEnabled: backupRemoteEnabled(),
+      }
+    );
+  }
+
+  function downloadLocalBuildSnapshot() {
+    const builds = exportLocalBuilds();
+    downloadJson(
+      `local-builds-snapshot-${now.toISOString().replace(/[:.]/g, "-")}.json`,
+      {
+        generatedAt: now.toISOString(),
+        count: builds.length,
+        builds,
+      }
+    );
+  }
 
   return (
     <div className="page" style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 16px" }}>
@@ -162,6 +224,76 @@ export default function MaintenanceDashboardPage() {
                 Refresh Snapshot
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* BACKUPS */}
+        <div className="panel card">
+          <div className="h3">Backups (Local + Cloud)</div>
+
+          <div className="muted" style={{ marginTop: 8 }}>
+            Cloud backup is enabled only when Firebase env values are set (not PASTE_ME).
+            Restore will overwrite local builds on this browser/device.
+          </div>
+
+          <div className="row" style={{ marginTop: 10, gap: 10, flexWrap: "wrap" }}>
+            <span className="badge">Remote: {backupRemoteEnabled() ? "Enabled" : "Disabled"}</span>
+            <span className="badge">Events: {backupEvents.length}</span>
+            {lastEvent ? (
+              <span className="badge">
+                Last: {lastEvent.kind} • {new Date(lastEvent.createdAt).toLocaleString()}
+              </span>
+            ) : (
+              <span className="badge">Last: —</span>
+            )}
+          </div>
+
+          <div className="row" style={{ marginTop: 12, gap: 10, flexWrap: "wrap" }}>
+            <button className="btn btn-primary" onClick={onBackupNow} disabled={busy !== ""}>
+              {busy === "backup" ? "Backing up…" : "Backup Now (Sync → Cloud)"}
+            </button>
+
+            <button className="btn" onClick={onRestoreFromCloud} disabled={busy !== ""}>
+              {busy === "restore" ? "Restoring…" : "Restore From Cloud (Overwrite Local)"}
+            </button>
+
+            <button className="btn btn-ghost" onClick={downloadBackupLog}>
+              Download Backup Log (JSON)
+            </button>
+
+            <button className="btn btn-ghost" onClick={downloadLocalBuildSnapshot}>
+              Download Local Builds Snapshot (JSON)
+            </button>
+
+            <button className="btn btn-ghost" onClick={onClearBackupLog}>
+              Clear Backup Log
+            </button>
+          </div>
+
+          <div className="stack" style={{ marginTop: 14 }}>
+            <div className="muted" style={{ fontWeight: 900 }}>Recent events</div>
+
+            {backupEvents.length === 0 ? (
+              <div className="muted">No backup events yet.</div>
+            ) : (
+              <div className="stack" style={{ gap: 8 }}>
+                {backupEvents.slice(0, 10).map((e) => (
+                  <div key={e.id} className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                    <div className="body" style={{ fontWeight: 900 }}>
+                      {e.kind}
+                    </div>
+                    <div className="muted" style={{ fontWeight: 850 }}>
+                      {new Date(e.createdAt).toLocaleString()}
+                    </div>
+                    {e.detail ? (
+                      <div className="muted" style={{ width: "100%", fontWeight: 800, opacity: 0.9 }}>
+                        {e.detail}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -221,31 +353,7 @@ export default function MaintenanceDashboardPage() {
           </div>
         </div>
 
-                <div className="panel card">
-          <div className="h3">Remote Builds Sync</div>
-          <div className="muted" style={{ marginTop: 10 }}>
-            This safely merges Local (browser) and Cloud (Firestore) builds by newest <code>updatedAt</code>, then pushes newer items to the cloud.
-          </div>
-
-          <div className="row" style={{ marginTop: 12, gap: 10, flexWrap: "wrap" }}>
-            <span className="badge">{isRemoteBuildsEnabled() ? "Remote Enabled" : "Remote Disabled"}</span>
-            {syncing ? <span className="badge">Syncing…</span> : null}
-            {syncResult ? (
-              <span className="badge">Last: pushed {syncResult.pushed}</span>
-            ) : null}
-          </div>
-
-          <div className="row" style={{ marginTop: 12, gap: 10, flexWrap: "wrap" }}>
-            <button className="btn btn-primary" onClick={runRemoteSync} disabled={syncing || !isRemoteBuildsEnabled()}>
-              Sync Builds from Cloud
-            </button>
-            <div className="muted" style={{ fontWeight: 850 }}>
-              Tip: Set real Firebase values in <code>.env</code> (no <code>PASTE_ME</code>) to enable.
-            </div>
-          </div>
-        </div>
-
-<div className="panel card">
+        <div className="panel card">
           <div className="h3">Quick Links</div>
           <div className="muted" style={{ marginTop: 10 }}>
             If you don’t want to add a Navbar link yet, you can still open the page directly:

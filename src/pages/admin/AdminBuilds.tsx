@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { readBuilds as readBuildsLocal, writeBuilds as writeBuildsLocal, type BuildSubmission } from "../../lib/buildsStore";
 import { buildsRemoteEnabled, subscribeBuildsRemote, bulkDeleteRemote, bulkStatusRemote } from "../../lib/buildsRemoteStore";
 import { toast } from "../../lib/toast";
+import { syncBuildsFromRemote } from "../../lib/buildsSync";
 function safe(s: any) {
   return String(s || "").toLowerCase();
 }
@@ -26,11 +27,31 @@ export default function AdminBuilds() {
   }
 
   useEffect(() => {
-    if (buildsRemoteEnabled()) {
-      const unsub = subscribeBuildsRemote((items) => setAll(items));
-      return () => unsub();
-    }
-    refresh();
+    let unsub: null | (() => void) = null;
+    let alive = true;
+
+    (async () => {
+      // If remote is enabled, do a one-time merge/push first (prevents stale local from overwriting).
+      if (buildsRemoteEnabled()) {
+        try {
+          await syncBuildsFromRemote();
+        } catch {
+          // ignore: remote might be misconfigured, network down, etc.
+        }
+
+        if (!alive) return;
+        unsub = subscribeBuildsRemote((items) => setAll(items));
+        return;
+      }
+
+      // Local-only mode
+      refresh();
+    })();
+
+    return () => {
+      alive = false;
+      if (unsub) unsub();
+    };
   }, []);
 
   const filtered = useMemo(() => {
