@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { readBuilds, writeBuilds, type BuildSubmission } from "../../lib/buildsStore";
+import { readBuilds as readBuildsLocal, writeBuilds as writeBuildsLocal, type BuildSubmission } from "../../lib/buildsStore";
+import { buildsRemoteEnabled, subscribeBuildsRemote, bulkDeleteRemote, bulkStatusRemote } from "../../lib/buildsRemoteStore";
 import { toast } from "../../lib/toast";
 
 function safe(s: any) {
@@ -22,10 +23,16 @@ export default function AdminBuilds() {
   const [bulkStatus, setBulkStatus] = useState<BuildSubmission["status"] | "">("");
 
   function refresh() {
-    setAll(readBuilds());
+    setAll(readBuildsLocal());
   }
 
-  useEffect(() => refresh(), []);
+  useEffect(() => {
+    if (buildsRemoteEnabled()) {
+      const unsub = subscribeBuildsRemote((items) => setAll(items));
+      return () => unsub();
+    }
+    refresh();
+  }, []);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -79,15 +86,20 @@ export default function AdminBuilds() {
     setSelected({});
   }
 
-  function clearAll() {
+  async function clearAll() {
     if (!confirm("Delete ALL build submissions stored in this browser? This cannot be undone.")) return;
-    writeBuilds([]);
+    if (buildsRemoteEnabled()) {
+    await bulkDeleteRemote(all.map((x) => String(x.id)));
+    setAll([]);
+  } else {
+    writeBuildsLocal([]);
     refresh();
-    clearSelection();
-    toast("All build submissions cleared (local only).", "warning", "Cleared", 2400);
   }
+  clearSelection();
+  toast("All build submissions cleared (local only).", "warning", "Cleared", 2400);
+}
 
-  function applyBulkStatus() {
+  async function applyBulkStatus() {
     if (!anySelected) {
       toast("Select at least one build first.", "warning", "Nothing Selected", 2200);
       return;
@@ -111,8 +123,12 @@ export default function AdminBuilds() {
       };
     });
 
-    writeBuilds(updated);
+    if (buildsRemoteEnabled()) {
+    await bulkStatusRemote(selectedIds, nextStatus);
+  } else {
+    writeBuildsLocal(updated);
     setAll(updated);
+  }
 
     toast(`Updated ${selectedIds.length} build(s) to "${nextStatus}".`, "success", "Bulk Update", 2400);
 
@@ -120,7 +136,7 @@ export default function AdminBuilds() {
     clearSelection();
   }
 
-  function bulkDeleteSelected() {
+  async function bulkDeleteSelected() {
     if (!anySelected) {
       toast("Select at least one build first.", "warning", "Nothing Selected", 2200);
       return;
@@ -133,8 +149,12 @@ export default function AdminBuilds() {
     const ids = new Set(selectedIds);
     const next = all.filter((b) => !ids.has(String(b.id)));
 
-    writeBuilds(next);
+    if (buildsRemoteEnabled()) {
+    await bulkDeleteRemote(selectedIds);
+  } else {
+    writeBuildsLocal(next);
     setAll(next);
+  }
 
     toast(`Deleted ${count} build(s).`, "warning", "Bulk Delete", 2400);
 
