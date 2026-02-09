@@ -1,27 +1,67 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { useCart } from "../data/requestCart";
 import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import rvLogo from "../assets/roberts-ventures-logo.png";
+
+import { useCart } from "../data/requestCart";
 import { getActiveTheme, toggleTheme } from "../lib/theme";
 
-const baseLinkStyle: React.CSSProperties = {
+const linkStyleBase: React.CSSProperties = {
   textDecoration: "none",
   padding: "8px 12px",
   borderRadius: 999,
   fontWeight: 850,
   fontSize: 14,
-  transition: "all .2s ease",
+  transition: "all .18s ease",
   display: "inline-flex",
   alignItems: "center",
-  gap: 6,
+  gap: 8,
+  lineHeight: 1,
 };
 
+const linkStyleActive: React.CSSProperties = {
+  background: "rgba(99,102,241,0.18)",
+  border: "1px solid rgba(99,102,241,0.25)",
+  boxShadow: "0 10px 26px rgba(2,6,23,0.18)",
+};
+
+const linkStyleInactive: React.CSSProperties = {
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(148,163,184,0.16)",
+};
+
+function Pill({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "5px 10px",
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 950,
+        border: "1px solid rgba(148,163,184,0.18)",
+        background: "rgba(255,255,255,0.10)",
+        color: "rgba(248,250,252,0.88)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 export default function Navbar() {
+  const navigate = useNavigate();
   const cart = useCart();
   const count = (cart as any)?.count ?? 0;
 
   const [theme, setTheme] = React.useState(getActiveTheme());
-  const navigate = useNavigate();
+
+  const onToggleTheme = () => {
+    toggleTheme();
+    // getActiveTheme reads from your theme store (html attribute/localStorage/etc.)
+    setTheme(getActiveTheme());
+  };
 
   return (
     <header
@@ -30,7 +70,8 @@ export default function Navbar() {
         top: 0,
         zIndex: 50,
         backdropFilter: "blur(18px)",
-        background: "linear-gradient(90deg, rgba(10,10,15,.78), rgba(6,10,22,.82))",
+        background:
+          "linear-gradient(90deg, rgba(10,10,15,.78), rgba(6,10,22,.82))",
         borderBottom: "1px solid rgba(148,163,184,.15)",
       }}
     >
@@ -47,19 +88,31 @@ export default function Navbar() {
         }}
       >
         {/* Brand */}
-        <div style={{ lineHeight: 1.15, display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+          aria-label="Go to Home"
+        >
           <img
             src={rvLogo}
             alt="Roberts Ventures LLC"
             style={{
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               objectFit: "contain",
               filter: "drop-shadow(0 0 14px rgba(56,189,248,.22))",
             }}
           />
-
-          <div style={{ display: "grid" }}>
+          <div style={{ display: "grid", lineHeight: 1.15 }}>
             <div
               style={{
                 fontSize: 18,
@@ -74,123 +127,94 @@ export default function Navbar() {
             >
               Roberts Ventures LLC
             </div>
-
-            <div style={{ fontSize: 11, color: "rgba(248,250,252,.62)", fontWeight: 800 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: "rgba(248,250,252,.62)",
+                fontWeight: 800,
+              }}
+            >
               Services • Stay Lit Candle Co.
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Nav */}
         <nav
           style={{
             display: "flex",
-            gap: 6,
+            gap: 8,
             flexWrap: "wrap",
             justifyContent: "center",
+            alignItems: "center",
           }}
+          aria-label="Primary"
         >
-          <NavLink to="/" end style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+          <NavLink
+            to="/"
+            end
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              color: "rgba(248,250,252,0.92)",
+            })}
+          >
             Home
           </NavLink>
 
-          <NavLink to="/services" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+          <NavLink
+            to="/services"
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              color: "rgba(248,250,252,0.92)",
+            })}
+          >
             Services
           </NavLink>
 
-          <NavLink to="/schedule" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+          <NavLink
+            to="/schedule"
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              color: "rgba(248,250,252,0.92)",
+            })}
+          >
             Schedule
           </NavLink>
 
-          <NavLink to="/staylit" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-            <span className="slFlameNav">🔥</span>
-            <span>Stay Lit</span>
+          <NavLink
+            to="/staylit"
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              color: "rgba(248,250,252,0.92)",
+            })}
+          >
+            Stay Lit
+            {count > 0 ? <Pill>{count}</Pill> : null}
           </NavLink>
 
-          <NavLink to="/contact" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-            Contact
-          </NavLink>
-
-                    <NavLink to="/builds" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-            Custom Builds
-          </NavLink>
-
-<NavLink to="/customer" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-            Customer Portal
-          </NavLink>
-
-          <NavLink to="/admin" style={baseLinkStyle} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-            Admin
-          </NavLink>
-        </nav>
-
-        {/* Right controls (keeps toggle + cart together and always visible) */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            flexShrink: 0,
-          }}
-        >
           {/* Theme toggle */}
           <button
             type="button"
-            className="btn btn-ghost"
-            onClick={() => setTheme(toggleTheme())}
-            aria-label="Toggle dark/light theme"
-            title="Toggle theme"
+            onClick={onToggleTheme}
             style={{
               padding: "8px 12px",
               borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 900,
-              letterSpacing: ".08em",
-              textTransform: "uppercase",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              background: "rgba(255,255,255,0.06)",
+              fontWeight: 950,
               border: "1px solid rgba(148,163,184,0.18)",
-              color: "rgba(248,250,252,.92)",
-              boxShadow: "0 0 18px rgba(56,189,248,.10)",
+              background: "rgba(255,255,255,0.08)",
+              color: "rgba(248,250,252,0.92)",
               cursor: "pointer",
-              whiteSpace: "nowrap",
             }}
+            aria-label="Toggle theme"
+            title="Toggle theme"
           >
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+            Theme: {theme === "dark" ? "Dark" : "Light"}
           </button>
-
-          {/* Cart (clickable + cannot “blend in”) */}
-          <button
-            type="button"
-            onClick={() => navigate("/requests")}
-            aria-label="Open requests cart"
-            title="Open Requests"
-            style={{
-              padding: "8px 12px",
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 900,
-              letterSpacing: ".08em",
-              textTransform: "uppercase",
-              background: "linear-gradient(90deg, rgba(56,189,248,.14), rgba(167,139,250,.14))",
-              color: "rgba(248,250,252,.92)",
-              border: "1px solid rgba(56,189,248,.32)",
-              boxShadow: "0 0 18px rgba(56,189,248,.15)",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            🛒 Cart
-            <span className="cart-count-badge" aria-label={`Cart items: ${count}`}>
-              {count}
-            </span>
-          </button>
-        </div>
+        </nav>
       </div>
     </header>
   );
