@@ -1,5 +1,8 @@
 import React from "react";
 
+import { isRemoteBuildsEnabled, syncBuildsFromRemote } from "../../lib/buildsSync";
+import { toast } from "../../lib/toast";
+
 type StorageEstimate = {
   quota?: number;
   usage?: number;
@@ -51,6 +54,10 @@ export default function MaintenanceDashboardPage() {
   const [online, setOnline] = React.useState<boolean>(navigator.onLine);
   const [now, setNow] = React.useState<Date>(new Date());
 
+  const [syncing, setSyncing] = React.useState<boolean>(false);
+  const [syncResult, setSyncResult] = React.useState<null | { enabled: boolean; pushed: number; pulled: number }>(null);
+
+
   React.useEffect(() => {
     setLsBytes(getLocalStorageBytes());
 
@@ -81,6 +88,29 @@ export default function MaintenanceDashboardPage() {
       window.clearInterval(t);
     };
   }, []);
+
+  async function runRemoteSync() {
+    const enabled = isRemoteBuildsEnabled();
+    if (!enabled) {
+      toast("Remote sync is disabled until Firebase env vars are set (not PASTE_ME).", "warning", "Remote Sync", 3200);
+      return;
+    }
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const r = await syncBuildsFromRemote();
+      setSyncResult(r);
+      if (!r.enabled) {
+        toast("Remote sync is disabled.", "warning", "Remote Sync", 2400);
+      } else {
+        toast(`Remote sync complete. Pushed: ${r.pushed}.`, "success", "Remote Sync", 2600);
+      }
+    } catch (e: any) {
+      toast(String(e?.message || e || "Remote sync failed."), "error", "Remote Sync", 3600);
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const theme =
     document.documentElement.getAttribute("data-theme") ||
@@ -191,7 +221,31 @@ export default function MaintenanceDashboardPage() {
           </div>
         </div>
 
-        <div className="panel card">
+                <div className="panel card">
+          <div className="h3">Remote Builds Sync</div>
+          <div className="muted" style={{ marginTop: 10 }}>
+            This safely merges Local (browser) and Cloud (Firestore) builds by newest <code>updatedAt</code>, then pushes newer items to the cloud.
+          </div>
+
+          <div className="row" style={{ marginTop: 12, gap: 10, flexWrap: "wrap" }}>
+            <span className="badge">{isRemoteBuildsEnabled() ? "Remote Enabled" : "Remote Disabled"}</span>
+            {syncing ? <span className="badge">Syncing…</span> : null}
+            {syncResult ? (
+              <span className="badge">Last: pushed {syncResult.pushed}</span>
+            ) : null}
+          </div>
+
+          <div className="row" style={{ marginTop: 12, gap: 10, flexWrap: "wrap" }}>
+            <button className="btn btn-primary" onClick={runRemoteSync} disabled={syncing || !isRemoteBuildsEnabled()}>
+              Sync Builds from Cloud
+            </button>
+            <div className="muted" style={{ fontWeight: 850 }}>
+              Tip: Set real Firebase values in <code>.env</code> (no <code>PASTE_ME</code>) to enable.
+            </div>
+          </div>
+        </div>
+
+<div className="panel card">
           <div className="h3">Quick Links</div>
           <div className="muted" style={{ marginTop: 10 }}>
             If you don’t want to add a Navbar link yet, you can still open the page directly:
