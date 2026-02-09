@@ -21,11 +21,36 @@ export default function AdminBuilds() {
   // Bulk selection
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [bulkStatus, setBulkStatus] = useState<BuildSubmission["status"] | "">("");
+  const [syncBusy, setSyncBusy] = useState(false);
 
   function refresh() {
     setAll(readBuildsLocal());
   }
 
+  
+  async function doSync() {
+    if (syncBusy) return;
+
+    // Only meaningful when remote is configured. If not, show a friendly message.
+    if (!buildsRemoteEnabled()) {
+      toast("Remote sync is not enabled yet (Firebase env values still set to PASTE_ME).", "warning", "Sync", 3200);
+      return;
+    }
+
+    setSyncBusy(true);
+    try {
+      const res = await syncBuildsFromRemote();
+      if (!res.enabled) {
+        toast("Remote sync is not enabled yet.", "warning", "Sync", 2400);
+      } else {
+        toast(`Sync complete. Pushed ${res.pushed}.`, "success", "Synced", 2400);
+      }
+    } catch {
+      toast("Sync failed (network/Firebase config).", "warning", "Sync Error", 3200);
+    } finally {
+      setSyncBusy(false);
+    }
+  }
   useEffect(() => {
     let unsub: null | (() => void) = null;
     let alive = true;
@@ -196,6 +221,7 @@ export default function AdminBuilds() {
 
           <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
             <button className="btn btn-ghost" onClick={refresh}>Refresh</button>
+            <button className="btn btn-ghost" onClick={doSync} disabled={syncBusy || !buildsRemoteEnabled()}>{syncBusy ? "Syncing…" : "Sync Now"}</button>
             <button className="btn btn-ghost" onClick={clearAll}>Clear All</button>
             <Link className="btn btn-primary" to="/admin">Back to Admin Dashboard</Link>
           </div>
