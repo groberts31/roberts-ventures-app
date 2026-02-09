@@ -1,0 +1,821 @@
+============================================================================
+FILE: src/App.css
+============================================================================
+     1	#root {
+     2	  max-width: 1280px;
+     3	  margin: 0 auto;
+     4	  padding: 2rem;
+     5	  text-align: center;
+     6	}
+     7	
+     8	.logo {
+     9	  height: 6em;
+    10	  padding: 1.5em;
+    11	  will-change: filter;
+    12	  transition: filter 300ms;
+    13	}
+    14	.logo:hover {
+    15	  filter: drop-shadow(0 0 2em #646cffaa);
+    16	}
+    17	.logo.react:hover {
+    18	  filter: drop-shadow(0 0 2em #61dafbaa);
+    19	}
+    20	
+    21	@keyframes logo-spin {
+    22	  from {
+    23	    transform: rotate(0deg);
+    24	  }
+    25	  to {
+    26	    transform: rotate(360deg);
+    27	  }
+    28	}
+    29	
+    30	@media (prefers-reduced-motion: no-preference) {
+    31	  a:nth-of-type(2) .logo {
+    32	    animation: logo-spin infinite 20s linear;
+    33	  }
+    34	}
+    35	
+    36	.card {
+    37	  padding: 2em;
+    38	}
+    39	
+    40	.read-the-docs {
+    41	  color: #888;
+    42	}
+    43	
+    44	/* --- Splash fade-in animation (Home) --- */
+    45	.page-enter {
+    46	  animation: pageEnter 520ms ease-out both;
+    47	}
+    48	
+    49	@keyframes pageEnter {
+    50	  from {
+    51	    opacity: 0;
+    52	    transform: translateY(10px);
+    53	    filter: blur(2px);
+    54	  }
+    55	  to {
+    56	    opacity: 1;
+    57	    transform: translateY(0);
+    58	    filter: blur(0);
+    59	  }
+    60	}
+    61	
+    62	/* Respect accessibility preferences */
+    63	@media (prefers-reduced-motion: reduce) {
+    64	  .page-enter {
+    65	    animation: none;
+    66	  }
+    67	}
+    68	
+    69	
+    70	/* RV: Schedule item styles */
+    71	.schedList {
+    72	  display: grid;
+    73	  gap: 12px;
+    74	  margin-top: 12px;
+    75	}
+    76	
+    77	.schedItem {
+    78	  width: 100%;
+    79	  border-radius: 16px;
+    80	  padding: 14px;
+    81	  border: 1px solid rgba(15, 23, 42, 0.10);
+    82	  background: rgba(255,255,255,0.72);
+    83	  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.10);
+    84	  backdrop-filter: blur(8px);
+    85	}
+    86	
+    87	.schedItem:hover {
+    88	  border-color: rgba(99, 102, 241, 0.25);
+    89	  box-shadow: 0 18px 42px rgba(2, 6, 23, 0.14);
+    90	}
+    91	
+    92	.schedItemTop {
+    93	  display: flex;
+    94	  justify-content: space-between;
+    95	  align-items: flex-start;
+    96	  gap: 12px;
+    97	  flex-wrap: wrap;
+    98	}
+    99	
+   100	.schedItemTitle {
+   101	  display: flex;
+   102	  align-items: center;
+   103	  gap: 10px;
+   104	  flex-wrap: wrap;
+   105	  font-weight: 950;
+   106	  color: #0f172a;
+   107	}
+   108	
+   109	.schedItemMeta {
+   110	  margin-top: 6px;
+   111	  font-weight: 850;
+   112	  opacity: 0.85;
+   113	}
+   114	
+   115	.schedPills {
+   116	  display: flex;
+   117	  gap: 8px;
+   118	  flex-wrap: wrap;
+   119	  margin-top: 8px;
+   120	}
+   121	
+   122	.schedPill {
+   123	  display: inline-flex;
+   124	  align-items: center;
+   125	  justify-content: center;
+   126	  padding: 6px 10px;
+   127	  border-radius: 999px;
+   128	  font-weight: 950;
+   129	  font-size: 12px;
+   130	  border: 1px solid rgba(15, 23, 42, 0.10);
+   131	  background: rgba(255,255,255,0.75);
+   132	}
+   133	
+   134	.schedPillService {
+   135	  background: rgba(79, 70, 229, 0.10);
+   136	  border-color: rgba(79, 70, 229, 0.22);
+   137	  color: #312e81;
+   138	}
+   139	
+   140	.schedPillAddOn {
+   141	  background: rgba(16, 185, 129, 0.10);
+   142	  border-color: rgba(16, 185, 129, 0.22);
+   143	  color: #064e3b;
+   144	}
+   145	
+   146	.schedEstimate {
+   147	  display: inline-flex;
+   148	  align-items: center;
+   149	  justify-content: center;
+   150	  padding: 8px 12px;
+   151	  border-radius: 12px;
+   152	  font-weight: 950;
+   153	  border: 1px solid rgba(15, 23, 42, 0.10);
+   154	  background: rgba(255,255,255,0.80);
+   155	}
+   156	
+   157	.schedQuote {
+   158	  background: rgba(245, 158, 11, 0.14);
+   159	  border-color: rgba(245, 158, 11, 0.22);
+   160	  color: #7c2d12;
+   161	}
+   162	
+   163	.schedFrom {
+   164	  background: rgba(14, 165, 233, 0.12);
+   165	  border-color: rgba(14, 165, 233, 0.22);
+   166	  color: #0c4a6e;
+   167	}
+   168	
+   169	.schedFixed {
+   170	  background: rgba(34, 197, 94, 0.12);
+   171	  border-color: rgba(34, 197, 94, 0.20);
+   172	  color: #14532d;
+   173	}
+
+============================================================================
+FILE: src/index.css
+============================================================================
+     1	/* ================= RESET ================= */
+     2	
+     3	*,
+     4	*::before,
+     5	*::after { box-sizing: border-box; }
+     6	
+     7	html, body, #root {
+     8	  margin: 0;
+     9	  padding: 0;
+    10	  min-height: 100%;
+    11	  height: 100%;
+    12	}
+    13	
+    14	/* ================= THEME TOKENS ================= */
+    15	/* Default theme = light (your app can toggle by setting html[data-theme="dark"]) */
+    16	
+    17	:root {
+    18	  /* Text */
+    19	  --text-main:   #050b18;
+    20	  --text-strong: #020617;
+    21	  --text-soft:   #0f172a;
+    22	  --text-muted:  #475569;
+    23	
+    24	  /* Borders + accents */
+    25	  --border:  rgba(15, 23, 42, 0.14);
+    26	  --accent:  #1d4ed8;
+    27	  --accent2: #60a5fa;
+    28	
+    29	  /* Surfaces */
+    30	  --panel-bg:   rgba(255,255,255,0.97);
+    31	  --field-bg:   rgba(255,255,255,0.98);
+    32	  --badge-bg:   rgba(255,255,255,0.96);
+    33	  --btn-bg:     rgba(255,255,255,0.98);
+    34	
+    35	  /* Radii + shadows */
+    36	  --radius-lg: 16px;
+    37	  --radius-md: 12px;
+    38	  --shadow-soft:  0 10px 26px rgba(0,0,0,0.10);
+    39	  --shadow-hover: 0 16px 42px rgba(29,78,216,0.22);
+    40	}
+    41	
+    42	/* Dark theme overrides */
+    43	html[data-theme="dark"] {
+    44	  --text-main:   #f8fafc;
+    45	  --text-strong: #ffffff;
+    46	  --text-soft:   rgba(241,245,249,0.92);
+    47	  --text-muted:  rgba(226,232,240,0.82);
+    48	
+    49	  --border:  rgba(148,163,184,0.22);
+    50	  --accent:  #60a5fa;
+    51	  --accent2: #22d3ee;
+    52	
+    53	  --panel-bg: rgba(2,6,23,0.86);
+    54	  --field-bg: rgba(2,6,23,0.72);
+    55	  --badge-bg: rgba(2,6,23,0.72);
+    56	  --btn-bg:   rgba(2,6,23,0.72);
+    57	
+    58	  --shadow-soft:  0 12px 32px rgba(0,0,0,0.45);
+    59	  --shadow-hover: 0 18px 52px rgba(34,211,238,0.20);
+    60	}
+    61	
+    62	/* ================= BASE ================= */
+    63	
+    64	body {
+    65	  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    66	    "Segoe UI", Roboto, Inter, Arial;
+    67	  -webkit-font-smoothing: antialiased;
+    68	
+    69	  color: var(--text-main);
+    70	  background-color: #f8fbff;
+    71	}
+    72	
+    73	html[data-theme="dark"] body {
+    74	  background-color: #020617;
+    75	}
+    76	
+    77	/* ================= TEXT ================= */
+    78	
+    79	.h1 {
+    80	  font-size: clamp(28px, 3vw, 44px);
+    81	  font-weight: 900;
+    82	  letter-spacing: -0.03em;
+    83	  color: var(--text-strong);
+    84	}
+    85	
+    86	.h2 {
+    87	  font-size: clamp(20px, 2vw, 28px);
+    88	  font-weight: 850;
+    89	  color: var(--text-strong);
+    90	}
+    91	
+    92	.h3 {
+    93	  font-size: 16px;
+    94	  font-weight: 900;
+    95	  color: var(--text-strong);
+    96	}
+    97	
+    98	.h1-accent {
+    99	  background: linear-gradient(90deg, var(--accent), var(--accent2));
+   100	  -webkit-background-clip: text;
+   101	  color: transparent;
+   102	}
+   103	
+   104	.lead {
+   105	  font-size: 16px;
+   106	  line-height: 1.6;
+   107	  color: var(--text-soft);
+   108	  font-weight: 600;
+   109	}
+   110	
+   111	.body {
+   112	  font-size: 14.5px;
+   113	  line-height: 1.6;
+   114	  color: var(--text-soft);
+   115	  font-weight: 600;
+   116	}
+   117	
+   118	.muted {
+   119	  color: var(--text-muted);
+   120	  font-weight: 700;
+   121	}
+   122	
+   123	/* ================= LAYOUT ================= */
+   124	
+   125	.stack {
+   126	  display: grid;
+   127	  gap: 14px;
+   128	}
+   129	
+   130	.row {
+   131	  display: flex;
+   132	  align-items: center;
+   133	  gap: 12px;
+   134	  flex-wrap: wrap;
+   135	}
+   136	
+   137	.center {
+   138	  text-align: center;
+   139	  align-items: center;
+   140	  justify-content: center;
+   141	}
+   142	
+   143	/* ================= CARDS / PANELS ================= */
+   144	
+   145	.panel {
+   146	  color: var(--text-main);
+   147	  background: var(--panel-bg);
+   148	  border: 1px solid var(--border);
+   149	  border-radius: var(--radius-lg);
+   150	  box-shadow: var(--shadow-soft);
+   151	  backdrop-filter: blur(16px);
+   152	  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+   153	}
+   154	
+   155	.card { padding: 18px; }
+   156	
+   157	.card-center {
+   158	  display: flex;
+   159	  flex-direction: column;
+   160	  align-items: center;
+   161	  text-align: center;
+   162	  gap: 8px;
+   163	}
+   164	
+   165	/* Glow variant stays (optional class you can add anywhere) */
+   166	.panel.glow-panel{
+   167	  box-shadow:
+   168	    var(--shadow-soft),
+   169	    0 0 28px rgba(34,211,238,0.45),
+   170	    0 0 72px rgba(59,130,246,0.28),
+   171	    0 0 120px rgba(167,139,250,0.18);
+   172	  border-color: rgba(34,211,238,0.34);
+   173	}
+   174	.panel.glow-panel:hover{
+   175	  box-shadow:
+   176	    var(--shadow-soft),
+   177	    0 0 34px rgba(34,211,238,0.55),
+   178	    0 0 92px rgba(59,130,246,0.34),
+   179	    0 0 150px rgba(167,139,250,0.22);
+   180	  transform: translateY(-1px);
+   181	}
+   182	
+   183	/* Hover lift for desktop */
+   184	@media (hover: hover) and (pointer: fine) {
+   185	  .panel:hover {
+   186	    transform: translateY(-2px);
+   187	    border-color: rgba(96,165,250,0.45);
+   188	    box-shadow:
+   189	      0 18px 40px rgba(29,78,216,0.18),
+   190	      0 0 0 1px rgba(96,165,250,0.18);
+   191	  }
+   192	}
+   193	
+   194	/* Tap feedback for touch devices */
+   195	@media (hover: none) and (pointer: coarse) {
+   196	  .panel:active { transform: scale(0.99); }
+   197	}
+   198	
+   199	/* ================= BUTTONS ================= */
+   200	
+   201	.btn {
+   202	  padding: 10px 14px;
+   203	  border-radius: var(--radius-md);
+   204	  border: 1px solid var(--border);
+   205	  background: var(--btn-bg);
+   206	  color: var(--text-main);
+   207	  font-weight: 900;
+   208	  cursor: pointer;
+   209	  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
+   210	}
+   211	
+   212	.btn:hover {
+   213	  transform: translateY(-1px);
+   214	  border-color: rgba(96,165,250,0.6);
+   215	  box-shadow: var(--shadow-hover);
+   216	}
+   217	
+   218	.btn:active {
+   219	  transform: translateY(1px) scale(0.99);
+   220	  filter: brightness(0.98);
+   221	}
+   222	
+   223	.btn-primary {
+   224	  position: relative;
+   225	  overflow: hidden;
+   226	  background: linear-gradient(90deg, rgba(29,78,216,.95), rgba(96,165,250,.95));
+   227	  color: #fff;
+   228	  border-color: rgba(29,78,216,.6);
+   229	}
+   230	
+   231	/* Subtle animated shine on primary buttons (desktop hover only) */
+   232	.btn-primary::after {
+   233	  content: "";
+   234	  position: absolute;
+   235	  top: -40%;
+   236	  left: -60%;
+   237	  width: 50%;
+   238	  height: 180%;
+   239	  transform: rotate(18deg);
+   240	  background: linear-gradient(
+   241	    to right,
+   242	    rgba(255,255,255,0) 0%,
+   243	    rgba(255,255,255,0.22) 50%,
+   244	    rgba(255,255,255,0) 100%
+   245	  );
+   246	  transition: left 0.75s ease;
+   247	}
+   248	
+   249	@media (hover: hover) and (pointer: fine) {
+   250	  .btn-primary:hover::after { left: 120%; }
+   251	}
+   252	
+   253	.btn-ghost {
+   254	  background: color-mix(in srgb, var(--btn-bg) 82%, transparent);
+   255	}
+   256	
+   257	/* ================= INPUTS ================= */
+   258	
+   259	.field {
+   260	  width: 100%;
+   261	  padding: 10px 12px;
+   262	  border-radius: var(--radius-md);
+   263	  border: 1px solid var(--border);
+   264	  background: var(--field-bg);
+   265	  color: var(--text-main);
+   266	  font-weight: 600;
+   267	}
+   268	
+   269	.field:focus {
+   270	  outline: none;
+   271	  border-color: rgba(96,165,250,.7);
+   272	  box-shadow: 0 0 0 4px rgba(96,165,250,.22);
+   273	}
+   274	
+   275	/* ================= BADGE ================= */
+   276	
+   277	.badge {
+   278	  padding: 5px 12px;
+   279	  border-radius: 999px;
+   280	  border: 1px solid var(--border);
+   281	  background: var(--badge-bg);
+   282	  font-size: 12px;
+   283	  font-weight: 900;
+   284	  color: var(--text-soft);
+   285	}
+   286	
+   287	/* ================= PAGE MOTION ================= */
+   288	
+   289	.page {
+   290	  animation: pageFade 0.35s ease-out both;
+   291	}
+   292	
+   293	@keyframes pageFade {
+   294	  from { opacity: 0; transform: translateY(6px); }
+   295	  to   { opacity: 1; transform: translateY(0); }
+   296	}
+   297	
+   298	/* Respect reduced motion */
+   299	@media (prefers-reduced-motion: reduce) {
+   300	  * { animation: none !important; transition: none !important; }
+   301	}
+
+============================================================================
+FILE: src/styles/theme-override.css
+============================================================================
+     1	/* =========================================================
+     2	   THEME OVERRIDE (loaded LAST)
+     3	   Purpose: ensure src/index.css theme tokens control the app,
+     4	   even when urban.css is present.
+     5	   ========================================================= */
+     6	
+     7	/* 1) Let index.css control base colors instead of urban.css */
+     8	html, body {
+     9	  background: #f8fbff !important;
+    10	  color: var(--text-main) !important;
+    11	}
+    12	
+    13	/* Dark mode base (when html[data-theme="dark"] is set) */
+    14	html[data-theme="dark"] body,
+    15	html[data-theme="dark"] {
+    16	  background: #020617 !important;
+    17	  color: var(--text-main) !important;
+    18	}
+    19	
+    20	/* 2) Restore common text classes to theme tokens */
+    21	.muted { color: var(--text-muted) !important; }
+    22	.body, .lead, p, li, span { color: var(--text-soft) !important; }
+    23	
+    24	/* 3) Restore panels/cards to theme tokens (beats urban.css .panel.card background) */
+    25	.panel,
+    26	.panel.card {
+    27	  background: var(--panel-bg) !important;
+    28	  border: 1px solid var(--border) !important;
+    29	  color: var(--text-main) !important;
+    30	}
+    31	
+    32	/* 4) Keep headings consistent with theme tokens */
+    33	.h1, .h2, .h3, h1, h2, h3, h4 {
+    34	  color: var(--text-strong) !important;
+    35	}
+    36	
+    37	/* 5) Buttons/fields/badges use theme tokens (avoid urban glow forcing colors) */
+    38	.btn {
+    39	  background: var(--btn-bg) !important;
+    40	  color: var(--text-main) !important;
+    41	  border-color: var(--border) !important;
+    42	}
+    43	
+    44	.field, input, textarea, select {
+    45	  background: var(--field-bg) !important;
+    46	  color: var(--text-main) !important;
+    47	  border-color: var(--border) !important;
+    48	}
+    49	
+    50	.badge {
+    51	  background: var(--badge-bg) !important;
+    52	  color: var(--text-soft) !important;
+    53	  border-color: var(--border) !important;
+    54	}
+    55	
+    56	/* =========================================================
+    57	   CLICK FIX: prevent overlays/pseudo-elements from stealing clicks
+    58	   (Common issue with glass cards + .panel::before glow layers)
+    59	   ========================================================= */
+    60	
+    61	/* Ensure panels establish a stacking context */
+    62	.panel, .panel.card { position: relative !important; }
+    63	
+    64	/* Decorative overlays must NOT capture pointer events */
+    65	.panel::before,
+    66	.panel::after,
+    67	.card::before,
+    68	.card::after,
+    69	.page::before,
+    70	.page::after {
+    71	  pointer-events: none !important;
+    72	}
+    73	
+    74	/* Force interactive elements above overlays */
+    75	.panel a,
+    76	.panel button,
+    77	.panel .btn,
+    78	.panel [role="button"],
+    79	.panel input,
+    80	.panel select,
+    81	.panel textarea {
+    82	  position: relative !important;
+    83	  z-index: 2 !important;
+    84	  pointer-events: auto !important;
+    85	}
+
+============================================================================
+FILE: src/components/Navbar.tsx
+============================================================================
+     1	import React from "react";
+     2	import { NavLink, useNavigate } from "react-router-dom";
+     3	import rvLogo from "../assets/roberts-ventures-logo.png";
+     4	
+     5	import { useCart } from "../data/requestCart";
+     6	import { getActiveTheme, toggleTheme } from "../lib/theme";
+     7	
+     8	const linkStyleBase: React.CSSProperties = {
+     9	  textDecoration: "none",
+    10	  padding: "8px 12px",
+    11	  borderRadius: 999,
+    12	  fontWeight: 850,
+    13	  fontSize: 14,
+    14	  transition: "all .18s ease",
+    15	  display: "inline-flex",
+    16	  alignItems: "center",
+    17	  gap: 8,
+    18	  lineHeight: 1,
+    19	};
+    20	
+    21	const linkStyleActive: React.CSSProperties = {
+    22	  background: "rgba(99,102,241,0.18)",
+    23	  border: "1px solid rgba(99,102,241,0.25)",
+    24	  boxShadow: "0 10px 26px rgba(2,6,23,0.18)",
+    25	};
+    26	
+    27	const linkStyleInactive: React.CSSProperties = {
+    28	  background: "rgba(255,255,255,0.06)",
+    29	  border: "1px solid rgba(148,163,184,0.16)",
+    30	};
+    31	
+    32	function Pill({ children }: { children: React.ReactNode }) {
+    33	  return (
+    34	    <span
+    35	      style={{
+    36	        display: "inline-flex",
+    37	        alignItems: "center",
+    38	        justifyContent: "center",
+    39	        padding: "5px 10px",
+    40	        borderRadius: 999,
+    41	        fontSize: 12,
+    42	        fontWeight: 950,
+    43	        border: "1px solid rgba(148,163,184,0.18)",
+    44	        background: "rgba(255,255,255,0.10)",
+    45	        color: "rgba(248,250,252,0.88)",
+    46	      }}
+    47	    >
+    48	      {children}
+    49	    </span>
+    50	  );
+    51	}
+    52	
+    53	export default function Navbar() {
+    54	  // Shared NavLink style (kept inside Navbar() so it is always in-scope)
+    55	  const baseLinkStyle: React.CSSProperties = {
+    56	    textDecoration: "none",
+    57	    padding: "8px 12px",
+    58	    borderRadius: 999,
+    59	    fontWeight: 850,
+    60	    fontSize: 14,
+    61	    transition: "all .2s ease",
+    62	    display: "inline-flex",
+    63	    alignItems: "center",
+    64	    gap: 6,
+    65	  };
+    66	
+    67	
+    68	  const navigate = useNavigate();
+    69	  const cart = useCart();
+    70	  const count = (cart as any)?.count ?? 0;
+    71	
+    72	  const [theme, setTheme] = React.useState(getActiveTheme());
+    73	
+    74	  const onToggleTheme = () => {
+    75	    toggleTheme();
+    76	    // getActiveTheme reads from your theme store (html attribute/localStorage/etc.)
+    77	    setTheme(getActiveTheme());
+    78	  };
+    79	
+    80	  return (
+    81	    <header
+    82	      style={{
+    83	        position: "sticky",
+    84	        top: 0,
+    85	        zIndex: 50,
+    86	        backdropFilter: "blur(18px)",
+    87	        background:
+    88	          "linear-gradient(90deg, rgba(10,10,15,.78), rgba(6,10,22,.82))",
+    89	        borderBottom: "1px solid rgba(148,163,184,.15)",
+    90	      }}
+    91	    >
+    92	      <div
+    93	        style={{
+    94	          maxWidth: 1200,
+    95	          margin: "0 auto",
+    96	          padding: "14px 18px",
+    97	          display: "flex",
+    98	          alignItems: "center",
+    99	          justifyContent: "space-between",
+   100	          gap: 16,
+   101	          flexWrap: "wrap",
+   102	        }}
+   103	      >
+   104	        {/* Brand */}
+   105	        <button
+   106	          type="button"
+   107	          onClick={() => navigate("/")}
+   108	          style={{
+   109	            background: "transparent",
+   110	            border: "none",
+   111	            padding: 0,
+   112	            cursor: "pointer",
+   113	            display: "flex",
+   114	            alignItems: "center",
+   115	            gap: 10,
+   116	          }}
+   117	          aria-label="Go to Home"
+   118	        >
+   119	          <img
+   120	            src={rvLogo}
+   121	            alt="Roberts Ventures LLC"
+   122	            style={{
+   123	              width: 32,
+   124	              height: 32,
+   125	              objectFit: "contain",
+   126	              filter: "drop-shadow(0 0 14px rgba(56,189,248,.22))",
+   127	            }}
+   128	          />
+   129	          <div style={{ display: "grid", lineHeight: 1.15 }}>
+   130	            <div
+   131	              style={{
+   132	                fontSize: 18,
+   133	                fontWeight: 950,
+   134	                letterSpacing: ".06em",
+   135	                textTransform: "uppercase",
+   136	                background: "linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6)",
+   137	                WebkitBackgroundClip: "text",
+   138	                WebkitTextFillColor: "transparent",
+   139	                filter: "drop-shadow(0 0 16px rgba(56,189,248,.25))",
+   140	              }}
+   141	            >
+   142	              Roberts Ventures LLC
+   143	            </div>
+   144	            <div
+   145	              style={{
+   146	                fontSize: 11,
+   147	                color: "rgba(248,250,252,.62)",
+   148	                fontWeight: 800,
+   149	              }}
+   150	            >
+   151	              Services • Stay Lit Candle Co.
+   152	            </div>
+   153	          </div>
+   154	        </button>
+   155	
+   156	        {/* Nav */}
+   157	        <nav
+   158	          style={{
+   159	            display: "flex",
+   160	            gap: 8,
+   161	            flexWrap: "wrap",
+   162	            justifyContent: "center",
+   163	            alignItems: "center",
+   164	          }}
+   165	          aria-label="Primary"
+   166	        >
+   167	          <NavLink
+   168	            to="/"
+   169	            end
+   170	            style={({ isActive }) => ({
+   171	              ...linkStyleBase,
+   172	              ...(isActive ? linkStyleActive : linkStyleInactive),
+   173	              color: "rgba(248,250,252,0.92)",
+   174	            })}
+   175	          >
+   176	            Home
+   177	          </NavLink>
+   178	
+   179	          <NavLink
+   180	            to="/services"
+   181	            style={({ isActive }) => ({
+   182	              ...linkStyleBase,
+   183	              ...(isActive ? linkStyleActive : linkStyleInactive),
+   184	              color: "rgba(248,250,252,0.92)",
+   185	            })}
+   186	          >
+   187	            Services
+   188	          </NavLink>
+   189	
+   190	          <NavLink
+   191	            to="/schedule"
+   192	            style={({ isActive }) => ({
+   193	              ...linkStyleBase,
+   194	              ...(isActive ? linkStyleActive : linkStyleInactive),
+   195	              color: "rgba(248,250,252,0.92)",
+   196	            })}
+   197	          >
+   198	            Schedule
+   199	          </NavLink>
+   200	
+   201	
+   202	
+   203	          <NavLink
+   204	            to="/staylit"
+   205	            style={({ isActive }) => ({
+   206	              ...linkStyleBase,
+   207	              ...(isActive ? linkStyleActive : linkStyleInactive),
+   208	              color: "rgba(248,250,252,0.92)",
+   209	            })}
+   210	          >
+   211	            Stay Lit
+   212	            {count > 0 ? <Pill>{count}</Pill> : null}
+   213	          </NavLink>
+   214	
+   215	          {/* Theme toggle */}
+   216	          <button
+   217	            type="button"
+   218	            onClick={onToggleTheme}
+   219	            style={{
+   220	              padding: "8px 12px",
+   221	              borderRadius: 999,
+   222	              fontWeight: 950,
+   223	              border: "1px solid rgba(148,163,184,0.18)",
+   224	              background: "rgba(255,255,255,0.08)",
+   225	              color: "rgba(248,250,252,0.92)",
+   226	              cursor: "pointer",
+   227	            }}
+   228	            aria-label="Toggle theme"
+   229	            title="Toggle theme"
+   230	          >
+   231	            Theme: {theme === "dark" ? "Dark" : "Light"}
+   232	          </button>
+   233	
+   234	<NavLink
+   235	  to="/admin/maintenance"
+   236	  style={baseLinkStyle}
+   237	  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+   238	>
+   239	  Admin
+   240	</NavLink>
+   241	
+   242	</nav>
+   243	      </div>
+   244	    </header>
+   245	  );
+   246	}
+

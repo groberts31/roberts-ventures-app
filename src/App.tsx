@@ -1,6 +1,7 @@
+import AdminLogout from "./admin/AdminLogout";
+import AdminGuard from "./admin/AdminGuard";
 import useThemeMode from "./hooks/useThemeMode";
 import SubNavbar from "./components/SubNavbar";
-
 
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -25,7 +26,6 @@ import About from "./pages/About";
 import CustomerPortal from "./pages/CustomerPortal";
 import CustomerRequestDetail from "./pages/CustomerRequestDetail";
 
-
 import Builds from "./pages/Builds";
 import BuildDesigner from "./pages/BuildDesigner";
 import BuildPreview from "./pages/BuildPreview";
@@ -33,10 +33,7 @@ import BuildPortal from "./pages/BuildPortal";
 
 import AdminBuilds from "./pages/admin/AdminBuilds";
 import AdminBuildDetail from "./pages/admin/AdminBuildDetail";
-import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminGuard from "./components/admin/AdminGuard";
-
 import RequestConfirmed from "./pages/RequestConfirmed";
 
 import bg from "./assets/handyman-bg.png";
@@ -44,12 +41,12 @@ import staylitBg from "./assets/staylit-bg.png";
 import ToastHost from "./components/ToastHost";
 import MaintenanceDashboardPage from "./pages/admin/MaintenanceDashboardPage";
 import AdminRoute from "./components/AdminRoute";
+import AdminLoginPage from "./admin/AdminLoginPage";
 
 export default function App() {
   const location = useLocation();
   const isStayLit = location.pathname.startsWith("/staylit");
   useThemeMode(isStayLit);
-
 
   return (
     <div
@@ -99,7 +96,9 @@ export default function App() {
         }}
       >
         <Routes>
-          <Route path="/" element={<Home />} />
+          
+        <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
+<Route path="/" element={<Home />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/:id" element={<ServiceDetail />} />
           <Route path="/schedule" element={<Schedule />} />
@@ -123,7 +122,7 @@ export default function App() {
           <Route path="/builds/new" element={<BuildDesigner />} />
           <Route path="/builds/portal" element={<BuildPortal />} />
           <Route path="/builds/:id" element={<BuildPreview />} />
-<Route path="/admin/login" element={<AdminLogin />} />
+<Route path="/admin/login" element={<AdminLoginPage />} />
           <Route
             path="/admin"
             element={
@@ -168,7 +167,7 @@ export default function App() {
               </div>
             }
           />
-          <Route path="/admin/maintenance" element={<AdminRoute><MaintenanceDashboardPage /></AdminRoute>} />
+          <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>}  />
 </Routes>
       </main>
 
