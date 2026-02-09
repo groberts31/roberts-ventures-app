@@ -52,3 +52,34 @@ html[data-theme="dark"] {
   color: var(--text-soft) !important;
   border-color: var(--border) !important;
 }
+
+/* =========================================================
+   CLICK FIX: prevent overlays/pseudo-elements from stealing clicks
+   (Common issue with glass cards + .panel::before glow layers)
+   ========================================================= */
+
+/* Ensure panels establish a stacking context */
+.panel, .panel.card { position: relative !important; }
+
+/* Decorative overlays must NOT capture pointer events */
+.panel::before,
+.panel::after,
+.card::before,
+.card::after,
+.page::before,
+.page::after {
+  pointer-events: none !important;
+}
+
+/* Force interactive elements above overlays */
+.panel a,
+.panel button,
+.panel .btn,
+.panel [role="button"],
+.panel input,
+.panel select,
+.panel textarea {
+  position: relative !important;
+  z-index: 2 !important;
+  pointer-events: auto !important;
+}
