@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "../../lib/toast";
-import { clearAdminAuthed } from "../../admin/adminAuth";
+import { setAdminAuthed } from "../../components/admin/AdminGuard";
 
 type CartItem = { serviceId: string; qty: number; note: string };
 
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
   }
 
   function logout() {
-    clearAdminAuthed();
+    setAdminAuthed(false);
     toast("Logged out.", "info", "Admin", 1600, "Go Home", "/");
     window.location.href = "/";
   }

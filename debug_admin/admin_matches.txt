@@ -1,0 +1,135 @@
+src/App.tsx:import AdminLogout from "./admin/AdminLogout";
+src/App.tsx:import AdminGuard from "./admin/AdminGuard";
+src/App.tsx:import AdminBuilds from "./pages/admin/AdminBuilds";
+src/App.tsx:import AdminBuildDetail from "./pages/admin/AdminBuildDetail";
+src/App.tsx:import AdminDashboard from "./pages/admin/AdminDashboard";
+src/App.tsx:import MaintenanceDashboardPage from "./pages/admin/MaintenanceDashboardPage";
+src/App.tsx:import AdminRoute from "./components/AdminRoute";
+src/App.tsx:import AdminLoginPage from "./admin/AdminLoginPage";
+src/App.tsx:        <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
+src/App.tsx:<Route path="/admin/login" element={<AdminLoginPage />} />
+src/App.tsx:            path="/admin"
+src/App.tsx:              <AdminGuard>
+src/App.tsx:                <AdminDashboard />
+src/App.tsx:              </AdminGuard>
+src/App.tsx:            path="/admin/builds"
+src/App.tsx:              <AdminGuard>
+src/App.tsx:                <AdminBuilds />
+src/App.tsx:              </AdminGuard>
+src/App.tsx:            path="/admin/builds/:id"
+src/App.tsx:              <AdminGuard>
+src/App.tsx:                <AdminBuildDetail />
+src/App.tsx:              </AdminGuard>
+src/App.tsx:                  If you expected Admin to load, this can mean the route is missing or the app is not wrapped in
+src/App.tsx:                  Try: <code>/admin/login</code> then <code>/admin</code>
+src/App.tsx:          <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>}  />
+src/components/admin/AdminGuard.tsx:const KEY = "rv_admin_authed";
+src/components/admin/AdminGuard.tsx:export function isAdminAuthed() {
+src/components/admin/AdminGuard.tsx:export function setAdminAuthed(v: boolean) {
+src/components/admin/AdminGuard.tsx:export default function AdminGuard({ children }: { children: React.ReactNode }) {
+src/components/admin/AdminGuard.tsx:  if (!isAdminAuthed()) return <Navigate to="/admin/login" replace />;
+src/admin/adminAuth.ts:// src/admin/adminAuth.ts
+src/admin/adminAuth.ts:const KEY = "rv_admin_session_v1";
+src/admin/adminAuth.ts:const LOCK_KEY = "rv_admin_lock_v1";
+src/admin/adminAuth.ts:// Session auth (existing)
+src/admin/adminAuth.ts:export function isAdminAuthed(): boolean {
+src/admin/adminAuth.ts:export function setAdminAuthed(): void {
+src/admin/adminAuth.ts:  // successful login should reset lock state
+src/admin/adminAuth.ts:  resetAdminLock();
+src/admin/adminAuth.ts:export function clearAdminAuthed(): void {
+src/admin/adminAuth.ts:export function getAdminLock(): LockState {
+src/admin/adminAuth.ts:export function isAdminLocked(): boolean {
+src/admin/adminAuth.ts:  const s = getAdminLock();
+src/admin/adminAuth.ts:export function getAdminLockRemainingMs(): number {
+src/admin/adminAuth.ts:  const s = getAdminLock();
+src/admin/adminAuth.ts:export function recordAdminFail(): LockState {
+src/admin/adminAuth.ts:  const s = getAdminLock();
+src/admin/adminAuth.ts:export function resetAdminLock(): void {
+src/admin/AdminGuard.tsx:import { isAdminAuthed } from "./adminAuth";
+src/admin/AdminGuard.tsx:export default function AdminGuard({ children }: Props) {
+src/admin/AdminGuard.tsx:  if (isAdminAuthed()) return children;
+src/admin/AdminGuard.tsx:  // Send them to /admin/login and remember where they were going
+src/admin/AdminGuard.tsx:  return <Navigate to="/admin/login" replace state={{ from: loc.pathname + loc.search }} />;
+src/admin/AdminLoginPage.tsx:import { setAdminAuthed } from "./adminAuth";
+src/admin/AdminLoginPage.tsx: * Admin Login Protection
+src/admin/AdminLoginPage.tsx:export default function AdminLoginPage() {
+src/admin/AdminLoginPage.tsx:  const from = loc?.state?.from || "/admin";
+src/admin/AdminLoginPage.tsx:      setErr("Admin passcode is not set. Add VITE_ADMIN_PASSCODE to your .env file.");
+src/admin/AdminLoginPage.tsx:    setAdminAuthed();
+src/admin/AdminLoginPage.tsx:        <div className="h2" style={{ marginBottom: 8 }}>Admin Login</div>
+src/admin/AdminLoginPage.tsx:          Enter the admin passcode to continue.
+src/admin/AdminLoginPage.tsx:          <button className="btn btn-primary" type="submit">Unlock Admin</button>
+src/lib/buildsStore.ts.bak.20260208-162716:export type NoteAuthor = "customer" | "admin";
+src/lib/buildsStore.ts.bak.20260208-162716:  author: NoteAuthor;
+src/lib/buildsStore.ts.bak.20260208-162716:          author: "customer",
+src/lib/buildsStore.ts.bak.20260208-162716:      author: "customer",
+src/lib/buildsStore.ts.bak.20260208-162716:      author: "customer",
+src/lib/buildsStore.ts.bak.20260208-162716: * Removes the last NOTE authored by customer (change/refinement/note/initial) and triggers re-render.
+src/lib/buildsStore.ts.bak.20260208-162716:  // remove last customer-authored entry
+src/lib/buildsStore.ts.bak.20260208-162716:    if (prevLog[i]?.author === "customer") {
+src/lib/buildsStore.ts.bak.20260208-163402:export type NoteAuthor = "customer" | "admin";
+src/lib/buildsStore.ts.bak.20260208-163402:  author: NoteAuthor;
+src/lib/buildsStore.ts.bak.20260208-163402:      author: "customer",
+src/lib/buildsStore.ts.bak.20260208-163402:          author: "customer",
+src/lib/buildsStore.ts.bak.20260208-163402:      author: "customer",
+src/lib/buildsStore.ts.bak.20260208-163402:      author: "customer",
+src/lib/buildsStore.ts.bak.20260208-163402: * Removes the last NOTE authored by customer and triggers re-render.
+src/lib/buildsStore.ts.bak.20260208-163402:  // remove last customer-authored entry
+src/lib/buildsStore.ts.bak.20260208-163402:    if (prevLog[i]?.author === "customer") {
+src/admin/AdminLogout.tsx:import { clearAdminAuthed } from "./adminAuth";
+src/admin/AdminLogout.tsx:export default function AdminLogout() {
+src/admin/AdminLogout.tsx:  React.useEffect(() => { clearAdminAuthed(); }, []);
+src/lib/buildsStore.ts:export type NoteAuthor = "customer" | "admin";
+src/lib/buildsStore.ts:  author: NoteAuthor;
+src/lib/buildsStore.ts:      author: "customer",
+src/lib/buildsStore.ts:          author: "customer",
+src/lib/buildsStore.ts:      author: "customer",
+src/lib/buildsStore.ts:      author: "customer",
+src/lib/buildsStore.ts:    if (prevLog[i]?.author === "customer") {
+src/lib/buildPricing.ts: * Admin later can see breakdown + editable factors.
+src/lib/buildPricing.ts:  const labor = money(laborHours * 85); // $85/hr placeholder (admin can change later)
+src/pages/admin/AdminBuilds.tsx:export default function AdminBuilds() {
+src/pages/admin/AdminBuilds.tsx:            <h1 className="h2" style={{ margin: 0 }}>Admin — Build Submissions</h1>
+src/pages/admin/AdminBuilds.tsx:            <Link className="btn btn-primary" to="/admin">Back to Admin Dashboard</Link>
+src/pages/admin/AdminBuilds.tsx:                  <Link className="btn btn-primary" to={`/admin/builds/${b.id}`} style={{ fontWeight: 950 }}>
+src/pages/BuildPreview.tsx:    notesLog.some((n) => String(n?.author || "").toLowerCase() === "customer");
+src/pages/BuildPreview.tsx:                Notes are saved in separate chunks so Admin can remove any later if needed.
+src/pages/BuildPreview.tsx:                        {String(n.kind || "NOTE").toUpperCase()} • {String(n.author || "UNKNOWN").toUpperCase()}
+src/pages/admin/AdminLogin.tsx:import { setAdminAuthed } from "../../components/admin/AdminGuard";
+src/pages/admin/AdminLogin.tsx: * Admin Login Protection (Lockout)
+src/pages/admin/AdminLogin.tsx: * - Clears lock on successful login
+src/pages/admin/AdminLogin.tsx: * PIN source:
+src/pages/admin/AdminLogin.tsx: *   .env.local => VITE_ADMIN_PIN="1234"
+src/pages/admin/AdminLogin.tsx:const LOCK_KEY = "rv_admin_pin_lock_v1";
+src/pages/admin/AdminLogin.tsx:export default function AdminLogin() {
+src/pages/admin/AdminLogin.tsx:  // PIN from env (Vite)
+src/pages/admin/AdminLogin.tsx:  const correct = (import.meta as any).env?.VITE_ADMIN_PIN ?? "1234";
+src/pages/admin/AdminLogin.tsx:      setErr("Enter your admin PIN.");
+src/pages/admin/AdminLogin.tsx:      const msg = `Incorrect PIN. ${res.remainingFails} attempt(s) left.`;
+src/pages/admin/AdminLogin.tsx:      toast("Incorrect admin PIN.", "error", "Access Denied", 2600);
+src/pages/admin/AdminLogin.tsx:    // Success: clear lock + auth + go to dashboard
+src/pages/admin/AdminLogin.tsx:    setAdminAuthed(true);
+src/pages/admin/AdminLogin.tsx:    toast("Welcome back.", "success", "Admin Access", 2200, "Go to Dashboard", "/admin");
+src/pages/admin/AdminLogin.tsx:    nav("/admin");
+src/pages/admin/AdminLogin.tsx:        <h1 className="h2">Admin Login</h1>
+src/pages/admin/AdminLogin.tsx:          Enter your admin PIN to access customer requests and manage statuses.
+src/pages/admin/AdminLogin.tsx:            <span className="label">Admin PIN</span>
+src/pages/admin/AdminLogin.tsx:            Unlock Admin
+src/pages/admin/AdminLogin.tsx:            PIN is stored in <code>.env.local</code> as <code>VITE_ADMIN_PIN</code>.
+src/pages/admin/AdminBuildDetail.tsx:export default function AdminBuildDetail() {
+src/pages/admin/AdminBuildDetail.tsx:        <Link className="btn btn-primary" to="/admin/builds">Back</Link>
+src/pages/admin/AdminBuildDetail.tsx:  function removeLastCustomerNoteAdmin() {
+src/pages/admin/AdminBuildDetail.tsx:            <h1 className="h2" style={{ margin: 0 }}>Admin — Build Detail</h1>
+src/pages/admin/AdminBuildDetail.tsx:            <Link className="btn btn-ghost" to="/admin/builds">Back</Link>
+src/pages/admin/AdminBuildDetail.tsx:            <button className="btn btn-ghost" onClick={removeLastCustomerNoteAdmin} style={{ fontWeight: 950 }}>
+src/pages/admin/AdminDashboard.tsx:import { setAdminAuthed } from "../../components/admin/AdminGuard";
+src/pages/admin/AdminDashboard.tsx:export default function AdminDashboard() {
+src/pages/admin/AdminDashboard.tsx:    setAdminAuthed(false);
+src/pages/admin/AdminDashboard.tsx:    toast("Logged out.", "info", "Admin", 1600, "Go Home", "/");
+src/pages/admin/AdminDashboard.tsx:            <h1 className="h2" style={{ margin: 0 }}>Admin Dashboard</h1>
+src/pages/admin/AdminDashboard.tsx:            <button className="btn btn-primary admin-quote-btn" style={{ boxShadow: "0 8px 22px rgba(29,78,216,0.28)", border: "1px solid rgba(29,78,216,0.35)", fontWeight: 950 }} onClick={logout}>Logout</button>
+src/pages/BuildPreview.tsx.bak:    ? notesLog.some(n => String(n?.author||"").toLowerCase()==="customer")
+src/pages/BuildPreview.tsx.bak:                Notes are saved in separate chunks so Admin can remove any later if needed.
+src/pages/BuildPreview.tsx.bak:                        {String(n.kind).toUpperCase()} • {String(n.author).toUpperCase()}
+src/pages/admin/MaintenanceDashboardPage.tsx:            <div className="h2">Admin • Maintenance Dashboard</div>
+src/pages/admin/MaintenanceDashboardPage.tsx:            <span className="badge">/admin/maintenance</span>

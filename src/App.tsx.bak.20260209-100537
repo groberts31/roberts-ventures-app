@@ -41,7 +41,7 @@ import staylitBg from "./assets/staylit-bg.png";
 import ToastHost from "./components/ToastHost";
 import MaintenanceDashboardPage from "./pages/admin/MaintenanceDashboardPage";
 import AdminRoute from "./components/AdminRoute";
-import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLoginPage from "./admin/AdminLoginPage";
 
 export default function App() {
   const location = useLocation();
@@ -122,7 +122,7 @@ export default function App() {
           <Route path="/builds/new" element={<BuildDesigner />} />
           <Route path="/builds/portal" element={<BuildPortal />} />
           <Route path="/builds/:id" element={<BuildPreview />} />
-<Route path="/admin/login" element={<AdminLogin />} />
+<Route path="/admin/login" element={<AdminLoginPage />} />
           <Route
             path="/admin"
             element={
