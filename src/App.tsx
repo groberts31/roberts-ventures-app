@@ -43,6 +43,7 @@ import bg from "./assets/handyman-bg.png";
 import staylitBg from "./assets/staylit-bg.png";
 import ToastHost from "./components/ToastHost";
 import MaintenanceDashboardPage from "./pages/admin/MaintenanceDashboardPage";
+import AdminRoute from "./components/AdminRoute";
 
 export default function App() {
   const location = useLocation();
@@ -167,7 +168,7 @@ export default function App() {
               </div>
             }
           />
-          <Route path="/admin/maintenance" element={<MaintenanceDashboardPage />} />
+          <Route path="/admin/maintenance" element={<AdminRoute><MaintenanceDashboardPage /></AdminRoute>} />
 </Routes>
       </main>
 
