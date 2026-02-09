@@ -2,6 +2,15 @@ import React from "react";
 import { readBackupEvents, clearBackupEvents } from "../../lib/backupStore";
 import { backupNow, restoreFromCloud, backupRemoteEnabled, exportLocalBuilds } from "../../lib/backupManager";
 
+
+function fmt(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
+}
+
+
+
 type StorageEstimate = {
   quota?: number;
   usage?: number;
@@ -353,7 +362,101 @@ export default function MaintenanceDashboardPage() {
           </div>
         </div>
 
+        
         <div className="panel card">
+          <div className="h3">Backup Events</div>
+
+          <div className="muted" style={{ marginTop: 8 }}>
+            Local browser backup logs.
+          </div>
+
+          {(() => {
+            const events = readBackupEvents().slice(0, 50);
+
+            return (
+              <div className="stack" style={{ marginTop: 12 }}>
+
+                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+
+                  <button
+                    className="btn btn-primary"
+                    onClick={() =>
+                      downloadJson(
+                        `backup-events-${now.toISOString().replace(/[:.]/g, "-")}.json`,
+                        events
+                      )
+                    }
+                  >
+                    Download Backup Events
+                  </button>
+
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      if (!confirm("Clear backup events?")) return;
+                      clearBackupEvents();
+                      setNow(new Date());
+                    }}
+                  >
+                    Clear Backup Events
+                  </button>
+
+                  <span className="badge">
+                    Showing: {Math.min(events.length, 50)}
+                  </span>
+
+                </div>
+
+                {events.length === 0 ? (
+
+                  <div className="muted" style={{ fontWeight: 850 }}>
+                    No backup events yet.
+                  </div>
+
+                ) : (
+
+                  <div style={{ overflowX: "auto" }}>
+                    <table
+                      className="table"
+                      style={{ width: "100%", borderCollapse: "collapse" }}
+                    >
+
+                      <thead>
+                        <tr>
+                          <th style={{ padding: "10px 8px" }}>Time</th>
+                          <th style={{ padding: "10px 8px" }}>Kind</th>
+                          <th style={{ padding: "10px 8px" }}>Detail</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {events.map((e) => (
+                          <tr key={e.id}>
+                            <td style={{ padding: "10px 8px" }}>
+                              {fmt(e.createdAt)}
+                            </td>
+                            <td style={{ padding: "10px 8px", fontWeight: 900 }}>
+                              {String(e.kind || "—")}
+                            </td>
+                            <td style={{ padding: "10px 8px" }}>
+                              {String(e.detail || "—")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+
+                    </table>
+                  </div>
+
+                )}
+
+              </div>
+            );
+          })()}
+
+        </div>
+
+<div className="panel card">
           <div className="h3">Quick Links</div>
           <div className="muted" style={{ marginTop: 10 }}>
             If you don’t want to add a Navbar link yet, you can still open the page directly:
