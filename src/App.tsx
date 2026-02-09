@@ -42,6 +42,7 @@ import RequestConfirmed from "./pages/RequestConfirmed";
 import bg from "./assets/handyman-bg.png";
 import staylitBg from "./assets/staylit-bg.png";
 import ToastHost from "./components/ToastHost";
+import MaintenanceDashboardPage from "./pages/admin/MaintenanceDashboardPage";
 
 export default function App() {
   const location = useLocation();
@@ -166,7 +167,8 @@ export default function App() {
               </div>
             }
           />
-        </Routes>
+          <Route path="/admin/maintenance" element={<MaintenanceDashboardPage />} />
+</Routes>
       </main>
 
       <Footer />
