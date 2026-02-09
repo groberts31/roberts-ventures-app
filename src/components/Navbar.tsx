@@ -51,6 +51,20 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 export default function Navbar() {
+  // Shared NavLink style (kept inside Navbar() so it is always in-scope)
+  const baseLinkStyle: React.CSSProperties = {
+    textDecoration: "none",
+    padding: "8px 12px",
+    borderRadius: 999,
+    fontWeight: 850,
+    fontSize: 14,
+    transition: "all .2s ease",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+  };
+
+
   const navigate = useNavigate();
   const cart = useCart();
   const count = (cart as any)?.count ?? 0;
@@ -184,6 +198,8 @@ export default function Navbar() {
             Schedule
           </NavLink>
 
+
+
           <NavLink
             to="/staylit"
             style={({ isActive }) => ({
@@ -214,7 +230,16 @@ export default function Navbar() {
           >
             Theme: {theme === "dark" ? "Dark" : "Light"}
           </button>
-        </nav>
+
+<NavLink
+  to="/admin/maintenance"
+  style={baseLinkStyle}
+  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+>
+  Admin
+</NavLink>
+
+</nav>
       </div>
     </header>
   );
