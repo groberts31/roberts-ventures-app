@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { readBuilds as readBuildsLocal, writeBuilds as writeBuildsLocal, type BuildSubmission } from "../../lib/buildsStore";
 import { buildsRemoteEnabled, subscribeBuildsRemote, bulkDeleteRemote, bulkStatusRemote } from "../../lib/buildsRemoteStore";
 import { toast } from "../../lib/toast";
-
 function safe(s: any) {
   return String(s || "").toLowerCase();
 }
