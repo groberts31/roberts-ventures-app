@@ -4,6 +4,7 @@ import { readBuilds as readBuildsLocal, writeBuilds as writeBuildsLocal, type Bu
 import { buildsRemoteEnabled, subscribeBuildsRemote, bulkDeleteRemote, bulkStatusRemote } from "../../lib/buildsRemoteStore";
 import { toast } from "../../lib/toast";
 import { syncBuildsFromRemote } from "../../lib/buildsSync";
+import { readSyncStatus, clearSyncStatus } from "../../lib/buildsSyncStatus";
 function safe(s: any) {
   return String(s || "").toLowerCase();
 }
@@ -22,6 +23,7 @@ export default function AdminBuilds() {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [bulkStatus, setBulkStatus] = useState<BuildSubmission["status"] | "">("");
   const [syncBusy, setSyncBusy] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(readSyncStatus());
 
   function refresh() {
     setAll(readBuildsLocal());
@@ -49,6 +51,7 @@ export default function AdminBuilds() {
       toast("Sync failed (network/Firebase config).", "warning", "Sync Error", 3200);
     } finally {
       setSyncBusy(false);
+      setSyncStatus(readSyncStatus());
     }
   }
   useEffect(() => {
@@ -213,6 +216,36 @@ export default function AdminBuilds() {
       <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "grid", gap: 6 }}>
+            <div className="panel" style={{ marginTop: 10, padding: 12, borderRadius: 12 }}>
+              <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "grid", gap: 4 }}>
+                  <div style={{ fontWeight: 950 }}>Remote Status</div>
+                  <div className="muted" style={{ fontWeight: 850 }}>
+                    {buildsRemoteEnabled() ? "Firebase remote is enabled (env configured)." : "Remote disabled (env still PASTE_ME / missing)."}
+                  </div>
+                  {syncStatus ? (
+                    <div className="muted" style={{ fontWeight: 850 }}>
+                      Last sync: <code>{syncStatus.at}</code> — {syncStatus.ok ? "OK" : "Issue"} — {syncStatus.message}
+                    </div>
+                  ) : (
+                    <div className="muted" style={{ fontWeight: 850 }}>Last sync: <em>none yet</em></div>
+                  )}
+                </div>
+
+                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      clearSyncStatus();
+                      setSyncStatus(null);
+                      toast("Sync status cleared.", "warning", "Cleared", 1800);
+                    }}
+                  >
+                    Clear Status
+                  </button>
+                </div>
+              </div>
+            </div>
             <h1 className="h2" style={{ margin: 0 }}>Admin — Build Submissions</h1>
             <div className="muted" style={{ fontWeight: 900 }}>
               Stored locally in this browser (Firebase later). Customers see renders + public estimate only.
@@ -325,6 +358,36 @@ export default function AdminBuilds() {
                 <article key={b.id} className="panel card" style={{ padding: 16 }}>
                   <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
                     <div style={{ display: "grid", gap: 6 }}>
+            <div className="panel" style={{ marginTop: 10, padding: 12, borderRadius: 12 }}>
+              <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "grid", gap: 4 }}>
+                  <div style={{ fontWeight: 950 }}>Remote Status</div>
+                  <div className="muted" style={{ fontWeight: 850 }}>
+                    {buildsRemoteEnabled() ? "Firebase remote is enabled (env configured)." : "Remote disabled (env still PASTE_ME / missing)."}
+                  </div>
+                  {syncStatus ? (
+                    <div className="muted" style={{ fontWeight: 850 }}>
+                      Last sync: <code>{syncStatus.at}</code> — {syncStatus.ok ? "OK" : "Issue"} — {syncStatus.message}
+                    </div>
+                  ) : (
+                    <div className="muted" style={{ fontWeight: 850 }}>Last sync: <em>none yet</em></div>
+                  )}
+                </div>
+
+                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      clearSyncStatus();
+                      setSyncStatus(null);
+                      toast("Sync status cleared.", "warning", "Cleared", 1800);
+                    }}
+                  >
+                    Clear Status
+                  </button>
+                </div>
+              </div>
+            </div>
                       <div className="row" style={{ alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                         <input
                           type="checkbox"
