@@ -1,0 +1,1148 @@
+src/App.tsx-1-import AdminLogout from "./admin/AdminLogout";
+src/App.tsx:2:import AdminGuard from "./admin/AdminGuard";
+src/App.tsx-3-import useThemeMode from "./hooks/useThemeMode";
+src/App.tsx-4-import SubNavbar from "./components/SubNavbar";
+--
+src/App.tsx-32-import BuildPortal from "./pages/BuildPortal";
+src/App.tsx-33-
+src/App.tsx:34:import AdminBuilds from "./pages/admin/AdminBuilds";
+src/App.tsx-35-import AdminBuildDetail from "./pages/admin/AdminBuildDetail";
+src/App.tsx-36-import AdminDashboard from "./pages/admin/AdminDashboard";
+--
+src/App.tsx-98-        <Routes>
+src/App.tsx-99-          
+src/App.tsx:100:        <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
+src/App.tsx-101-<Route path="/" element={<Home />} />
+src/App.tsx-102-          <Route path="/services" element={<Services />} />
+--
+src/App.tsx-127-            path="/admin"
+src/App.tsx-128-            element={
+src/App.tsx:129:              <AdminGuard>
+src/App.tsx-130-                <AdminDashboard />
+src/App.tsx:131:              </AdminGuard>
+src/App.tsx-132-            }
+src/App.tsx-133-          />
+--
+src/App.tsx-137-            path="/admin/builds"
+src/App.tsx-138-            element={
+src/App.tsx:139:              <AdminGuard>
+src/App.tsx:140:                <AdminBuilds />
+src/App.tsx:141:              </AdminGuard>
+src/App.tsx-142-            }
+src/App.tsx-143-          />
+--
+src/App.tsx-145-            path="/admin/builds/:id"
+src/App.tsx-146-            element={
+src/App.tsx:147:              <AdminGuard>
+src/App.tsx-148-                <AdminBuildDetail />
+src/App.tsx:149:              </AdminGuard>
+src/App.tsx-150-            }
+src/App.tsx-151-          />
+--
+src/App.tsx-168-            }
+src/App.tsx-169-          />
+src/App.tsx:170:          <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>}  />
+src/App.tsx-171-</Routes>
+src/App.tsx-172-      </main>
+--
+src/admin/AdminLogout.tsx-1-import React from "react";
+src/admin/AdminLogout.tsx-2-import { Navigate } from "react-router-dom";
+src/admin/AdminLogout.tsx:3:import { clearAdminAuthed } from "./adminAuth";
+src/admin/AdminLogout.tsx-4-
+src/admin/AdminLogout.tsx-5-export default function AdminLogout() {
+--
+src/admin/AdminGuard.tsx-1-import React from "react";
+src/admin/AdminGuard.tsx-2-import { Navigate, useLocation } from "react-router-dom";
+src/admin/AdminGuard.tsx:3:import { isAdminAuthed } from "./adminAuth";
+src/admin/AdminGuard.tsx-4-
+src/admin/AdminGuard.tsx-5-type Props = { children: React.ReactElement };
+src/admin/AdminGuard.tsx-6-
+src/admin/AdminGuard.tsx:7:export default function AdminGuard({ children }: Props) {
+src/admin/AdminGuard.tsx-8-  const loc = useLocation();
+src/admin/AdminGuard.tsx-9-  if (isAdminAuthed()) return children;
+--
+src/admin/AdminLoginPage.tsx-1-import React from "react";
+src/admin/AdminLoginPage.tsx-2-import { useLocation, useNavigate } from "react-router-dom";
+src/admin/AdminLoginPage.tsx:3:import { setAdminAuthed } from "./adminAuth";
+src/admin/AdminLoginPage.tsx-4-
+src/admin/AdminLoginPage.tsx-5-/**
+--
+src/admin/adminAuth.ts:1:// src/admin/adminAuth.ts
+src/admin/adminAuth.ts-2-
+src/admin/adminAuth.ts-3-const KEY = "rv_admin_session_v1";
+--
+src/App.tsx.bak.20260209-100537-1-import AdminLogout from "./admin/AdminLogout";
+src/App.tsx.bak.20260209-100537:2:import AdminGuard from "./admin/AdminGuard";
+src/App.tsx.bak.20260209-100537-3-import useThemeMode from "./hooks/useThemeMode";
+src/App.tsx.bak.20260209-100537-4-import SubNavbar from "./components/SubNavbar";
+--
+src/App.tsx.bak.20260209-100537-32-import BuildPortal from "./pages/BuildPortal";
+src/App.tsx.bak.20260209-100537-33-
+src/App.tsx.bak.20260209-100537:34:import AdminBuilds from "./pages/admin/AdminBuilds";
+src/App.tsx.bak.20260209-100537-35-import AdminBuildDetail from "./pages/admin/AdminBuildDetail";
+src/App.tsx.bak.20260209-100537-36-import AdminDashboard from "./pages/admin/AdminDashboard";
+--
+src/App.tsx.bak.20260209-100537-98-        <Routes>
+src/App.tsx.bak.20260209-100537-99-          
+src/App.tsx.bak.20260209-100537:100:        <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
+src/App.tsx.bak.20260209-100537-101-<Route path="/" element={<Home />} />
+src/App.tsx.bak.20260209-100537-102-          <Route path="/services" element={<Services />} />
+--
+src/App.tsx.bak.20260209-100537-127-            path="/admin"
+src/App.tsx.bak.20260209-100537-128-            element={
+src/App.tsx.bak.20260209-100537:129:              <AdminGuard>
+src/App.tsx.bak.20260209-100537-130-                <AdminDashboard />
+src/App.tsx.bak.20260209-100537:131:              </AdminGuard>
+src/App.tsx.bak.20260209-100537-132-            }
+src/App.tsx.bak.20260209-100537-133-          />
+--
+src/App.tsx.bak.20260209-100537-137-            path="/admin/builds"
+src/App.tsx.bak.20260209-100537-138-            element={
+src/App.tsx.bak.20260209-100537:139:              <AdminGuard>
+src/App.tsx.bak.20260209-100537:140:                <AdminBuilds />
+src/App.tsx.bak.20260209-100537:141:              </AdminGuard>
+src/App.tsx.bak.20260209-100537-142-            }
+src/App.tsx.bak.20260209-100537-143-          />
+--
+src/App.tsx.bak.20260209-100537-145-            path="/admin/builds/:id"
+src/App.tsx.bak.20260209-100537-146-            element={
+src/App.tsx.bak.20260209-100537:147:              <AdminGuard>
+src/App.tsx.bak.20260209-100537-148-                <AdminBuildDetail />
+src/App.tsx.bak.20260209-100537:149:              </AdminGuard>
+src/App.tsx.bak.20260209-100537-150-            }
+src/App.tsx.bak.20260209-100537-151-          />
+--
+src/App.tsx.bak.20260209-100537-168-            }
+src/App.tsx.bak.20260209-100537-169-          />
+src/App.tsx.bak.20260209-100537:170:          <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>}  />
+src/App.tsx.bak.20260209-100537-171-</Routes>
+src/App.tsx.bak.20260209-100537-172-      </main>
+--
+src/components/admin/AdminGuard.tsx-11-}
+src/components/admin/AdminGuard.tsx-12-
+src/components/admin/AdminGuard.tsx:13:export default function AdminGuard({ children }: { children: React.ReactNode }) {
+src/components/admin/AdminGuard.tsx-14-  if (!isAdminAuthed()) return <Navigate to="/admin/login" replace />;
+src/components/admin/AdminGuard.tsx-15-  return <>{children}</>;
+--
+src/components/ToastHost.tsx-213-              onClick={() => dismiss(t.id)}
+src/components/ToastHost.tsx-214-              title="Click to dismiss"
+src/components/ToastHost.tsx:215:              role="status"
+src/components/ToastHost.tsx-216-            >
+src/components/ToastHost.tsx-217-              {/* Neon border glow */}
+--
+src/lib/requestsStore.ts-16-  items: Array<{ serviceId: string; qty: number; note: string }>;
+src/lib/requestsStore.ts-17-  photos: RVPhoto[];
+src/lib/requestsStore.ts:18:  status: RVRequestStatus;
+src/lib/requestsStore.ts-19-};
+src/lib/requestsStore.ts-20-
+--
+src/lib/buildsStore.ts.bak.20260208-162716-26-  renderId: string;
+src/lib/buildsStore.ts.bak.20260208-162716-27-  view: "iso" | "front" | "top" | "detail";
+src/lib/buildsStore.ts.bak.20260208-162716:28:  status: RenderStatus;
+src/lib/buildsStore.ts.bak.20260208-162716-29-  imageDataUrl?: string;
+src/lib/buildsStore.ts.bak.20260208-162716-30-  startedAt?: string;
+--
+src/lib/buildsStore.ts.bak.20260208-162716-85-};
+src/lib/buildsStore.ts.bak.20260208-162716-86-
+src/lib/buildsStore.ts.bak.20260208-162716:87:export type BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-162716-88-  id: string;
+src/lib/buildsStore.ts.bak.20260208-162716-89-  createdAt: string;
+src/lib/buildsStore.ts.bak.20260208-162716-90-  updatedAt: string;
+src/lib/buildsStore.ts.bak.20260208-162716-91-
+src/lib/buildsStore.ts.bak.20260208-162716:92:  status: BuildStatus;
+src/lib/buildsStore.ts.bak.20260208-162716-93-  accessCode?: string;
+src/lib/buildsStore.ts.bak.20260208-162716-94-
+--
+src/lib/buildsStore.ts.bak.20260208-162716-135-}
+src/lib/buildsStore.ts.bak.20260208-162716-136-
+src/lib/buildsStore.ts.bak.20260208-162716:137:export function readBuilds(): BuildSubmission[] {
+src/lib/buildsStore.ts.bak.20260208-162716-138-  const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
+src/lib/buildsStore.ts.bak.20260208-162716-139-  return (Array.isArray(arr) ? arr : []).filter(Boolean);
+src/lib/buildsStore.ts.bak.20260208-162716-140-}
+src/lib/buildsStore.ts.bak.20260208-162716-141-
+src/lib/buildsStore.ts.bak.20260208-162716:142:export function writeBuilds(items: BuildSubmission[]) {
+src/lib/buildsStore.ts.bak.20260208-162716-143-  localStorage.setItem(KEY, JSON.stringify(items));
+src/lib/buildsStore.ts.bak.20260208-162716-144-}
+src/lib/buildsStore.ts.bak.20260208-162716-145-
+src/lib/buildsStore.ts.bak.20260208-162716:146:export function getBuild(id: string): BuildSubmission | null {
+src/lib/buildsStore.ts.bak.20260208-162716:147:  const all = readBuilds();
+src/lib/buildsStore.ts.bak.20260208-162716-148-  const found = all.find((b) => String(b.id) === String(id));
+src/lib/buildsStore.ts.bak.20260208-162716-149-  return found || null;
+src/lib/buildsStore.ts.bak.20260208-162716-150-}
+src/lib/buildsStore.ts.bak.20260208-162716-151-
+src/lib/buildsStore.ts.bak.20260208-162716:152:export function upsertBuild(next: BuildSubmission) {
+src/lib/buildsStore.ts.bak.20260208-162716:153:  const all = readBuilds();
+src/lib/buildsStore.ts.bak.20260208-162716-154-  const idx = all.findIndex((b) => String(b.id) === String(next.id));
+src/lib/buildsStore.ts.bak.20260208-162716-155-  if (idx >= 0) all[idx] = next;
+src/lib/buildsStore.ts.bak.20260208-162716-156-  else all.unshift(next);
+src/lib/buildsStore.ts.bak.20260208-162716:157:  writeBuilds(all);
+src/lib/buildsStore.ts.bak.20260208-162716-158-}
+src/lib/buildsStore.ts.bak.20260208-162716-159-
+src/lib/buildsStore.ts.bak.20260208-162716-160-export function deleteBuild(id: string) {
+src/lib/buildsStore.ts.bak.20260208-162716:161:  const all = readBuilds().filter((b) => String(b.id) !== String(id));
+src/lib/buildsStore.ts.bak.20260208-162716:162:  writeBuilds(all);
+src/lib/buildsStore.ts.bak.20260208-162716-163-}
+src/lib/buildsStore.ts.bak.20260208-162716-164-
+--
+src/lib/buildsStore.ts.bak.20260208-162716-186-  options: BuildOptions;
+src/lib/buildsStore.ts.bak.20260208-162716-187-  notes?: string;
+src/lib/buildsStore.ts.bak.20260208-162716:188:}): BuildSubmission {
+src/lib/buildsStore.ts.bak.20260208-162716-189-  const now = new Date().toISOString();
+src/lib/buildsStore.ts.bak.20260208-162716-190-  const id = uid();
+--
+src/lib/buildsStore.ts.bak.20260208-162716-215-    },
+src/lib/buildsStore.ts.bak.20260208-162716-216-    renders: [
+src/lib/buildsStore.ts.bak.20260208-162716:217:      { renderId: uid(), view: "iso", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716:218:      { renderId: uid(), view: "front", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716:219:      { renderId: uid(), view: "top", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716-220-    ],
+src/lib/buildsStore.ts.bak.20260208-162716-221-  };
+src/lib/buildsStore.ts.bak.20260208-162716-222-
+src/lib/buildsStore.ts.bak.20260208-162716:223:  const build: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-162716-224-    id,
+src/lib/buildsStore.ts.bak.20260208-162716-225-    createdAt: now,
+src/lib/buildsStore.ts.bak.20260208-162716-226-    updatedAt: now,
+src/lib/buildsStore.ts.bak.20260208-162716:227:    status: "draft",
+src/lib/buildsStore.ts.bak.20260208-162716-228-    customer: args.customer,
+src/lib/buildsStore.ts.bak.20260208-162716-229-    project: {
+--
+src/lib/buildsStore.ts.bak.20260208-162716-249-  id: string,
+src/lib/buildsStore.ts.bak.20260208-162716-250-  customerChangeRequest: string,
+src/lib/buildsStore.ts.bak.20260208-162716:251:  patch?: Partial<BuildSubmission["project"]>
+src/lib/buildsStore.ts.bak.20260208-162716-252-) {
+src/lib/buildsStore.ts.bak.20260208-162716-253-  const b = getBuild(id);
+--
+src/lib/buildsStore.ts.bak.20260208-162716-255-
+src/lib/buildsStore.ts.bak.20260208-162716-256-  const now = new Date().toISOString();
+src/lib/buildsStore.ts.bak.20260208-162716:257:  const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
+src/lib/buildsStore.ts.bak.20260208-162716-258-
+src/lib/buildsStore.ts.bak.20260208-162716-259-  const version: BuildVersion = {
+--
+src/lib/buildsStore.ts.bak.20260208-162716-269-    },
+src/lib/buildsStore.ts.bak.20260208-162716-270-    renders: [
+src/lib/buildsStore.ts.bak.20260208-162716:271:      { renderId: uid(), view: "iso", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716:272:      { renderId: uid(), view: "front", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716:273:      { renderId: uid(), view: "top", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716:274:      { renderId: uid(), view: "detail", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-162716-275-    ],
+src/lib/buildsStore.ts.bak.20260208-162716-276-  };
+src/lib/buildsStore.ts.bak.20260208-162716-277-
+src/lib/buildsStore.ts.bak.20260208-162716:278:  const next: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-162716-279-    ...b,
+src/lib/buildsStore.ts.bak.20260208-162716-280-    updatedAt: now,
+--
+src/lib/buildsStore.ts.bak.20260208-162716-368-  const accessCode = b.accessCode && String(b.accessCode).trim().length >= 6 ? b.accessCode : makeAccessCode();
+src/lib/buildsStore.ts.bak.20260208-162716-369-
+src/lib/buildsStore.ts.bak.20260208-162716:370:  const next: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-162716-371-    ...b,
+src/lib/buildsStore.ts.bak.20260208-162716-372-    updatedAt: now,
+src/lib/buildsStore.ts.bak.20260208-162716:373:    status: b.status === "draft" ? "submitted" : b.status,
+src/lib/buildsStore.ts.bak.20260208-162716-374-    accessCode,
+src/lib/buildsStore.ts.bak.20260208-162716-375-  };
+--
+src/lib/buildsStore.ts.bak.20260208-162716-383-  const c = String(code || "").replace(/\\D+/g, "");
+src/lib/buildsStore.ts.bak.20260208-162716-384-  if (!p || c.length < 6) return [];
+src/lib/buildsStore.ts.bak.20260208-162716:385:  return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
+src/lib/buildsStore.ts.bak.20260208-162716-386-}
+src/lib/buildsStore.ts.bak.20260208-162716-387-
+--
+src/lib/buildsStore.ts.bak.20260208-162716-390-  const p = normalizePhone(phone);
+src/lib/buildsStore.ts.bak.20260208-162716-391-  if (!n || p.length < 7) return [];
+src/lib/buildsStore.ts.bak.20260208-162716:392:  return readBuilds().filter((b) => {
+src/lib/buildsStore.ts.bak.20260208-162716-393-    const bn = String(b.customer?.name || "").trim().toLowerCase();
+src/lib/buildsStore.ts.bak.20260208-162716-394-    const bp = normalizePhone(b.customer?.phone || "");
+--
+src/lib/buildsStore.ts.bak.20260208-163402-26-  renderId: string;
+src/lib/buildsStore.ts.bak.20260208-163402-27-  view: "iso" | "front" | "top" | "detail";
+src/lib/buildsStore.ts.bak.20260208-163402:28:  status: RenderStatus;
+src/lib/buildsStore.ts.bak.20260208-163402-29-  imageDataUrl?: string;
+src/lib/buildsStore.ts.bak.20260208-163402-30-  startedAt?: string;
+--
+src/lib/buildsStore.ts.bak.20260208-163402-85-};
+src/lib/buildsStore.ts.bak.20260208-163402-86-
+src/lib/buildsStore.ts.bak.20260208-163402:87:export type BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-163402-88-  id: string;
+src/lib/buildsStore.ts.bak.20260208-163402-89-  createdAt: string;
+src/lib/buildsStore.ts.bak.20260208-163402-90-  updatedAt: string;
+src/lib/buildsStore.ts.bak.20260208-163402-91-
+src/lib/buildsStore.ts.bak.20260208-163402:92:  status: BuildStatus;
+src/lib/buildsStore.ts.bak.20260208-163402-93-  accessCode?: string;
+src/lib/buildsStore.ts.bak.20260208-163402-94-
+--
+src/lib/buildsStore.ts.bak.20260208-163402-153-}
+src/lib/buildsStore.ts.bak.20260208-163402-154-
+src/lib/buildsStore.ts.bak.20260208-163402:155:function normalizeBuild(b: any): BuildSubmission | null {
+src/lib/buildsStore.ts.bak.20260208-163402-156-  if (!b || typeof b !== "object") return null;
+src/lib/buildsStore.ts.bak.20260208-163402-157-
+--
+src/lib/buildsStore.ts.bak.20260208-163402-183-  });
+src/lib/buildsStore.ts.bak.20260208-163402-184-
+src/lib/buildsStore.ts.bak.20260208-163402:185:  const out: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-163402-186-    ...b,
+src/lib/buildsStore.ts.bak.20260208-163402-187-    createdAt,
+src/lib/buildsStore.ts.bak.20260208-163402-188-    updatedAt: String(b.updatedAt || createdAt),
+src/lib/buildsStore.ts.bak.20260208-163402:189:    status: (b.status || "draft") as BuildStatus,
+src/lib/buildsStore.ts.bak.20260208-163402-190-    customer: b.customer || { name: "", phone: "", email: "" },
+src/lib/buildsStore.ts.bak.20260208-163402-191-    project: {
+--
+src/lib/buildsStore.ts.bak.20260208-163402-229-}
+src/lib/buildsStore.ts.bak.20260208-163402-230-
+src/lib/buildsStore.ts.bak.20260208-163402:231:export function readBuilds(): BuildSubmission[] {
+src/lib/buildsStore.ts.bak.20260208-163402-232-  const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
+src/lib/buildsStore.ts.bak.20260208-163402-233-  const raw = (Array.isArray(arr) ? arr : []).filter(Boolean);
+src/lib/buildsStore.ts.bak.20260208-163402-234-
+src/lib/buildsStore.ts.bak.20260208-163402-235-  // normalize in-memory so UI always sees notesLog
+src/lib/buildsStore.ts.bak.20260208-163402:236:  return raw.map(normalizeBuild).filter(Boolean) as BuildSubmission[];
+src/lib/buildsStore.ts.bak.20260208-163402-237-}
+src/lib/buildsStore.ts.bak.20260208-163402-238-
+src/lib/buildsStore.ts.bak.20260208-163402:239:export function writeBuilds(items: BuildSubmission[]) {
+src/lib/buildsStore.ts.bak.20260208-163402-240-  localStorage.setItem(KEY, JSON.stringify(items));
+src/lib/buildsStore.ts.bak.20260208-163402-241-}
+src/lib/buildsStore.ts.bak.20260208-163402-242-
+src/lib/buildsStore.ts.bak.20260208-163402:243:export function getBuild(id: string): BuildSubmission | null {
+src/lib/buildsStore.ts.bak.20260208-163402:244:  const all = readBuilds();
+src/lib/buildsStore.ts.bak.20260208-163402-245-  const found = all.find((b) => String(b.id) === String(id));
+src/lib/buildsStore.ts.bak.20260208-163402-246-  return found || null;
+src/lib/buildsStore.ts.bak.20260208-163402-247-}
+src/lib/buildsStore.ts.bak.20260208-163402-248-
+src/lib/buildsStore.ts.bak.20260208-163402:249:export function upsertBuild(next: BuildSubmission) {
+src/lib/buildsStore.ts.bak.20260208-163402:250:  const all = readBuilds();
+src/lib/buildsStore.ts.bak.20260208-163402-251-  const idx = all.findIndex((b) => String(b.id) === String(next.id));
+src/lib/buildsStore.ts.bak.20260208-163402-252-  if (idx >= 0) all[idx] = next;
+--
+src/lib/buildsStore.ts.bak.20260208-163402-254-
+src/lib/buildsStore.ts.bak.20260208-163402-255-  // persist normalized objects
+src/lib/buildsStore.ts.bak.20260208-163402:256:  writeBuilds(all);
+src/lib/buildsStore.ts.bak.20260208-163402-257-}
+src/lib/buildsStore.ts.bak.20260208-163402-258-
+src/lib/buildsStore.ts.bak.20260208-163402-259-export function deleteBuild(id: string) {
+src/lib/buildsStore.ts.bak.20260208-163402:260:  const all = readBuilds().filter((b) => String(b.id) !== String(id));
+src/lib/buildsStore.ts.bak.20260208-163402:261:  writeBuilds(all);
+src/lib/buildsStore.ts.bak.20260208-163402-262-}
+src/lib/buildsStore.ts.bak.20260208-163402-263-
+--
+src/lib/buildsStore.ts.bak.20260208-163402-268-  options: BuildOptions;
+src/lib/buildsStore.ts.bak.20260208-163402-269-  notes?: string;
+src/lib/buildsStore.ts.bak.20260208-163402:270:}): BuildSubmission {
+src/lib/buildsStore.ts.bak.20260208-163402-271-  const now = new Date().toISOString();
+src/lib/buildsStore.ts.bak.20260208-163402-272-  const id = uid();
+--
+src/lib/buildsStore.ts.bak.20260208-163402-297-    },
+src/lib/buildsStore.ts.bak.20260208-163402-298-    renders: [
+src/lib/buildsStore.ts.bak.20260208-163402:299:      { renderId: uid(), view: "iso", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402:300:      { renderId: uid(), view: "front", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402:301:      { renderId: uid(), view: "top", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402-302-    ],
+src/lib/buildsStore.ts.bak.20260208-163402-303-  };
+src/lib/buildsStore.ts.bak.20260208-163402-304-
+src/lib/buildsStore.ts.bak.20260208-163402:305:  const build: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-163402-306-    id,
+src/lib/buildsStore.ts.bak.20260208-163402-307-    createdAt: now,
+src/lib/buildsStore.ts.bak.20260208-163402-308-    updatedAt: now,
+src/lib/buildsStore.ts.bak.20260208-163402:309:    status: "draft",
+src/lib/buildsStore.ts.bak.20260208-163402-310-    customer: args.customer,
+src/lib/buildsStore.ts.bak.20260208-163402-311-    project: {
+--
+src/lib/buildsStore.ts.bak.20260208-163402-331-  id: string,
+src/lib/buildsStore.ts.bak.20260208-163402-332-  customerChangeRequest: string,
+src/lib/buildsStore.ts.bak.20260208-163402:333:  patch?: Partial<BuildSubmission["project"]>
+src/lib/buildsStore.ts.bak.20260208-163402-334-) {
+src/lib/buildsStore.ts.bak.20260208-163402-335-  const b0 = getBuild(id);
+--
+src/lib/buildsStore.ts.bak.20260208-163402-341-
+src/lib/buildsStore.ts.bak.20260208-163402-342-  const now = new Date().toISOString();
+src/lib/buildsStore.ts.bak.20260208-163402:343:  const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
+src/lib/buildsStore.ts.bak.20260208-163402-344-
+src/lib/buildsStore.ts.bak.20260208-163402-345-  // Ensure notesLog exists even if patch only updates legacy notes string
+--
+src/lib/buildsStore.ts.bak.20260208-163402-359-    },
+src/lib/buildsStore.ts.bak.20260208-163402-360-    renders: [
+src/lib/buildsStore.ts.bak.20260208-163402:361:      { renderId: uid(), view: "iso", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402:362:      { renderId: uid(), view: "front", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402:363:      { renderId: uid(), view: "top", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402:364:      { renderId: uid(), view: "detail", status: "queued" },
+src/lib/buildsStore.ts.bak.20260208-163402-365-    ],
+src/lib/buildsStore.ts.bak.20260208-163402-366-  };
+src/lib/buildsStore.ts.bak.20260208-163402-367-
+src/lib/buildsStore.ts.bak.20260208-163402:368:  const next: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-163402-369-    ...b,
+src/lib/buildsStore.ts.bak.20260208-163402-370-    updatedAt: now,
+--
+src/lib/buildsStore.ts.bak.20260208-163402-466-  const accessCode = b.accessCode && String(b.accessCode).trim().length >= 6 ? b.accessCode : makeAccessCode();
+src/lib/buildsStore.ts.bak.20260208-163402-467-
+src/lib/buildsStore.ts.bak.20260208-163402:468:  const next: BuildSubmission = {
+src/lib/buildsStore.ts.bak.20260208-163402-469-    ...b,
+src/lib/buildsStore.ts.bak.20260208-163402-470-    updatedAt: now,
+src/lib/buildsStore.ts.bak.20260208-163402:471:    status: b.status === "draft" ? "submitted" : b.status,
+src/lib/buildsStore.ts.bak.20260208-163402-472-    accessCode,
+src/lib/buildsStore.ts.bak.20260208-163402-473-  };
+--
+src/lib/buildsStore.ts.bak.20260208-163402-481-  const c = String(code || "").replace(/\D+/g, "");
+src/lib/buildsStore.ts.bak.20260208-163402-482-  if (!p || c.length < 6) return [];
+src/lib/buildsStore.ts.bak.20260208-163402:483:  return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
+src/lib/buildsStore.ts.bak.20260208-163402-484-}
+src/lib/buildsStore.ts.bak.20260208-163402-485-
+--
+src/lib/buildsStore.ts.bak.20260208-163402-488-  const p = normalizePhone(phone);
+src/lib/buildsStore.ts.bak.20260208-163402-489-  if (!n || p.length < 7) return [];
+src/lib/buildsStore.ts.bak.20260208-163402:490:  return readBuilds().filter((b) => {
+src/lib/buildsStore.ts.bak.20260208-163402-491-    const bn = String(b.customer?.name || "").trim().toLowerCase();
+src/lib/buildsStore.ts.bak.20260208-163402-492-    const bp = normalizePhone(b.customer?.phone || "");
+--
+src/lib/buildsStore.ts-26-  renderId: string;
+src/lib/buildsStore.ts-27-  view: "iso" | "front" | "top" | "detail";
+src/lib/buildsStore.ts:28:  status: RenderStatus;
+src/lib/buildsStore.ts-29-  imageDataUrl?: string;
+src/lib/buildsStore.ts-30-  startedAt?: string;
+--
+src/lib/buildsStore.ts-81-};
+src/lib/buildsStore.ts-82-
+src/lib/buildsStore.ts:83:export type BuildSubmission = {
+src/lib/buildsStore.ts-84-  id: string;
+src/lib/buildsStore.ts-85-  createdAt: string;
+src/lib/buildsStore.ts-86-  updatedAt: string;
+src/lib/buildsStore.ts-87-
+src/lib/buildsStore.ts:88:  status: BuildStatus;
+src/lib/buildsStore.ts-89-  accessCode?: string;
+src/lib/buildsStore.ts-90-
+--
+src/lib/buildsStore.ts-145-}
+src/lib/buildsStore.ts-146-
+src/lib/buildsStore.ts:147:function normalizeBuild(b: any): BuildSubmission | null {
+src/lib/buildsStore.ts-148-  if (!b || typeof b !== "object") return null;
+src/lib/buildsStore.ts-149-
+--
+src/lib/buildsStore.ts-181-  });
+src/lib/buildsStore.ts-182-
+src/lib/buildsStore.ts:183:  const out: BuildSubmission = {
+src/lib/buildsStore.ts-184-    ...b,
+src/lib/buildsStore.ts-185-    createdAt,
+src/lib/buildsStore.ts-186-    updatedAt: String(b.updatedAt || createdAt),
+src/lib/buildsStore.ts:187:    status: (b.status || "draft") as BuildStatus,
+src/lib/buildsStore.ts-188-    customer: b.customer || { name: "", phone: "", email: "" },
+src/lib/buildsStore.ts-189-    project: {
+--
+src/lib/buildsStore.ts-226-}
+src/lib/buildsStore.ts-227-
+src/lib/buildsStore.ts:228:export function readBuilds(): BuildSubmission[] {
+src/lib/buildsStore.ts-229-  const arr = safeParse<any[]>(localStorage.getItem(KEY), []);
+src/lib/buildsStore.ts-230-  const raw = (Array.isArray(arr) ? arr : []).filter(Boolean);
+src/lib/buildsStore.ts:231:  return raw.map(normalizeBuild).filter(Boolean) as BuildSubmission[];
+src/lib/buildsStore.ts-232-}
+src/lib/buildsStore.ts-233-
+src/lib/buildsStore.ts:234:export function writeBuilds(items: BuildSubmission[]) {
+src/lib/buildsStore.ts-235-  localStorage.setItem(KEY, JSON.stringify(items));
+src/lib/buildsStore.ts-236-}
+src/lib/buildsStore.ts-237-
+src/lib/buildsStore.ts:238:export function getBuild(id: string): BuildSubmission | null {
+src/lib/buildsStore.ts:239:  const all = readBuilds();
+src/lib/buildsStore.ts-240-  const found = all.find((b) => String(b.id) === String(id));
+src/lib/buildsStore.ts-241-  return found || null;
+src/lib/buildsStore.ts-242-}
+src/lib/buildsStore.ts-243-
+src/lib/buildsStore.ts:244:export function upsertBuild(next: BuildSubmission) {
+src/lib/buildsStore.ts:245:  const all = readBuilds();
+src/lib/buildsStore.ts-246-  const idx = all.findIndex((b) => String(b.id) === String(next.id));
+src/lib/buildsStore.ts-247-  if (idx >= 0) all[idx] = next;
+src/lib/buildsStore.ts-248-  else all.unshift(next);
+src/lib/buildsStore.ts:249:  writeBuilds(all);
+src/lib/buildsStore.ts-250-}
+src/lib/buildsStore.ts-251-
+src/lib/buildsStore.ts-252-export function deleteBuild(id: string) {
+src/lib/buildsStore.ts:253:  const all = readBuilds().filter((b) => String(b.id) !== String(id));
+src/lib/buildsStore.ts:254:  writeBuilds(all);
+src/lib/buildsStore.ts-255-}
+src/lib/buildsStore.ts-256-
+--
+src/lib/buildsStore.ts-261-  options: BuildOptions;
+src/lib/buildsStore.ts-262-  notes?: string;
+src/lib/buildsStore.ts:263:}): BuildSubmission {
+src/lib/buildsStore.ts-264-  const now = new Date().toISOString();
+src/lib/buildsStore.ts-265-  const id = uid();
+--
+src/lib/buildsStore.ts-291-    },
+src/lib/buildsStore.ts-292-    renders: [
+src/lib/buildsStore.ts:293:      { renderId: uid(), view: "iso", status: "queued" },
+src/lib/buildsStore.ts:294:      { renderId: uid(), view: "front", status: "queued" },
+src/lib/buildsStore.ts:295:      { renderId: uid(), view: "top", status: "queued" },
+src/lib/buildsStore.ts-296-    ],
+src/lib/buildsStore.ts-297-  };
+src/lib/buildsStore.ts-298-
+src/lib/buildsStore.ts:299:  const build: BuildSubmission = {
+src/lib/buildsStore.ts-300-    id,
+src/lib/buildsStore.ts-301-    createdAt: now,
+src/lib/buildsStore.ts-302-    updatedAt: now,
+src/lib/buildsStore.ts:303:    status: "draft",
+src/lib/buildsStore.ts-304-    customer: args.customer,
+src/lib/buildsStore.ts-305-    project: {
+--
+src/lib/buildsStore.ts-321-  id: string,
+src/lib/buildsStore.ts-322-  customerChangeRequest: string,
+src/lib/buildsStore.ts:323:  patch?: Partial<BuildSubmission["project"]>
+src/lib/buildsStore.ts-324-) {
+src/lib/buildsStore.ts-325-  const b0 = getBuild(id);
+--
+src/lib/buildsStore.ts-330-
+src/lib/buildsStore.ts-331-  const now = new Date().toISOString();
+src/lib/buildsStore.ts:332:  const mergedProject: BuildSubmission["project"] = { ...b.project, ...(patch || {}) };
+src/lib/buildsStore.ts-333-
+src/lib/buildsStore.ts-334-  const mergedNotesLog = ensureNotesLog("", mergedProject.notesLog, b.createdAt);
+--
+src/lib/buildsStore.ts-346-    },
+src/lib/buildsStore.ts-347-    renders: [
+src/lib/buildsStore.ts:348:      { renderId: uid(), view: "iso", status: "queued" },
+src/lib/buildsStore.ts:349:      { renderId: uid(), view: "front", status: "queued" },
+src/lib/buildsStore.ts:350:      { renderId: uid(), view: "top", status: "queued" },
+src/lib/buildsStore.ts:351:      { renderId: uid(), view: "detail", status: "queued" },
+src/lib/buildsStore.ts-352-    ],
+src/lib/buildsStore.ts-353-  };
+src/lib/buildsStore.ts-354-
+src/lib/buildsStore.ts:355:  const next: BuildSubmission = {
+src/lib/buildsStore.ts-356-    ...b,
+src/lib/buildsStore.ts-357-    updatedAt: now,
+--
+src/lib/buildsStore.ts-439-  const accessCode = b.accessCode && String(b.accessCode).trim().length >= 6 ? b.accessCode : makeAccessCode();
+src/lib/buildsStore.ts-440-
+src/lib/buildsStore.ts:441:  const next: BuildSubmission = {
+src/lib/buildsStore.ts-442-    ...b,
+src/lib/buildsStore.ts-443-    updatedAt: now,
+src/lib/buildsStore.ts:444:    status: b.status === "draft" ? "submitted" : b.status,
+src/lib/buildsStore.ts-445-    accessCode,
+src/lib/buildsStore.ts-446-  };
+--
+src/lib/buildsStore.ts-454-  const c = String(code || "").replace(/\D+/g, "");
+src/lib/buildsStore.ts-455-  if (!p || c.length < 6) return [];
+src/lib/buildsStore.ts:456:  return readBuilds().filter((b) => normalizePhone(b.customer?.phone || "") === p && String(b.accessCode || "") === c);
+src/lib/buildsStore.ts-457-}
+src/lib/buildsStore.ts-458-
+--
+src/lib/buildsStore.ts-461-  const p = normalizePhone(phone);
+src/lib/buildsStore.ts-462-  if (!n || p.length < 7) return [];
+src/lib/buildsStore.ts:463:  return readBuilds().filter((b) => {
+src/lib/buildsStore.ts-464-    const bn = String(b.customer?.name || "").trim().toLowerCase();
+src/lib/buildsStore.ts-465-    const bp = normalizePhone(b.customer?.phone || "");
+--
+src/data/addOns.ts-79-    category: "Add-Ons",
+src/data/addOns.ts-80-    name: "Haul Away Old Furniture",
+src/data/addOns.ts:81:    shortDesc: "Remove and dispose of old furniture or bulky items.",
+src/data/addOns.ts-82-    priceType: "starting_at",
+src/data/addOns.ts-83-    price: 25,
+Binary file src/assets/roberts-logo.png matches
+Binary file src/assets/addons/cable-concealment.png matches
+Binary file src/assets/addons/stain-finish.png matches
+Binary file src/assets/addons/deck-wash.png matches
+Binary file src/assets/addons/soundbar-mount.png matches
+Binary file src/assets/addons/heavy-items.png matches
+Binary file src/assets/addons/haul-away.png matches
+Binary file src/assets/addons/written-summary.png matches
+Binary file src/assets/addons/high-ceiling.png matches
+Binary file src/assets/roberts-ventures-logo.png matches
+Binary file src/assets/handyman-bg.png matches
+Binary file src/assets/staylit-logo.gif matches
+Binary file src/assets/staylit-bg.png matches
+Binary file src/assets/services/consultation.png matches
+Binary file src/assets/services/tv-mount.png matches
+Binary file src/assets/services/custom-shelves.png matches
+Binary file src/assets/services/ceiling-fan.png matches
+Binary file src/assets/services/junk-removal.png matches
+Binary file src/assets/services/deck-repair.png matches
+--
+src/pages/CustomerRequestDetail.tsx-11-}
+src/pages/CustomerRequestDetail.tsx-12-
+src/pages/CustomerRequestDetail.tsx:13:function statusLabel(s: string) {
+src/pages/CustomerRequestDetail.tsx-14-  const low = String(s || "").toLowerCase();
+src/pages/CustomerRequestDetail.tsx-15-  if (low === "complete") return "Complete";
+--
+src/pages/CustomerRequestDetail.tsx-46-            <div className="h2" style={{ margin: 0 }}>Request Details</div>
+src/pages/CustomerRequestDetail.tsx-47-            <div className="muted" style={{ fontWeight: 850 }}>
+src/pages/CustomerRequestDetail.tsx:48:              Request #{String(req.id).slice(-8).toUpperCase()} • Status: {statusLabel(req.status)}
+src/pages/CustomerRequestDetail.tsx-49-            </div>
+src/pages/CustomerRequestDetail.tsx-50-          </div>
+--
+src/pages/CustomerPortal.tsx-14-}
+src/pages/CustomerPortal.tsx-15-
+src/pages/CustomerPortal.tsx:16:function statusLabel(s: string) {
+src/pages/CustomerPortal.tsx-17-  const low = String(s || "").toLowerCase();
+src/pages/CustomerPortal.tsx-18-  if (low === "complete") return "Complete";
+--
+src/pages/CustomerPortal.tsx-234-
+src/pages/CustomerPortal.tsx-235-                      <div className="row" style={{ gap: 10, alignItems: "center" }}>
+src/pages/CustomerPortal.tsx:236:                        <span className="badge" style={{ fontWeight: 950 }}>Status: {statusLabel(r.status)}</span>
+src/pages/CustomerPortal.tsx-237-                        <Link className="btn btn-primary" to={`/customer/requests/${r.id}`}>
+src/pages/CustomerPortal.tsx-238-                          View Details
+--
+src/pages/Requests.tsx-10-  customer: { name: string; phone: string; address?: string; notes?: string };
+src/pages/Requests.tsx-11-  items: CartItem[];
+src/pages/Requests.tsx:12:  status?: "new" | "in_progress" | "complete";
+src/pages/Requests.tsx-13-};
+src/pages/Requests.tsx-14-
+--
+src/pages/Requests.tsx-20-}
+src/pages/Requests.tsx-21-
+src/pages/Requests.tsx:22:function badgeStyle(status: string) {
+src/pages/Requests.tsx:23:  if (status === "complete")
+src/pages/Requests.tsx-24-    return { background: "rgba(34,197,94,0.12)", color: "#14532d", border: "1px solid rgba(34,197,94,0.20)" };
+src/pages/Requests.tsx:25:  if (status === "in_progress")
+src/pages/Requests.tsx-26-    return { background: "rgba(14,165,233,0.12)", color: "#0c4a6e", border: "1px solid rgba(14,165,233,0.20)" };
+src/pages/Requests.tsx-27-  return { background: "rgba(245,158,11,0.14)", color: "#7c2d12", border: "1px solid rgba(245,158,11,0.22)" };
+--
+src/pages/Requests.tsx-37-  try {
+src/pages/Requests.tsx-38-    const raw = JSON.parse(localStorage.getItem(KEY) ?? "[]");
+src/pages/Requests.tsx:39:    return (Array.isArray(raw) ? raw : []).map((r: any) => ({ ...r, status: safeStatus(r?.status) }));
+src/pages/Requests.tsx-40-  } catch (e) {
+src/pages/Requests.tsx-41-    return [];
+--
+src/pages/Requests.tsx-68-        r.customer?.address,
+src/pages/Requests.tsx-69-        r.customer?.notes,
+src/pages/Requests.tsx:70:        safeStatus(r.status),
+src/pages/Requests.tsx-71-        ...(r.items ?? []).map((i) => i.serviceId),
+src/pages/Requests.tsx-72-      ]
+--
+src/pages/Requests.tsx-86-            <h1 className="h2" style={{ margin: 0, fontWeight: 950 }}>My Requests</h1>
+src/pages/Requests.tsx-87-            <div className="muted" style={{ fontWeight: 850 }}>
+src/pages/Requests.tsx:88:              Track your request status: <strong>New</strong> → <strong>In Progress</strong> → <strong>Complete</strong>
+src/pages/Requests.tsx-89-            </div>
+src/pages/Requests.tsx-90-          </div>
+--
+src/pages/Requests.tsx-122-            .sort((a, b) => String(b?.createdAt || "").localeCompare(String(a?.createdAt || "")))
+src/pages/Requests.tsx-123-            .map((r, idx) => {
+src/pages/Requests.tsx:124:              const st = safeStatus(r.status);
+src/pages/Requests.tsx-125-              const rid = r.id ?? r.createdAt ?? `req-${idx}`;
+src/pages/Requests.tsx-126-              const items = r.items ?? [];
+--
+src/pages/staylit/StayLitCreate.tsx-68-          </div>
+src/pages/staylit/StayLitCreate.tsx-69-          <div className="muted" style={{ fontWeight: 850 }}>
+src/pages/staylit/StayLitCreate.tsx:70:            Final price may vary for special requests, bulk orders, or custom labeling.
+src/pages/staylit/StayLitCreate.tsx-71-          </div>
+src/pages/staylit/StayLitCreate.tsx-72-        </div>
+--
+src/pages/staylit/StayLitAbout.tsx-54-            <div style={{ fontWeight: 950, color: "#f8fafc" }}>Bulk / events</div>
+src/pages/staylit/StayLitAbout.tsx-55-            <div className="muted" style={{ marginTop: 8, fontWeight: 850, color: "#c7d2fe", lineHeight: 1.6 }}>
+src/pages/staylit/StayLitAbout.tsx:56:              We can support bulk orders for weddings, events, corporate gifts, and custom label concepts (later upgrade).
+src/pages/staylit/StayLitAbout.tsx-57-            </div>
+src/pages/staylit/StayLitAbout.tsx-58-          </div>
+--
+src/pages/admin/AdminBuildDetail.tsx-1-import { useEffect, useMemo, useState } from "react";
+src/pages/admin/AdminBuildDetail.tsx-2-import { Link, useParams } from "react-router-dom";
+src/pages/admin/AdminBuildDetail.tsx:3:import { getBuild, upsertBuild, removeLastCustomerNote, compileNotes, type BuildSubmission } from "../../lib/buildsStore";
+src/pages/admin/AdminBuildDetail.tsx-4-import { estimateBuild } from "../../lib/buildPricing";
+src/pages/admin/AdminBuildDetail.tsx-5-import { toast } from "../../lib/toast";
+--
+src/pages/admin/AdminBuildDetail.tsx-17-export default function AdminBuildDetail() {
+src/pages/admin/AdminBuildDetail.tsx-18-  const { id } = useParams();
+src/pages/admin/AdminBuildDetail.tsx:19:  const [build, setBuild] = useState<BuildSubmission | null>(null);
+src/pages/admin/AdminBuildDetail.tsx-20-
+src/pages/admin/AdminBuildDetail.tsx-21-  useEffect(() => {
+--
+src/pages/admin/AdminBuildDetail.tsx-38-  const vv = v;
+src/pages/admin/AdminBuildDetail.tsx-39-
+src/pages/admin/AdminBuildDetail.tsx:40:  function setStatus(status: BuildSubmission["status"]) {
+src/pages/admin/AdminBuildDetail.tsx:41:    const next: BuildSubmission = { ...b, status, updatedAt: new Date().toISOString() };
+src/pages/admin/AdminBuildDetail.tsx-42-    upsertBuild(next);
+src/pages/admin/AdminBuildDetail.tsx-43-    setBuild(next);
+src/pages/admin/AdminBuildDetail.tsx:44:    toast("Build status updated.", "success", "Saved", 1600);
+src/pages/admin/AdminBuildDetail.tsx-45-  }
+src/pages/admin/AdminBuildDetail.tsx-46-
+--
+src/pages/admin/AdminBuildDetail.tsx-61-    };
+src/pages/admin/AdminBuildDetail.tsx-62-
+src/pages/admin/AdminBuildDetail.tsx:63:    const next: BuildSubmission = { ...b, updatedAt: new Date().toISOString(), versions: [nextV, ...b.versions.slice(1)] };
+src/pages/admin/AdminBuildDetail.tsx-64-    upsertBuild(next);
+src/pages/admin/AdminBuildDetail.tsx-65-    setBuild(next);
+--
+src/pages/admin/AdminBuildDetail.tsx-105-
+src/pages/admin/AdminBuildDetail.tsx-106-        <div className="row" style={{ gap: 8, flexWrap: "wrap", marginTop: 12, justifyContent: "center" }}>
+src/pages/admin/AdminBuildDetail.tsx:107:          <span className="badge" style={{ fontWeight: 950 }}>Status: {String(build.status).toUpperCase()}</span>
+src/pages/admin/AdminBuildDetail.tsx-108-          <button className="btn btn-ghost" onClick={() => setStatus("reviewing")}>Reviewing</button>
+src/pages/admin/AdminBuildDetail.tsx-109-          <button className="btn btn-ghost" onClick={() => setStatus("quote_sent")}>Quote Sent</button>
+--
+src/pages/admin/AdminBuildDetail.tsx-156-            {(v.renders || []).map((r) => (
+src/pages/admin/AdminBuildDetail.tsx-157-              <div key={r.renderId} className="panel" style={{ padding: 10, borderRadius: 12 }}>
+src/pages/admin/AdminBuildDetail.tsx:158:                <div style={{ fontWeight: 950 }}>{String(r.view).toUpperCase()} <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span></div>
+src/pages/admin/AdminBuildDetail.tsx-159-                <div style={{ marginTop: 8, width: "100%", height: 140, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(15,23,42,0.16)" }}>
+src/pages/admin/AdminBuildDetail.tsx-160-                  {r.imageDataUrl ? (
+--
+src/pages/admin/AdminLogin.tsx-7-  recordAdminFail,
+src/pages/admin/AdminLogin.tsx-8-  getAdminLockRemainingMs,
+src/pages/admin/AdminLogin.tsx:9:} from "../../admin/adminAuth";
+src/pages/admin/AdminLogin.tsx-10-
+src/pages/admin/AdminLogin.tsx-11-/**
+--
+src/pages/admin/AdminLogin.tsx-67-
+src/pages/admin/AdminLogin.tsx-68-    // ✅ Success
+src/pages/admin/AdminLogin.tsx:69:    setAdminAuthed();   // stored session (and resets lock inside adminAuth)
+src/pages/admin/AdminLogin.tsx-70-    setPin("");         // ✅ clear input
+src/pages/admin/AdminLogin.tsx-71-    setErr("");
+--
+src/pages/admin/AdminLogin.tsx-82-        <h1 className="h2">Admin Login</h1>
+src/pages/admin/AdminLogin.tsx-83-        <p className="lead" style={{ maxWidth: 560 }}>
+src/pages/admin/AdminLogin.tsx:84:          Enter your admin PIN to access customer requests and manage statuses.
+src/pages/admin/AdminLogin.tsx-85-        </p>
+src/pages/admin/AdminLogin.tsx-86-
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-1-import { useEffect, useMemo, useState } from "react";
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-2-import { toast } from "../../lib/toast";
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:3:import { setAdminAuthed } from "../../components/admin/AdminGuard";
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-4-
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-5-type CartItem = { serviceId: string; qty: number; note: string };
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-27-  items: CartItem[];
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-28-  photos?: { name: string; type: string; dataUrl: string }[];
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:29:  status?: "new" | "in_progress" | "complete"; // may be missing on older records
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-30-  quote?: QuoteDraft;
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-31-};
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-46-    const raw = JSON.parse(localStorage.getItem(KEY) ?? "[]");
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-47-    const arr = Array.isArray(raw) ? raw : [];
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:48:    return arr.map((r: any) => ({ ...r, status: safeStatus(r?.status) }));
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-49-  } catch {
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-50-    return [];
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-71-}
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-72-
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:73:function badgeStyle(status: string) {
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:74:  if (status === "complete")
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-75-    return { background: "rgba(34,197,94,0.12)", color: "#14532d", border: "1px solid rgba(34,197,94,0.20)" };
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:76:  if (status === "in_progress")
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-77-    return { background: "rgba(14,165,233,0.12)", color: "#0c4a6e", border: "1px solid rgba(14,165,233,0.20)" };
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-78-  return { background: "rgba(245,158,11,0.14)", color: "#7c2d12", border: "1px solid rgba(245,158,11,0.22)" };
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-82-  const [reqs, setReqs] = useState<RequestRecord[]>([]);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-83-  const [q, setQ] = useState("");
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:84:  const [statusFilter, setStatusFilter] = useState<"all" | "new" | "in_progress" | "complete">("all");
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-85-
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-86-  // which request has the quote panel open
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-98-    const term = q.trim().toLowerCase();
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-99-    return reqs.filter((r) => {
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:100:      const st = safeStatus(r.status);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:101:      if (statusFilter !== "all" && st !== statusFilter) return false;
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-102-      if (!term) return true;
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-103-
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-118-      return hay.includes(term);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-119-    });
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:120:  }, [reqs, q, statusFilter]);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-121-
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-122-  function updateRequestByIndex(index: number, updater: (r: RequestRecord) => RequestRecord) {
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-128-  }
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-129-
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:130:  function setStatus(index: number, status: "new" | "in_progress" | "complete") {
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:131:    updateRequestByIndex(index, (r) => ({ ...r, status }));
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-132-    toast("Status updated.", "success", "Saved", 1600);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-133-  }
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-168-          updatedAt: now,
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-169-        },
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:170:        status: safeStatus(r.status),
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-171-      };
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-172-    });
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-286-    updateRequestByIndex(index, (r) => {
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-287-      if (!r.quote) return r;
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:288:      const st = safeStatus(r.status);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-289-      return {
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-290-        ...r,
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:291:        status: st === "new" ? "in_progress" : st,
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-292-        quote: { ...r.quote, sentAt: now, updatedAt: now },
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-293-      };
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-327-            className="field"
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-328-            style={{ width: 220 }}
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:329:            value={statusFilter}
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-330-            onChange={(e) => setStatusFilter(e.target.value as any)}
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-331-          >
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:332:            <option value="all">All statuses</option>
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-333-            <option value="new">New</option>
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-334-            <option value="in_progress">In progress</option>
+--
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-352-            const key = (r.createdAt || "x") + ":" + idx;
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-353-            const quoteOpen = openQuoteKey === key;
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537:354:            const st = safeStatus(r.status);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-355-            const totals = calcTotals(r.quote);
+src/pages/admin/AdminDashboard.tsx.bak.20260209-100537-356-
+--
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-2-import { useNavigate } from "react-router-dom";
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-3-import { toast } from "../../lib/toast";
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537:4:import { setAdminAuthed } from "../../components/admin/AdminGuard";
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-5-
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-6-/**
+--
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-151-        <h1 className="h2">Admin Login</h1>
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-152-        <p className="lead" style={{ maxWidth: 560 }}>
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537:153:          Enter your admin PIN to access customer requests and manage statuses.
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-154-        </p>
+src/pages/admin/AdminLogin.tsx.bak.20260209-100537-155-
+--
+src/pages/admin/AdminDashboard.tsx-1-import { useEffect, useMemo, useState } from "react";
+src/pages/admin/AdminDashboard.tsx-2-import { toast } from "../../lib/toast";
+src/pages/admin/AdminDashboard.tsx:3:import { clearAdminAuthed } from "../../admin/adminAuth";
+src/pages/admin/AdminDashboard.tsx-4-
+src/pages/admin/AdminDashboard.tsx-5-type CartItem = { serviceId: string; qty: number; note: string };
+--
+src/pages/admin/AdminDashboard.tsx-27-  items: CartItem[];
+src/pages/admin/AdminDashboard.tsx-28-  photos?: { name: string; type: string; dataUrl: string }[];
+src/pages/admin/AdminDashboard.tsx:29:  status?: "new" | "in_progress" | "complete"; // may be missing on older records
+src/pages/admin/AdminDashboard.tsx-30-  quote?: QuoteDraft;
+src/pages/admin/AdminDashboard.tsx-31-};
+--
+src/pages/admin/AdminDashboard.tsx-46-    const raw = JSON.parse(localStorage.getItem(KEY) ?? "[]");
+src/pages/admin/AdminDashboard.tsx-47-    const arr = Array.isArray(raw) ? raw : [];
+src/pages/admin/AdminDashboard.tsx:48:    return arr.map((r: any) => ({ ...r, status: safeStatus(r?.status) }));
+src/pages/admin/AdminDashboard.tsx-49-  } catch {
+src/pages/admin/AdminDashboard.tsx-50-    return [];
+--
+src/pages/admin/AdminDashboard.tsx-71-}
+src/pages/admin/AdminDashboard.tsx-72-
+src/pages/admin/AdminDashboard.tsx:73:function badgeStyle(status: string) {
+src/pages/admin/AdminDashboard.tsx:74:  if (status === "complete")
+src/pages/admin/AdminDashboard.tsx-75-    return { background: "rgba(34,197,94,0.12)", color: "#14532d", border: "1px solid rgba(34,197,94,0.20)" };
+src/pages/admin/AdminDashboard.tsx:76:  if (status === "in_progress")
+src/pages/admin/AdminDashboard.tsx-77-    return { background: "rgba(14,165,233,0.12)", color: "#0c4a6e", border: "1px solid rgba(14,165,233,0.20)" };
+src/pages/admin/AdminDashboard.tsx-78-  return { background: "rgba(245,158,11,0.14)", color: "#7c2d12", border: "1px solid rgba(245,158,11,0.22)" };
+--
+src/pages/admin/AdminDashboard.tsx-82-  const [reqs, setReqs] = useState<RequestRecord[]>([]);
+src/pages/admin/AdminDashboard.tsx-83-  const [q, setQ] = useState("");
+src/pages/admin/AdminDashboard.tsx:84:  const [statusFilter, setStatusFilter] = useState<"all" | "new" | "in_progress" | "complete">("all");
+src/pages/admin/AdminDashboard.tsx-85-
+src/pages/admin/AdminDashboard.tsx-86-  // which request has the quote panel open
+--
+src/pages/admin/AdminDashboard.tsx-98-    const term = q.trim().toLowerCase();
+src/pages/admin/AdminDashboard.tsx-99-    return reqs.filter((r) => {
+src/pages/admin/AdminDashboard.tsx:100:      const st = safeStatus(r.status);
+src/pages/admin/AdminDashboard.tsx:101:      if (statusFilter !== "all" && st !== statusFilter) return false;
+src/pages/admin/AdminDashboard.tsx-102-      if (!term) return true;
+src/pages/admin/AdminDashboard.tsx-103-
+--
+src/pages/admin/AdminDashboard.tsx-118-      return hay.includes(term);
+src/pages/admin/AdminDashboard.tsx-119-    });
+src/pages/admin/AdminDashboard.tsx:120:  }, [reqs, q, statusFilter]);
+src/pages/admin/AdminDashboard.tsx-121-
+src/pages/admin/AdminDashboard.tsx-122-  function updateRequestByIndex(index: number, updater: (r: RequestRecord) => RequestRecord) {
+--
+src/pages/admin/AdminDashboard.tsx-128-  }
+src/pages/admin/AdminDashboard.tsx-129-
+src/pages/admin/AdminDashboard.tsx:130:  function setStatus(index: number, status: "new" | "in_progress" | "complete") {
+src/pages/admin/AdminDashboard.tsx:131:    updateRequestByIndex(index, (r) => ({ ...r, status }));
+src/pages/admin/AdminDashboard.tsx-132-    toast("Status updated.", "success", "Saved", 1600);
+src/pages/admin/AdminDashboard.tsx-133-  }
+--
+src/pages/admin/AdminDashboard.tsx-168-          updatedAt: now,
+src/pages/admin/AdminDashboard.tsx-169-        },
+src/pages/admin/AdminDashboard.tsx:170:        status: safeStatus(r.status),
+src/pages/admin/AdminDashboard.tsx-171-      };
+src/pages/admin/AdminDashboard.tsx-172-    });
+--
+src/pages/admin/AdminDashboard.tsx-286-    updateRequestByIndex(index, (r) => {
+src/pages/admin/AdminDashboard.tsx-287-      if (!r.quote) return r;
+src/pages/admin/AdminDashboard.tsx:288:      const st = safeStatus(r.status);
+src/pages/admin/AdminDashboard.tsx-289-      return {
+src/pages/admin/AdminDashboard.tsx-290-        ...r,
+src/pages/admin/AdminDashboard.tsx:291:        status: st === "new" ? "in_progress" : st,
+src/pages/admin/AdminDashboard.tsx-292-        quote: { ...r.quote, sentAt: now, updatedAt: now },
+src/pages/admin/AdminDashboard.tsx-293-      };
+--
+src/pages/admin/AdminDashboard.tsx-327-            className="field"
+src/pages/admin/AdminDashboard.tsx-328-            style={{ width: 220 }}
+src/pages/admin/AdminDashboard.tsx:329:            value={statusFilter}
+src/pages/admin/AdminDashboard.tsx-330-            onChange={(e) => setStatusFilter(e.target.value as any)}
+src/pages/admin/AdminDashboard.tsx-331-          >
+src/pages/admin/AdminDashboard.tsx:332:            <option value="all">All statuses</option>
+src/pages/admin/AdminDashboard.tsx-333-            <option value="new">New</option>
+src/pages/admin/AdminDashboard.tsx-334-            <option value="in_progress">In progress</option>
+--
+src/pages/admin/AdminDashboard.tsx-352-            const key = (r.createdAt || "x") + ":" + idx;
+src/pages/admin/AdminDashboard.tsx-353-            const quoteOpen = openQuoteKey === key;
+src/pages/admin/AdminDashboard.tsx:354:            const st = safeStatus(r.status);
+src/pages/admin/AdminDashboard.tsx-355-            const totals = calcTotals(r.quote);
+src/pages/admin/AdminDashboard.tsx-356-
+--
+src/pages/admin/AdminBuilds.tsx-1-import { useEffect, useMemo, useState } from "react";
+src/pages/admin/AdminBuilds.tsx-2-import { Link } from "react-router-dom";
+src/pages/admin/AdminBuilds.tsx:3:import { readBuilds, type BuildSubmission } from "../../lib/buildsStore";
+src/pages/admin/AdminBuilds.tsx-4-import { toast } from "../../lib/toast";
+src/pages/admin/AdminBuilds.tsx-5-
+--
+src/pages/admin/AdminBuilds.tsx-17-
+src/pages/admin/AdminBuilds.tsx-18-// Local helper (keeps this upgrade self-contained)
+src/pages/admin/AdminBuilds.tsx:19:function writeBuilds(next: BuildSubmission[]) {
+src/pages/admin/AdminBuilds.tsx-20-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+src/pages/admin/AdminBuilds.tsx-21-}
+src/pages/admin/AdminBuilds.tsx-22-
+src/pages/admin/AdminBuilds.tsx:23:export default function AdminBuilds() {
+src/pages/admin/AdminBuilds.tsx:24:  const [all, setAll] = useState<BuildSubmission[]>([]);
+src/pages/admin/AdminBuilds.tsx-25-  const [q, setQ] = useState("");
+src/pages/admin/AdminBuilds.tsx-26-
+src/pages/admin/AdminBuilds.tsx-27-  // Bulk selection
+src/pages/admin/AdminBuilds.tsx-28-  const [selected, setSelected] = useState<Record<string, boolean>>({});
+src/pages/admin/AdminBuilds.tsx:29:  const [bulkStatus, setBulkStatus] = useState<string>("");
+src/pages/admin/AdminBuilds.tsx-30-
+src/pages/admin/AdminBuilds.tsx-31-  function refresh() {
+src/pages/admin/AdminBuilds.tsx:32:    setAll(readBuilds());
+src/pages/admin/AdminBuilds.tsx-33-  }
+src/pages/admin/AdminBuilds.tsx-34-
+--
+src/pages/admin/AdminBuilds.tsx-41-      const hay = [
+src/pages/admin/AdminBuilds.tsx-42-        b.id,
+src/pages/admin/AdminBuilds.tsx:43:        b.status,
+src/pages/admin/AdminBuilds.tsx-44-        b.createdAt,
+src/pages/admin/AdminBuilds.tsx-45-        b.updatedAt,
+--
+src/pages/admin/AdminBuilds.tsx-100-      return;
+src/pages/admin/AdminBuilds.tsx-101-    }
+src/pages/admin/AdminBuilds.tsx:102:    const nextStatus = bulkStatus.trim();
+src/pages/admin/AdminBuilds.tsx-103-    if (!nextStatus) {
+src/pages/admin/AdminBuilds.tsx:104:      toast("Choose a status to apply.", "warning", "Missing Status", 2200);
+src/pages/admin/AdminBuilds.tsx-105-      return;
+src/pages/admin/AdminBuilds.tsx-106-    }
+--
+src/pages/admin/AdminBuilds.tsx-114-      return {
+src/pages/admin/AdminBuilds.tsx-115-        ...b,
+src/pages/admin/AdminBuilds.tsx:116:        status: nextStatus,
+src/pages/admin/AdminBuilds.tsx-117-        updatedAt: nowIso,
+src/pages/admin/AdminBuilds.tsx-118-      };
+src/pages/admin/AdminBuilds.tsx-119-    });
+src/pages/admin/AdminBuilds.tsx-120-
+src/pages/admin/AdminBuilds.tsx:121:    writeBuilds(updated);
+src/pages/admin/AdminBuilds.tsx-122-    setAll(updated);
+src/pages/admin/AdminBuilds.tsx-123-
+--
+src/pages/admin/AdminBuilds.tsx-128-  }
+src/pages/admin/AdminBuilds.tsx-129-
+src/pages/admin/AdminBuilds.tsx:130:  function bulkDeleteSelected() {
+src/pages/admin/AdminBuilds.tsx-131-    if (!anySelected) {
+src/pages/admin/AdminBuilds.tsx-132-      toast("Select at least one build first.", "warning", "Nothing Selected", 2200);
+--
+src/pages/admin/AdminBuilds.tsx-141-    const next = all.filter((b) => !ids.has(String(b.id)));
+src/pages/admin/AdminBuilds.tsx-142-
+src/pages/admin/AdminBuilds.tsx:143:    writeBuilds(next);
+src/pages/admin/AdminBuilds.tsx-144-    setAll(next);
+src/pages/admin/AdminBuilds.tsx-145-
+--
+src/pages/admin/AdminBuilds.tsx-175-            value={q}
+src/pages/admin/AdminBuilds.tsx-176-            onChange={(e) => setQ(e.target.value)}
+src/pages/admin/AdminBuilds.tsx:177:            placeholder="Search name, phone, email, status, type…"
+src/pages/admin/AdminBuilds.tsx-178-          />
+src/pages/admin/AdminBuilds.tsx-179-          <span className="badge" style={{ justifyContent: "center" }}>Total: {filtered.length}</span>
+--
+src/pages/admin/AdminBuilds.tsx-210-              className="field"
+src/pages/admin/AdminBuilds.tsx-211-              style={{ width: 220 }}
+src/pages/admin/AdminBuilds.tsx:212:              value={bulkStatus}
+src/pages/admin/AdminBuilds.tsx-213-              onChange={(e) => setBulkStatus(e.target.value)}
+src/pages/admin/AdminBuilds.tsx-214-            >
+src/pages/admin/AdminBuilds.tsx:215:              <option value="">Bulk status…</option>
+src/pages/admin/AdminBuilds.tsx-216-              <option value="new">NEW</option>
+src/pages/admin/AdminBuilds.tsx-217-              <option value="in_review">IN REVIEW</option>
+--
+src/pages/admin/AdminBuilds.tsx-234-            <button
+src/pages/admin/AdminBuilds.tsx-235-              className="btn"
+src/pages/admin/AdminBuilds.tsx:236:              onClick={bulkDeleteSelected}
+src/pages/admin/AdminBuilds.tsx-237-              disabled={!anySelected}
+src/pages/admin/AdminBuilds.tsx-238-              style={{
+--
+src/pages/admin/AdminBuilds.tsx-277-                        <div style={{ fontWeight: 950, color: "#0f172a" }}>
+src/pages/admin/AdminBuilds.tsx-278-                          Build <span className="badge" style={{ marginLeft: 8, fontSize: 12 }}>{String(b.id).slice(-8).toUpperCase()}</span>
+src/pages/admin/AdminBuilds.tsx:279:                          <span className="badge" style={{ marginLeft: 8 }}>{String(b.status || "draft").toUpperCase()}</span>
+src/pages/admin/AdminBuilds.tsx-280-                        </div>
+src/pages/admin/AdminBuilds.tsx-281-                      </div>
+--
+src/pages/BuildPreview.tsx-9-  markSubmitted,
+src/pages/BuildPreview.tsx-10-  removeLastCustomerNote,
+src/pages/BuildPreview.tsx:11:  type BuildSubmission,
+src/pages/BuildPreview.tsx-12-  type RenderJob,
+src/pages/BuildPreview.tsx-13-  upsertBuild,
+--
+src/pages/BuildPreview.tsx-26-export default function BuildPreview() {
+src/pages/BuildPreview.tsx-27-  const { id } = useParams();
+src/pages/BuildPreview.tsx:28:  const [build, setBuild] = useState<BuildSubmission | null>(null);
+src/pages/BuildPreview.tsx-29-
+src/pages/BuildPreview.tsx-30-  // Customer refinement fields
+--
+src/pages/BuildPreview.tsx-49-    const renders0 = lv0.renders || [];
+src/pages/BuildPreview.tsx-50-
+src/pages/BuildPreview.tsx:51:    const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
+src/pages/BuildPreview.tsx-52-    let target: RenderJob | null = currentlyRendering;
+src/pages/BuildPreview.tsx-53-
+src/pages/BuildPreview.tsx-54-    if (!target) {
+src/pages/BuildPreview.tsx:55:      const firstQueued = renders0.find((r) => r.status === "queued") ?? null;
+src/pages/BuildPreview.tsx-56-
+src/pages/BuildPreview.tsx-57-      if (firstQueued) {
+src/pages/BuildPreview.tsx-58-        const startedAt = new Date().toISOString();
+src/pages/BuildPreview.tsx-59-        const updatedRenders = renders0.map((r) =>
+src/pages/BuildPreview.tsx:60:          r.renderId === firstQueued.renderId ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob) : r
+src/pages/BuildPreview.tsx-61-        );
+src/pages/BuildPreview.tsx-62-
+src/pages/BuildPreview.tsx-63-        const nextV = { ...lv0, renders: updatedRenders };
+src/pages/BuildPreview.tsx:64:        const nextBuild: BuildSubmission = {
+src/pages/BuildPreview.tsx-65-          ...latest0,
+src/pages/BuildPreview.tsx-66-          updatedAt: new Date().toISOString(),
+--
+src/pages/BuildPreview.tsx-112-          return {
+src/pages/BuildPreview.tsx-113-            ...x,
+src/pages/BuildPreview.tsx:114:            status: "complete" as const,
+src/pages/BuildPreview.tsx-115-            finishedAt: new Date().toISOString(),
+src/pages/BuildPreview.tsx-116-            imageDataUrl: png,
+--
+src/pages/BuildPreview.tsx-138-        };
+src/pages/BuildPreview.tsx-139-
+src/pages/BuildPreview.tsx:140:        const nextBuild: BuildSubmission = {
+src/pages/BuildPreview.tsx-141-          ...latest,
+src/pages/BuildPreview.tsx-142-          updatedAt: new Date().toISOString(),
+--
+src/pages/BuildPreview.tsx-156-        const updatedRenders = (lv.renders || []).map((x) => {
+src/pages/BuildPreview.tsx-157-          if (x.renderId !== target!.renderId) return x;
+src/pages/BuildPreview.tsx:158:          return { ...x, status: "failed" as const, finishedAt: new Date().toISOString() };
+src/pages/BuildPreview.tsx-159-        });
+src/pages/BuildPreview.tsx-160-
+src/pages/BuildPreview.tsx-161-        const nextV = { ...lv, renders: updatedRenders };
+src/pages/BuildPreview.tsx:162:        const nextBuild: BuildSubmission = {
+src/pages/BuildPreview.tsx-163-          ...latest,
+src/pages/BuildPreview.tsx-164-          updatedAt: new Date().toISOString(),
+--
+src/pages/BuildPreview.tsx-250-          </h1>
+src/pages/BuildPreview.tsx-251-          <div className="muted" style={{ fontWeight: 850 }}>
+src/pages/BuildPreview.tsx:252:            Created: {fmt(b.createdAt)} • Status: <span className="badge">{String(b.status).toUpperCase()}</span>
+src/pages/BuildPreview.tsx-253-          </div>
+src/pages/BuildPreview.tsx-254-          <div className="muted" style={{ fontWeight: 850 }}>
+--
+src/pages/BuildPreview.tsx-397-              <div style={{ fontWeight: 950, color: "#0f172a" }}>
+src/pages/BuildPreview.tsx-398-                View: {String(r.view).toUpperCase()}
+src/pages/BuildPreview.tsx:399:                <span className="badge" style={{ marginLeft: 8 }}>{String(r.status).toUpperCase()}</span>
+src/pages/BuildPreview.tsx-400-              </div>
+src/pages/BuildPreview.tsx-401-
+--
+src/pages/BuildPreview.tsx-419-                  <div className="card-center" style={{ width: "100%", height: "100%", padding: 12 }}>
+src/pages/BuildPreview.tsx-420-                    <div className="muted" style={{ fontWeight: 900 }}>
+src/pages/BuildPreview.tsx:421:                      {r.status === "queued"
+src/pages/BuildPreview.tsx-422-                        ? "Queued…"
+src/pages/BuildPreview.tsx:423:                        : r.status === "rendering"
+src/pages/BuildPreview.tsx-424-                        ? "Rendering…"
+src/pages/BuildPreview.tsx:425:                        : r.status === "failed"
+src/pages/BuildPreview.tsx-426-                        ? "Render failed (will re-run on refresh later)"
+src/pages/BuildPreview.tsx-427-                        : "No image"}
+--
+src/pages/BuildPreview.tsx-435-                {!r.estimatePublic ? (
+src/pages/BuildPreview.tsx-436-                  <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+src/pages/BuildPreview.tsx:437:                    {r.status === "complete" ? "Finalizing estimate…" : "Waiting for render to complete…"}
+src/pages/BuildPreview.tsx-438-                  </div>
+src/pages/BuildPreview.tsx-439-                ) : (
+--
+src/pages/BuildPreview.tsx.bak-9-  markSubmitted,
+src/pages/BuildPreview.tsx.bak-10-  removeLastCustomerNote,
+src/pages/BuildPreview.tsx.bak:11:  type BuildSubmission,
+src/pages/BuildPreview.tsx.bak-12-  type RenderJob,
+src/pages/BuildPreview.tsx.bak-13-  upsertBuild,
+--
+src/pages/BuildPreview.tsx.bak-26-export default function BuildPreview() {
+src/pages/BuildPreview.tsx.bak-27-  const { id } = useParams();
+src/pages/BuildPreview.tsx.bak:28:  const [build, setBuild] = useState<BuildSubmission | null>(null);
+src/pages/BuildPreview.tsx.bak-29-
+src/pages/BuildPreview.tsx.bak-30-  // Customer refinement fields
+--
+src/pages/BuildPreview.tsx.bak-49-    const renders0 = lv0.renders || [];
+src/pages/BuildPreview.tsx.bak-50-
+src/pages/BuildPreview.tsx.bak:51:    const currentlyRendering = renders0.find((r) => r.status === "rendering") ?? null;
+src/pages/BuildPreview.tsx.bak-52-    let target: RenderJob | null = currentlyRendering;
+src/pages/BuildPreview.tsx.bak-53-
+src/pages/BuildPreview.tsx.bak-54-    if (!target) {
+src/pages/BuildPreview.tsx.bak:55:      const firstQueued = renders0.find((r) => r.status === "queued") ?? null;
+src/pages/BuildPreview.tsx.bak-56-
+src/pages/BuildPreview.tsx.bak-57-      if (firstQueued) {
+src/pages/BuildPreview.tsx.bak-58-        const startedAt = new Date().toISOString();
+src/pages/BuildPreview.tsx.bak-59-        const updatedRenders = renders0.map((r) =>
+src/pages/BuildPreview.tsx.bak:60:          r.renderId === firstQueued.renderId ? ({ ...r, status: "rendering" as const, startedAt } as RenderJob) : r
+src/pages/BuildPreview.tsx.bak-61-        );
+src/pages/BuildPreview.tsx.bak-62-
+src/pages/BuildPreview.tsx.bak-63-        const nextV = { ...lv0, renders: updatedRenders };
+src/pages/BuildPreview.tsx.bak:64:        const nextBuild: BuildSubmission = {
+src/pages/BuildPreview.tsx.bak-65-          ...latest0,
+src/pages/BuildPreview.tsx.bak-66-          updatedAt: new Date().toISOString(),
+--
+src/pages/BuildPreview.tsx.bak-111-          return {
+src/pages/BuildPreview.tsx.bak-112-            ...x,
+src/pages/BuildPreview.tsx.bak:113:            status: "complete" as const,
+src/pages/BuildPreview.tsx.bak-114-            finishedAt: new Date().toISOString(),
+src/pages/BuildPreview.tsx.bak-115-            imageDataUrl: png,
+--
+src/pages/BuildPreview.tsx.bak-137-        };
+src/pages/BuildPreview.tsx.bak-138-
+src/pages/BuildPreview.tsx.bak:139:        const nextBuild: BuildSubmission = {
+src/pages/BuildPreview.tsx.bak-140-          ...latest,
+src/pages/BuildPreview.tsx.bak-141-          updatedAt: new Date().toISOString(),
+--
+src/pages/BuildPreview.tsx.bak-155-        const updatedRenders = (lv.renders || []).map((x) => {
+src/pages/BuildPreview.tsx.bak-156-          if (x.renderId !== target!.renderId) return x;
+src/pages/BuildPreview.tsx.bak:157:          return { ...x, status: "failed" as const, finishedAt: new Date().toISOString() };
+src/pages/BuildPreview.tsx.bak-158-        });
+src/pages/BuildPreview.tsx.bak-159-
+src/pages/BuildPreview.tsx.bak-160-        const nextV = { ...lv, renders: updatedRenders };
+src/pages/BuildPreview.tsx.bak:161:        const nextBuild: BuildSubmission = {
+src/pages/BuildPreview.tsx.bak-162-          ...latest,
+src/pages/BuildPreview.tsx.bak-163-          updatedAt: new Date().toISOString(),
+--
+src/pages/BuildPreview.tsx.bak-247-          </h1>
+src/pages/BuildPreview.tsx.bak-248-          <div className="muted" style={{ fontWeight: 850 }}>
+src/pages/BuildPreview.tsx.bak:249:            Created: {fmt(build.createdAt)} • Status: <span className="badge">{build.status.toUpperCase()}</span>
+src/pages/BuildPreview.tsx.bak-250-          </div>
+src/pages/BuildPreview.tsx.bak-251-          <div className="muted" style={{ fontWeight: 850 }}>
+--
+src/pages/BuildPreview.tsx.bak-392-              <div style={{ fontWeight: 950, color: "#0f172a" }}>
+src/pages/BuildPreview.tsx.bak-393-                View: {String(r.view).toUpperCase()}
+src/pages/BuildPreview.tsx.bak:394:                <span className="badge" style={{ marginLeft: 8 }}>{r.status.toUpperCase()}</span>
+src/pages/BuildPreview.tsx.bak-395-              </div>
+src/pages/BuildPreview.tsx.bak-396-
+--
+src/pages/BuildPreview.tsx.bak-414-                  <div className="card-center" style={{ width: "100%", height: "100%", padding: 12 }}>
+src/pages/BuildPreview.tsx.bak-415-                    <div className="muted" style={{ fontWeight: 900 }}>
+src/pages/BuildPreview.tsx.bak:416:                      {r.status === "queued"
+src/pages/BuildPreview.tsx.bak-417-                        ? "Queued…"
+src/pages/BuildPreview.tsx.bak:418:                        : r.status === "rendering"
+src/pages/BuildPreview.tsx.bak-419-                        ? "Rendering…"
+src/pages/BuildPreview.tsx.bak:420:                        : r.status === "failed"
+src/pages/BuildPreview.tsx.bak-421-                        ? "Render failed (will re-run on refresh later)"
+src/pages/BuildPreview.tsx.bak-422-                        : "No image"}
+--
+src/pages/BuildPreview.tsx.bak-430-                {!r.estimatePublic ? (
+src/pages/BuildPreview.tsx.bak-431-                  <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+src/pages/BuildPreview.tsx.bak:432:                    {r.status === "complete" ? "Finalizing estimate…" : "Waiting for render to complete…"}
+src/pages/BuildPreview.tsx.bak-433-                  </div>
+src/pages/BuildPreview.tsx.bak-434-                ) : (
+--
+src/pages/Schedule.tsx-285-      items: cart.items,
+src/pages/Schedule.tsx-286-      photos: contact.photos,
+src/pages/Schedule.tsx:287:      status: "new" as const,
+src/pages/Schedule.tsx-288-    };
+src/pages/Schedule.tsx-289-
+--
+src/pages/Builds.tsx-1-import { Link } from "react-router-dom";
+src/pages/Builds.tsx:2:import { readBuilds } from "../lib/buildsStore";
+src/pages/Builds.tsx-3-
+src/pages/Builds.tsx-4-export default function Builds() {
+src/pages/Builds.tsx:5:  const count = readBuilds().length;
+src/pages/Builds.tsx-6-
+src/pages/Builds.tsx-7-  return (
+--
+src/pages/BuildPortal.tsx-1-import { useMemo, useState } from "react";
+src/pages/BuildPortal.tsx-2-import { Link } from "react-router-dom";
+src/pages/BuildPortal.tsx:3:import { findBuildsByNameAndPhone, findBuildsByPhoneAndCode, type BuildSubmission, normalizePhone } from "../lib/buildsStore";
+src/pages/BuildPortal.tsx-4-
+src/pages/BuildPortal.tsx-5-function prettyDate(iso: string) {
+--
+src/pages/BuildPortal.tsx-9-}
+src/pages/BuildPortal.tsx-10-
+src/pages/BuildPortal.tsx:11:function statusLabel(s: string) {
+src/pages/BuildPortal.tsx-12-  const low = String(s || "").toLowerCase();
+src/pages/BuildPortal.tsx-13-  if (low === "complete") return "Complete";
+--
+src/pages/BuildPortal.tsx-29-  const [retrievePhone, setRetrievePhone] = useState("");
+src/pages/BuildPortal.tsx-30-
+src/pages/BuildPortal.tsx:31:  const matches: BuildSubmission[] = useMemo(() => {
+src/pages/BuildPortal.tsx-32-    const p = normalizePhone(phone);
+src/pages/BuildPortal.tsx-33-    if (!p) return [];
+--
+src/pages/BuildPortal.tsx-191-
+src/pages/BuildPortal.tsx-192-                      <div className="row" style={{ gap: 10, alignItems: "center" }}>
+src/pages/BuildPortal.tsx:193:                        <span className="badge" style={{ fontWeight: 950 }}>Status: {statusLabel(b.status)}</span>
+src/pages/BuildPortal.tsx-194-                        <Link className="btn btn-primary" to={`/builds/${b.id}`}>
+src/pages/BuildPortal.tsx-195-                          View Renders
