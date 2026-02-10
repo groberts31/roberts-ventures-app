@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CATEGORIES, SERVICES, type Service } from "../data/services";
+import { ADD_ONS } from "../data/addOns";
 import { useCart } from "../data/requestCart";
 import { toast } from "../lib/toast";
 
@@ -21,12 +22,15 @@ export default function ServicesPage() {
   const [category, setCategory] = useState("All");
   const [q, setQ] = useState("");
 
+
+  // Catalog = core services + add-ons (add-ons are also selectable from this page)
+  const CATALOG = useMemo(() => [...SERVICES, ...ADD_ONS], []);
   // Scroll target: the catalog header card
   const headerRef = useRef<HTMLElement | null>(null);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-    return SERVICES.filter((s) => {
+        return CATALOG.filter((s) => {
       const matchCategory = category === "All" ? true : s.category === category;
       const matchQuery =
         query.length === 0 ? true : (s.name + " " + s.shortDesc).toLowerCase().includes(query);
@@ -57,7 +61,7 @@ export default function ServicesPage() {
         >
           <select className="field" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="All">All</option>
-            {CATEGORIES.map((c) => (
+            {Array.from(new Set([...CATEGORIES, "Add-Ons"])).map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
