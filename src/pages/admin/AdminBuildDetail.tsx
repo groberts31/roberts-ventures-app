@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { buildsRemoteEnabled } from "../../lib/buildsRemoteStore";
+import { syncBuildsFromRemote } from "../../lib/buildsSync";
 import { getBuild, upsertBuild, removeLastCustomerNote, compileNotes, type BuildSubmission } from "../../lib/buildsStore";
 import { estimateBuild } from "../../lib/buildPricing";
 import { toast } from "../../lib/toast";
@@ -19,8 +21,27 @@ export default function AdminBuildDetail() {
   const [build, setBuild] = useState<BuildSubmission | null>(null);
 
   useEffect(() => {
-    if (!id) return;
-    setBuild(getBuild(id));
+    let alive = true;
+
+    (async () => {
+      if (!id) return;
+
+      // If remote builds are enabled, sync first so this detail page is never stale.
+      if (buildsRemoteEnabled()) {
+        try {
+          await syncBuildsFromRemote();
+        } catch {
+          // ignore: remote may be down/misconfigured
+        }
+      }
+
+      if (!alive) return;
+      setBuild(getBuild(id));
+    })();
+
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   const v = useMemo(() => build?.versions?.[0] ?? null, [build]);
