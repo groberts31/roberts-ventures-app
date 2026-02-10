@@ -237,18 +237,6 @@ export default function Navbar() {
           >
             Theme: {theme === "dark" ? "Dark" : "Light"}
           </button>
-
-<NavLink
-            to="/admin/maintenance"
-            style={({ isActive }) => ({
-              ...linkStyleBase,
-              ...(isActive ? linkStyleActive : linkStyleInactive),
-              color: "rgba(248,250,252,0.92)",
-            })}
-          >
-            Admin
-          </NavLink>
-
 </nav>
       </div>
     </header>
