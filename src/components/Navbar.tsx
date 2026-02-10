@@ -52,18 +52,6 @@ function Pill({ children }: { children: React.ReactNode }) {
 
 export default function Navbar() {
   // Shared NavLink style (kept inside Navbar() so it is always in-scope)
-  const baseLinkStyle: React.CSSProperties = {
-    textDecoration: "none",
-    padding: "8px 12px",
-    borderRadius: 999,
-    fontWeight: 850,
-    fontSize: 14,
-    transition: "all .2s ease",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-  };
-
 
   const navigate = useNavigate();
   const cart = useCart();
@@ -200,17 +188,22 @@ export default function Navbar() {
 
 
 
-          <NavLink
-            to="/staylit"
-            style={({ isActive }) => ({
-              ...linkStyleBase,
-              ...(isActive ? linkStyleActive : linkStyleInactive),
-              color: "rgba(248,250,252,0.92)",
-            })}
-          >
-            Stay Lit
-            {count > 0 ? <Pill>{count}</Pill> : null}
-          </NavLink>
+<NavLink
+  to="/staylit"
+  className="nav-link staylit-navlink"
+  style={({ isActive }) => ({
+    ...linkStyleBase,
+    ...(isActive ? linkStyleActive : linkStyleInactive),
+    color: "rgba(248,250,252,0.92)",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+  })}
+>
+  <span className="staylit-flame" aria-hidden="true">🔥</span>
+  <span>Stay Lit</span>
+  {count > 0 ? <Pill>{count}</Pill> : null}
+</NavLink>
 
           {/* Theme toggle */}
           <button
@@ -232,12 +225,15 @@ export default function Navbar() {
           </button>
 
 <NavLink
-  to="/admin/maintenance"
-  style={baseLinkStyle}
-  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
->
-  Admin
-</NavLink>
+            to="/admin/maintenance"
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              color: "rgba(248,250,252,0.92)",
+            })}
+          >
+            Admin
+          </NavLink>
 
 </nav>
       </div>
