@@ -110,6 +110,17 @@ export default function Home() {
             </Link>
 
             <Link
+              to="/builds"
+              className="btn btn-ghost"
+              style={{
+                padding: "10px 16px",
+                fontWeight: 950,
+              }}
+            >
+              Custom Builds
+            </Link>
+
+            <Link
               to="/staylit"
               className="btn btn-ghost"
               style={{
@@ -195,6 +206,9 @@ export default function Home() {
           <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 14, justifyContent: "center" }}>
             <Link to="/services" className="btn btn-primary" style={{ fontWeight: 950 }}>
               View Catalog
+            </Link>
+            <Link to="/builds" className="btn btn-ghost" style={{ fontWeight: 950 }}>
+              Custom Builds
             </Link>
             <Link to="/schedule" className="btn btn-ghost" style={{ fontWeight: 950 }}>
               Go to Schedule
