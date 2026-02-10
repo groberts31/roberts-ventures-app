@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { CATEGORIES, SERVICES, type Service } from "../data/services";
 import { useCart } from "../data/requestCart";
 import { toast } from "../lib/toast";
@@ -17,45 +17,26 @@ function formatPrice(s: Service) {
 }
 
 export default function ServicesPage() {
-  const loc = useLocation();
-  const nav = useNavigate();
   const cart = useCart();
   const [category, setCategory] = useState("All");
   const [q, setQ] = useState("");
 
-  // If we landed here from "Add to Request" on a detail page,
-  // reset filters + scroll back to the catalog header card.
-  React.useEffect(() => {
-    const st: any = (loc as any)?.state || {};
-    if (!st?.fromAddToRequest) return;
-
-    setCategory("All");
-    setQ("");
-
-    // Smoothly return to top
-    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
-
-    // Clear the navigation state so it doesn't re-trigger on refresh/back.
-    nav("/services", { replace: true, state: {} });
-  }, [loc]);
-
-
+  // Scroll target: the catalog header card
+  const headerRef = useRef<HTMLElement | null>(null);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return SERVICES.filter((s) => {
       const matchCategory = category === "All" ? true : s.category === category;
       const matchQuery =
-        query.length === 0
-          ? true
-          : (s.name + " " + s.shortDesc).toLowerCase().includes(query);
+        query.length === 0 ? true : (s.name + " " + s.shortDesc).toLowerCase().includes(query);
       return matchCategory && matchQuery;
     });
   }, [category, q]);
 
   return (
     <div className="stack page">
-      <section className="panel card card-center">
+      <section ref={headerRef as any} className="panel card card-center">
         <h1 className="h2">Services Catalog</h1>
         <p className="lead" style={{ maxWidth: 760 }}>
           Pick a service and add it to your request. For quote-required jobs, add notes and photos in Schedule.
@@ -158,30 +139,41 @@ export default function ServicesPage() {
                   <div className="badge" style={{ justifyContent: "center" }}>
                     {s.priceType === "fixed" ? "Fixed" : s.priceType === "starting_at" ? "Starting" : "Quote"}
                   </div>
-                  <div className="price-accent" style={{ fontWeight: 950, marginTop: 8 }}>{formatPrice(s)}</div>
+                  <div className="price-accent" style={{ fontWeight: 950, marginTop: 8 }}>
+                    {formatPrice(s)}
+                  </div>
                 </div>
               </div>
 
               <div className="body">{s.shortDesc}</div>
 
               <div className="row">
-                <button className="btn btn-primary" onClick={() => {
-                  cart.add(s);
-                  // Reset filters + return the user to the catalog header card
-                  setCategory("All");
-                  setQ("");
-                  toast(`${s.name} added`, "success", "Added", 2600, "View Schedule", "/schedule");
-                  // Scroll after state updates paint
-                  setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
-                }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    cart.add(s);
+
+                    // Reset filters so customer returns to the full catalog context
+                    setCategory("All");
+                    setQ("");
+
+                    toast(`${s.name} added`, "success", "Added", 2600, "View Schedule", "/schedule");
+
+                    // After state updates paint, scroll the header card into view
+                    setTimeout(() => {
+                      const el = headerRef.current as any;
+                      if (el && typeof el.scrollIntoView === "function") {
+                        el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      } else {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }
+                    }, 0);
+                  }}
+                >
                   Add to Request
                 </button>
 
-                <Link
-                  to={`/services/${s.id}`}
-                  className="btn btn-ghost"
-                  style={{ textDecoration: "none" }}
-                >
+                <Link to={`/services/${s.id}`} className="btn btn-ghost" style={{ textDecoration: "none" }}>
                   View Details
                 </Link>
 
