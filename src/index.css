@@ -299,3 +299,28 @@ html[data-theme="dark"] body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+
+/* RV: navbar link theme vars */
+:root{
+  --rv-navlink: rgba(248, 250, 252, 0.92); /* light theme nav text */
+}
+html[data-theme="dark"], body[data-theme="dark"], :root[data-theme="dark"]{
+  --rv-navlink: rgba(248, 250, 252, 0.92); /* dark theme nav text */
+}
+
+
+/* RV: FORCE NAVBAR LINKS WHITE */
+header nav[aria-label="Primary"] a,
+header nav[aria-label="Primary"] a:visited,
+header nav[aria-label="Primary"] a:hover,
+header nav[aria-label="Primary"] a:active,
+header nav[aria-label="Primary"] a:focus,
+header nav[aria-label="Primary"] a:focus-visible {
+  color: rgba(248, 250, 252, 0.92) !important;
+  -webkit-text-fill-color: rgba(248, 250, 252, 0.92) !important;
+}
+
+header nav[aria-label="Primary"] button {
+  color: rgba(248, 250, 252, 0.92) !important;
+}
