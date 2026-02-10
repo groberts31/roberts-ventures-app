@@ -189,6 +189,37 @@ export default function Navbar() {
           >
             Schedule
           </NavLink>
+          <NavLink
+            to="/schedule"
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              gap: 6,
+              whiteSpace: "nowrap",
+            })}
+            aria-label={`Cart (${count})`}
+            title="View request cart"
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 14,
+                height: 14,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                lineHeight: "14px",
+                overflow: "hidden",
+                flex: "0 0 auto",
+                transform: "translateY(-0.5px)",
+              }}
+            >
+              🛒
+            </span>
+            <Pill>{count}</Pill>
+          </NavLink>
+
 
           <NavLink
             to="/staylit"
@@ -217,7 +248,7 @@ export default function Navbar() {
               🔥
             </span>
             <span>Stay Lit</span>
-            {count > 0 ? <Pill>{count}</Pill> : null}
+            
           </NavLink>
 
           {/* Theme toggle */}
