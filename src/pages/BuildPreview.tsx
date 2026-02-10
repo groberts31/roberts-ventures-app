@@ -202,7 +202,9 @@ export default function BuildPreview() {
     const next = markSubmitted(b.id);
     if (!next) return alert("Could not submit. Try again.");
     setBuild(next);
-    alert(`Submitted! Your Build Access Code: ${String(next.accessCode || "—")}`);
+
+    // Send customer to confirmation page (shows access code + summary)
+    window.location.href = `/builds/confirmed/${String(next.id)}`;
   }
 
   function submitRefinement() {

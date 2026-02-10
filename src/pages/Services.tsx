@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CATEGORIES, SERVICES, type Service } from "../data/services";
 import { useCart } from "../data/requestCart";
 import { toast } from "../lib/toast";
@@ -17,9 +17,29 @@ function formatPrice(s: Service) {
 }
 
 export default function ServicesPage() {
+  const loc = useLocation();
+  const nav = useNavigate();
   const cart = useCart();
   const [category, setCategory] = useState("All");
   const [q, setQ] = useState("");
+
+  // If we landed here from "Add to Request" on a detail page,
+  // reset filters + scroll back to the catalog header card.
+  React.useEffect(() => {
+    const st: any = (loc as any)?.state || {};
+    if (!st?.fromAddToRequest) return;
+
+    setCategory("All");
+    setQ("");
+
+    // Smoothly return to top
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+
+    // Clear the navigation state so it doesn't re-trigger on refresh/back.
+    nav("/services", { replace: true, state: {} });
+  }, [loc]);
+
+
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -145,7 +165,15 @@ export default function ServicesPage() {
               <div className="body">{s.shortDesc}</div>
 
               <div className="row">
-                <button className="btn btn-primary" onClick={() => { cart.add(s); toast(`${s.name} added`, "success", "Added", 2600, "View Schedule", "/schedule"); }}>
+                <button className="btn btn-primary" onClick={() => {
+                  cart.add(s);
+                  // Reset filters + return the user to the catalog header card
+                  setCategory("All");
+                  setQ("");
+                  toast(`${s.name} added`, "success", "Added", 2600, "View Schedule", "/schedule");
+                  // Scroll after state updates paint
+                  setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+                }}>
                   Add to Request
                 </button>
 

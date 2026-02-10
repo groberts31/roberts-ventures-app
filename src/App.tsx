@@ -30,6 +30,7 @@ import Builds from "./pages/Builds";
 import BuildDesigner from "./pages/BuildDesigner";
 import BuildPreview from "./pages/BuildPreview";
 import BuildPortal from "./pages/BuildPortal";
+import BuildConfirmed from "./pages/BuildConfirmed";
 
 import AdminBuilds from "./pages/admin/AdminBuilds";
 import AdminBuildDetail from "./pages/admin/AdminBuildDetail";
@@ -122,6 +123,7 @@ export default function App() {
           <Route path="/builds/new" element={<BuildDesigner />} />
           <Route path="/builds/portal" element={<BuildPortal />} />
           <Route path="/builds/:id" element={<BuildPreview />} />
+          <Route path="/builds/confirmed/:id" element={<BuildConfirmed />} />
 <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"

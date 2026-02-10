@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { SERVICES, type Service } from "../data/services";
 import { useCart } from "../data/requestCart";
 import { addOnsFor } from "../data/addOns";
@@ -125,6 +125,7 @@ function getDetails(id: string): DetailPack {
 }
 
 export default function ServiceDetail() {
+  const nav = useNavigate();
   const { id } = useParams();
   const cart = useCart();
 
@@ -171,7 +172,9 @@ export default function ServiceDetail() {
       });
 
     toast(buildAddedMessage(svc.name, selected.length), "success", "Added", 2600, "View Schedule", "/schedule");
-  }
+  
+    nav("/services", { state: { fromAddToRequest: true } });
+}
 
   return (
     <div className="stack page">
