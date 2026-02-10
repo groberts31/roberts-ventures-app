@@ -4,6 +4,41 @@ import { findRequestById } from "../lib/requestsStore";
 import { SERVICES } from "../data/services";
 import { ADD_ONS } from "../data/addOns";
 
+
+
+
+
+
+
+
+
+
+const softPanel: React.CSSProperties = {
+  background: "rgba(255,255,255,0.92)",
+  border: "1px solid rgba(2,6,23,0.14)",
+  boxShadow: "0 18px 44px rgba(2,6,23,0.18)",
+};
+
+const softPanelTight: React.CSSProperties = {
+  ...softPanel,
+  padding: 14,
+  borderRadius: 14,
+};
+
+const darkText: React.CSSProperties = {
+  color: "#0f172a",
+};
+
+const heroCodeBox: React.CSSProperties = {
+  ...softPanel,
+  textAlign: "center",
+  width: "100%",
+  maxWidth: 620,
+  padding: 16,
+  borderRadius: 16,
+};
+
+
 function prettyDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -123,7 +158,15 @@ export default function RequestConfirmed() {
 
   if (!id) {
     return (
-      <section className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
+      <section
+        className="panel card card-center"
+        style={{
+          maxWidth: 980,
+          margin: "0 auto",
+          padding: 18,
+          borderRadius: 18,
+        }}
+      >
         <h2 className="h2" style={{ margin: 0 }}>Missing request id</h2>
         <p className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 720 }}>
           We couldn’t determine which request to display.
@@ -135,7 +178,15 @@ export default function RequestConfirmed() {
 
   if (!req) {
     return (
-      <section className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
+      <section
+        className="panel card card-center"
+        style={{
+          maxWidth: 980,
+          margin: "0 auto",
+          padding: 18,
+          borderRadius: 18,
+        }}
+      >
         <h2 className="h2" style={{ margin: 0 }}>We couldn’t load the request details.</h2>
         <p className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 720 }}>
           This can happen if the request was cleared from this browser/device.
@@ -158,8 +209,16 @@ export default function RequestConfirmed() {
   const phoneToCopy = String(customer?.phone || "");
 
   return (
-    <div className="stack page" style={{ gap: 16 }}>
-      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+    <div className="stack page" style={{ gap: 16, alignItems: "stretch" }}>
+      <section
+        className="panel card card-center"
+        style={{
+          maxWidth: 980,
+          margin: "0 auto",
+          padding: 18,
+          borderRadius: 18,
+        }}
+      >
         <h2 className="h2" style={{ margin: 0 }}>Request Submitted ✅</h2>
         <p className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 820 }}>
           Here’s a full confirmation of what was submitted. Screenshot or copy the Access Code to open this request in the Customer Portal.
@@ -168,18 +227,9 @@ export default function RequestConfirmed() {
         {/* Access Code (big) */}
         <div
           className="panel"
-          style={{
-            padding: 14,
-            borderRadius: 14,
-            background: "rgba(255,255,255,0.90)",
-            border: "1px solid rgba(2,6,23,0.14)",
-            textAlign: "center",
-            width: "100%",
-            maxWidth: 600,
-          }}
-        >
+          style={{ ...heroCodeBox }}>
           <div className="label">Customer Access Code</div>
-          <div style={{ fontWeight: 950, fontSize: 28, letterSpacing: 3, marginTop: 6, color: "#0f172a" }}>
+          <div style={{ ...darkText, fontWeight: 950, fontSize: 34, letterSpacing: 6, marginTop: 10, padding: "10px 14px", borderRadius: 14, background: "linear-gradient(90deg, rgba(99,102,241,0.16), rgba(56,189,248,0.14))", border: "1px solid rgba(99,102,241,0.22)", display: "inline-block", minWidth: 260 }}>
             {accessCode || "—"}
           </div>
 
@@ -236,7 +286,7 @@ export default function RequestConfirmed() {
           }}
         >
           {/* Request meta */}
-          <div className="panel" style={{ padding: 14, borderRadius: 14 }}>
+          <div className="panel" style={{ ...softPanelTight }}>
             <div className="h3" style={{ margin: 0, color: "#0f172a" }}>Request Details</div>
 
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
@@ -279,7 +329,7 @@ export default function RequestConfirmed() {
           </div>
 
           {/* Items + totals */}
-          <div className="panel" style={{ padding: 14, borderRadius: 14 }}>
+          <div className="panel" style={{ ...softPanelTight }}>
             <div className="h3" style={{ margin: 0, color: "#0f172a" }}>Services Requested</div>
 
             {detailed.length === 0 ? (
@@ -388,7 +438,7 @@ export default function RequestConfirmed() {
         </div>
 
         {/* Actions */}
-        <div className="row" style={{ gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 10 }}>
+        <div className="row" style={{ gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 14 }}>
           <Link className="btn btn-primary" to="/customer">Open Customer Portal</Link>
           <Link className="btn btn-ghost" to="/services">Browse Services</Link>
           <Link className="btn btn-ghost" to="/schedule">New Request</Link>
