@@ -5,19 +5,25 @@ import rvLogo from "../assets/roberts-ventures-logo.png";
 import { useCart } from "../data/requestCart";
 import { getActiveTheme, toggleTheme } from "../lib/theme";
 
+const NAV_WHITE = "rgba(248,250,252,0.92)";
+
 const linkStyleBase: React.CSSProperties = {
   textDecoration: "none",
   padding: "8px 12px",
-  height: 34,
-  boxSizing: "border-box",
   borderRadius: 999,
   fontWeight: 850,
   fontSize: 14,
   transition: "all .18s ease",
   display: "inline-flex",
+  flexWrap: "nowrap",
   alignItems: "center",
   gap: 8,
   lineHeight: 1,
+  height: 34,
+  minHeight: 34,
+  boxSizing: "border-box",
+  whiteSpace: "nowrap",
+  color: NAV_WHITE, // always white
 };
 
 const linkStyleActive: React.CSSProperties = {
@@ -38,7 +44,10 @@ function Pill({ children }: { children: React.ReactNode }) {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "5px 10px",
+        padding: "0 10px",
+        height: 18,
+        minHeight: 18,
+        lineHeight: "18px",
         borderRadius: 999,
         fontSize: 12,
         fontWeight: 950,
@@ -53,8 +62,6 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 export default function Navbar() {
-  // Shared NavLink style (kept inside Navbar() so it is always in-scope)
-
   const navigate = useNavigate();
   const cart = useCart();
   const count = (cart as any)?.count ?? 0;
@@ -63,7 +70,6 @@ export default function Navbar() {
 
   const onToggleTheme = () => {
     toggleTheme();
-    // getActiveTheme reads from your theme store (html attribute/localStorage/etc.)
     setTheme(getActiveTheme());
   };
 
@@ -74,8 +80,7 @@ export default function Navbar() {
         top: 0,
         zIndex: 50,
         backdropFilter: "blur(18px)",
-        background:
-          "linear-gradient(90deg, rgba(10,10,15,.78), rgba(6,10,22,.82))",
+        background: "linear-gradient(90deg, rgba(10,10,15,.78), rgba(6,10,22,.82))",
         borderBottom: "1px solid rgba(148,163,184,.15)",
       }}
     >
@@ -160,7 +165,6 @@ export default function Navbar() {
             style={({ isActive }) => ({
               ...linkStyleBase,
               ...(isActive ? linkStyleActive : linkStyleInactive),
-              color: "rgba(248,250,252,0.92)",
             })}
           >
             Home
@@ -171,7 +175,6 @@ export default function Navbar() {
             style={({ isActive }) => ({
               ...linkStyleBase,
               ...(isActive ? linkStyleActive : linkStyleInactive),
-              color: "rgba(248,250,252,0.92)",
             })}
           >
             Services
@@ -182,34 +185,33 @@ export default function Navbar() {
             style={({ isActive }) => ({
               ...linkStyleBase,
               ...(isActive ? linkStyleActive : linkStyleInactive),
-              color: "rgba(248,250,252,0.92)",
             })}
           >
             Schedule
           </NavLink>
-
-
-
 
           <NavLink
             to="/staylit"
             style={({ isActive }) => ({
               ...linkStyleBase,
               ...(isActive ? linkStyleActive : linkStyleInactive),
-              color: "rgba(248,250,252,0.92)",
+              gap: 6, // slight tighten, but does NOT change height
             })}
           >
             <span
               aria-hidden="true"
               style={{
+                // Hard-box the emoji so it CANNOT increase button height.
+                width: 12,
+                height: 12,
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 14,
-                height: 14,
-                fontSize: 14,
-                lineHeight: "14px",
-                transform: "translateY(-0.5px)",
+                fontSize: 12,
+                lineHeight: "12px",
+                overflow: "hidden",
+                flex: "0 0 auto",
+                transform: "translateY(-0.5px)", // keeps baseline aligned
               }}
             >
               🔥
@@ -217,7 +219,6 @@ export default function Navbar() {
             <span>Stay Lit</span>
             {count > 0 ? <Pill>{count}</Pill> : null}
           </NavLink>
-
 
           {/* Theme toggle */}
           <button
@@ -229,15 +230,24 @@ export default function Navbar() {
               fontWeight: 950,
               border: "1px solid rgba(148,163,184,0.18)",
               background: "rgba(255,255,255,0.08)",
-              color: "rgba(248,250,252,0.92)",
+              color: NAV_WHITE,
               cursor: "pointer",
+              lineHeight: 1,
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              minHeight: 34,
+              height: 34,
+              fontSize: 14,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
             }}
             aria-label="Toggle theme"
             title="Toggle theme"
           >
             Theme: {theme === "dark" ? "Dark" : "Light"}
           </button>
-</nav>
+        </nav>
       </div>
     </header>
   );
