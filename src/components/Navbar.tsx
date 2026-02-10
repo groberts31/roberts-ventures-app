@@ -8,6 +8,8 @@ import { getActiveTheme, toggleTheme } from "../lib/theme";
 const linkStyleBase: React.CSSProperties = {
   textDecoration: "none",
   padding: "8px 12px",
+  height: 34,
+  boxSizing: "border-box",
   borderRadius: 999,
   fontWeight: 850,
   fontSize: 14,
@@ -188,22 +190,34 @@ export default function Navbar() {
 
 
 
-<NavLink
-  to="/staylit"
-  className="nav-link staylit-navlink"
-  style={({ isActive }) => ({
-    ...linkStyleBase,
-    ...(isActive ? linkStyleActive : linkStyleInactive),
-    color: "rgba(248,250,252,0.92)",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-  })}
->
-  <span className="staylit-flame" aria-hidden="true">🔥</span>
-  <span>Stay Lit</span>
-  {count > 0 ? <Pill>{count}</Pill> : null}
-</NavLink>
+
+          <NavLink
+            to="/staylit"
+            style={({ isActive }) => ({
+              ...linkStyleBase,
+              ...(isActive ? linkStyleActive : linkStyleInactive),
+              color: "rgba(248,250,252,0.92)",
+            })}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 14,
+                height: 14,
+                fontSize: 14,
+                lineHeight: "14px",
+                transform: "translateY(-0.5px)",
+              }}
+            >
+              🔥
+            </span>
+            <span>Stay Lit</span>
+            {count > 0 ? <Pill>{count}</Pill> : null}
+          </NavLink>
+
 
           {/* Theme toggle */}
           <button
