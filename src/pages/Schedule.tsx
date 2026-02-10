@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useCart } from "../data/requestCart";
 import { SERVICES } from "../data/services";
 import { ADD_ONS } from "../data/addOns";
@@ -40,9 +40,6 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 
-function normalizePhone(p?: string) {
-  return String(p || "").replace(/\D+/g, "");
-}
 
 function money(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
@@ -68,9 +65,6 @@ function estimateLabel(s: any, qty: number) {
 
   return money(price * q);
 }
-
-
-
 
 
 function QuoteBanner({ quoteNames }: { quoteNames: string[] }) {
@@ -194,18 +188,7 @@ return { ...i, service, estLabel };
     notes: "",
     photos: [],
   });
-
-  // Step 2: as soon as the user types a real phone number, scope the cart to that phone
-  // (so the navbar cart count reflects THIS customer, not the last active one).
-  useEffect(() => {
-    const digits = normalizePhone(contact.phone);
-    if (digits.length >= 10) {
-      cart.setCustomer({ phone: contact.phone });
-    }
-  }, [contact.phone]);
-
-
-  async function onAddPhotos(files: FileList | null) {
+async function onAddPhotos(files: FileList | null) {
     if (!files || files.length === 0) return;
 
     const existing = contact.photos.length;
@@ -298,12 +281,13 @@ return { ...i, service, estLabel };
 
     localStorage.setItem("rv_requests", JSON.stringify([request, ...existing]));
 
-    // ✅ Redirect to confirmation page
-    window.location.href = `/request-confirmed/${(request as any).id}`;
-
+    // ✅ Clear cart + reset UI BEFORE redirect (redirect can short-circuit code after it)
     cart.clear();
     setSelectedSlotISO("");
     setContact({ name: "", phone: "", address: "", notes: "", photos: [] });
+
+    // ✅ Redirect to confirmation page
+    window.location.href = `/request-confirmed/${(request as any).id}`;
   }
 
   function EstimateBox({ compact }: { compact?: boolean }) {
