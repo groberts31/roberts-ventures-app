@@ -173,11 +173,10 @@ html[data-theme="dark"] body {
 }
 .panel.glow-panel:hover{
   box-shadow:
-    var(--shadow-soft),
-    0 0 34px rgba(34,211,238,0.55),
-    0 0 92px rgba(59,130,246,0.34),
-    0 0 150px rgba(167,139,250,0.22);
-  transform: translateY(-1px);
+    0 0 0 1px rgba(56,189,248,0.20) inset,
+    0 26px 68px rgba(29,78,216,0.30),
+    0 0 44px rgba(56,189,248,0.34);
+  transform: translateY(-2px);
 }
 
 /* Hover lift for desktop */
