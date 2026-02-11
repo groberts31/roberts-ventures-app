@@ -1,0 +1,449 @@
+     1	import { useMemo } from "react";
+     2	import { Link, useParams } from "react-router-dom";
+     3	import { findRequestById } from "../lib/requestsStore";
+     4	import { SERVICES } from "../data/services";
+     5	import { ADD_ONS } from "../data/addOns";
+     6	
+     7	
+     8	
+     9	
+    10	
+    11	
+    12	
+    13	
+    14	
+    15	
+    16	const softPanel: React.CSSProperties = {
+    17	  background: "rgba(255,255,255,0.92)",
+    18	  border: "1px solid rgba(2,6,23,0.14)",
+    19	  boxShadow: "0 18px 44px rgba(2,6,23,0.18)",
+    20	};
+    21	
+    22	const softPanelTight: React.CSSProperties = {
+    23	  ...softPanel,
+    24	  padding: 14,
+    25	  borderRadius: 14,
+    26	};
+    27	
+    28	const darkText: React.CSSProperties = {
+    29	  color: "#0f172a",
+    30	};
+    31	
+    32	const heroCodeBox: React.CSSProperties = {
+    33	  ...softPanel,
+    34	  textAlign: "center",
+    35	  width: "100%",
+    36	  maxWidth: 620,
+    37	  padding: 16,
+    38	  borderRadius: 16,
+    39	};
+    40	
+    41	
+    42	function prettyDate(iso: string) {
+    43	  const d = new Date(iso);
+    44	  if (Number.isNaN(d.getTime())) return iso;
+    45	  return d.toLocaleString();
+    46	}
+    47	
+    48	function money(n: number) {
+    49	  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+    50	}
+    51	
+    52	function estimateLineLabel(s: any, qty: number) {
+    53	  if (!s) return "";
+    54	  const q = Number.isFinite(Number(qty)) && Number(qty) > 0 ? Number(qty) : 1;
+    55	
+    56	  if (s.priceType === "quote") return "Quote";
+    57	
+    58	  const price = typeof s.price === "number" ? s.price : 0;
+    59	
+    60	  if (s.priceType === "starting_at") return `From ${money(price * q)}`;
+    61	  return money(price * q);
+    62	}
+    63	
+    64	export default function RequestConfirmed() {
+    65	  const { id } = useParams();
+    66	
+    67	  const req = useMemo(() => {
+    68	    if (!id) return undefined;
+    69	    return findRequestById(id);
+    70	  }, [id]);
+    71	
+    72	  const ALL_SERVICES = useMemo(() => [...SERVICES, ...ADD_ONS], []);
+    73	
+    74	  const detailed = useMemo(() => {
+    75	    const items = (req as any)?.items ?? [];
+    76	    return (Array.isArray(items) ? items : []).map((it: any) => {
+    77	      const serviceId = String(it?.serviceId || "");
+    78	      const qty = Number(it?.qty ?? 1);
+    79	      const note = String(it?.note || "");
+    80	      const svc = ALL_SERVICES.find((s: any) => String(s?.id) === serviceId);
+    81	      return {
+    82	        serviceId,
+    83	        qty: Number.isFinite(qty) && qty > 0 ? qty : 1,
+    84	        note,
+    85	        svc,
+    86	        name: String(svc?.name || serviceId || "Service"),
+    87	        priceType: String((svc as any)?.priceType || ""),
+    88	        lineLabel: estimateLineLabel(svc as any, qty),
+    89	      };
+    90	    });
+    91	  }, [req, ALL_SERVICES]);
+    92	
+    93	  const totals = useMemo(() => {
+    94	    let fixedSubtotal = 0;
+    95	    let startingSubtotal = 0;
+    96	    const quoteNames: string[] = [];
+    97	
+    98	    for (const it of detailed) {
+    99	      const s: any = it.svc;
+   100	      const qty = Number(it.qty ?? 1);
+   101	      if (!s) continue;
+   102	
+   103	      const price = typeof s.price === "number" ? s.price : 0;
+   104	
+   105	      if (s.priceType === "quote") {
+   106	        quoteNames.push(it.name);
+   107	        continue;
+   108	      }
+   109	      if (s.priceType === "fixed") {
+   110	        fixedSubtotal += price * qty;
+   111	        continue;
+   112	      }
+   113	      if (s.priceType === "starting_at") {
+   114	        startingSubtotal += price * qty;
+   115	        continue;
+   116	      }
+   117	    }
+   118	
+   119	    return {
+   120	      fixedSubtotal,
+   121	      startingSubtotal,
+   122	      minTotal: fixedSubtotal + startingSubtotal,
+   123	      quoteNames,
+   124	    };
+   125	  }, [detailed]);
+   126	
+   127	  async function copyText(v: string) {
+   128	    const text = String(v || "").trim();
+   129	    if (!text) return;
+   130	
+   131	    // Try modern clipboard first
+   132	    try {
+   133	      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+   134	        await navigator.clipboard.writeText(text);
+   135	        alert("Copied.");
+   136	        return;
+   137	      }
+   138	    } catch {
+   139	      // fall through to legacy copy
+   140	    }
+   141	
+   142	    // Legacy fallback (works even on http + some blocked clipboard contexts)
+   143	    const ta = document.createElement("textarea");
+   144	    ta.value = text;
+   145	    ta.style.position = "fixed";
+   146	    ta.style.left = "-9999px";
+   147	    ta.style.top = "0";
+   148	    document.body.appendChild(ta);
+   149	    ta.focus();
+   150	    ta.select();
+   151	    try {
+   152	      document.execCommand("copy");
+   153	      alert("Copied.");
+   154	    } finally {
+   155	      document.body.removeChild(ta);
+   156	    }
+   157	  }
+   158	
+   159	  if (!id) {
+   160	    return (
+   161	      <section
+   162	        className="panel card card-center"
+   163	        style={{
+   164	          maxWidth: 980,
+   165	          margin: "0 auto",
+   166	          padding: 18,
+   167	          borderRadius: 18,
+   168	        }}
+   169	      >
+   170	        <h2 className="h2" style={{ margin: 0 }}>Missing request id</h2>
+   171	        <p className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 720 }}>
+   172	          We couldn’t determine which request to display.
+   173	        </p>
+   174	        <Link className="btn btn-primary" to="/schedule">Back to Schedule</Link>
+   175	      </section>
+   176	    );
+   177	  }
+   178	
+   179	  if (!req) {
+   180	    return (
+   181	      <section
+   182	        className="panel card card-center"
+   183	        style={{
+   184	          maxWidth: 980,
+   185	          margin: "0 auto",
+   186	          padding: 18,
+   187	          borderRadius: 18,
+   188	        }}
+   189	      >
+   190	        <h2 className="h2" style={{ margin: 0 }}>We couldn’t load the request details.</h2>
+   191	        <p className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 720 }}>
+   192	          This can happen if the request was cleared from this browser/device.
+   193	        </p>
+   194	        <div className="row" style={{ gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+   195	          <Link className="btn btn-primary" to="/customer">Go to Customer Portal</Link>
+   196	          <Link className="btn btn-ghost" to="/services">Browse Services</Link>
+   197	        </div>
+   198	      </section>
+   199	    );
+   200	  }
+   201	
+   202	  const photos: any[] = Array.isArray((req as any)?.photos) ? (req as any).photos : [];
+   203	  const accessCode = (req as any)?.accessCode ? String((req as any).accessCode) : "";
+   204	  const rid = String((req as any)?.id || id);
+   205	  const customer = (req as any)?.customer ?? {};
+   206	  const appt = String((req as any)?.appointmentStart || "");
+   207	  const createdAt = String((req as any)?.createdAt || "");
+   208	
+   209	  const phoneToCopy = String(customer?.phone || "");
+   210	
+   211	  return (
+   212	    <div className="stack page" style={{ gap: 16, alignItems: "stretch" }}>
+   213	      <section
+   214	        className="panel card card-center"
+   215	        style={{
+   216	          maxWidth: 980,
+   217	          margin: "0 auto",
+   218	          padding: 18,
+   219	          borderRadius: 18,
+   220	        }}
+   221	      >
+   222	        <h2 className="h2" style={{ margin: 0 }}>Request Submitted ✅</h2>
+   223	        <p className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 820 }}>
+   224	          Here’s a full confirmation of what was submitted. Screenshot or copy the Access Code to open this request in the Customer Portal.
+   225	        </p>
+   226	
+   227	        {/* Access Code (big) */}
+   228	        <div
+   229	          className="panel"
+   230	          style={{ ...heroCodeBox }}>
+   231	          <div className="label">Customer Access Code</div>
+   232	          <div style={{ ...darkText, fontWeight: 950, fontSize: 34, letterSpacing: 6, marginTop: 10, padding: "10px 14px", borderRadius: 14, background: "linear-gradient(90deg, rgba(99,102,241,0.16), rgba(56,189,248,0.14))", border: "1px solid rgba(99,102,241,0.22)", display: "inline-block", minWidth: 260 }}>
+   233	            {accessCode || "—"}
+   234	          </div>
+   235	
+   236	          {/* ✅ COPY BUTTONS (ALWAYS RENDER) */}
+   237	          <div className="row" style={{ justifyContent: "center", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+   238	            <button
+   239	              type="button"
+   240	              className="btn btn-primary"
+   241	              style={{ fontWeight: 950 }}
+   242	              onClick={() => copyText(accessCode)}
+   243	              disabled={!accessCode}
+   244	              title="Copy Access Code"
+   245	            >
+   246	              Copy Code
+   247	            </button>
+   248	
+   249	            <button
+   250	              type="button"
+   251	              className="btn btn-ghost"
+   252	              style={{ fontWeight: 950 }}
+   253	              onClick={() => copyText(phoneToCopy)}
+   254	              disabled={!phoneToCopy}
+   255	              title="Copy Phone Number"
+   256	            >
+   257	              Copy Phone
+   258	            </button>
+   259	
+   260	            <button
+   261	              type="button"
+   262	              className="btn btn-ghost"
+   263	              style={{ fontWeight: 950 }}
+   264	              onClick={() => copyText(rid)}
+   265	              disabled={!rid}
+   266	              title="Copy Request ID"
+   267	            >
+   268	              Copy ID
+   269	            </button>
+   270	          </div>
+   271	
+   272	          <div className="muted" style={{ fontWeight: 850, marginTop: 10 }}>
+   273	            Use <strong>Phone + Access Code</strong> in the Customer Portal (on this device/browser until Firebase is connected).
+   274	          </div>
+   275	        </div>
+   276	
+   277	        {/* Summary grid */}
+   278	        <div
+   279	          style={{
+   280	            width: "100%",
+   281	            display: "grid",
+   282	            gap: 12,
+   283	            marginTop: 12,
+   284	            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+   285	            alignItems: "start",
+   286	          }}
+   287	        >
+   288	          {/* Request meta */}
+   289	          <div className="panel" style={{ ...softPanelTight }}>
+   290	            <div className="h3" style={{ margin: 0, color: "#0f172a" }}>Request Details</div>
+   291	
+   292	            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   293	              <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+   294	                <div>
+   295	                  <div className="label">Request ID</div>
+   296	                  <div style={{ fontWeight: 950, color: "#0f172a" }}>{rid}</div>
+   297	                </div>
+   298	                <div style={{ textAlign: "right" }}>
+   299	                  <div className="label">Submitted</div>
+   300	                  <div style={{ fontWeight: 950, color: "#0f172a" }}>{createdAt ? prettyDate(createdAt) : "—"}</div>
+   301	                </div>
+   302	              </div>
+   303	
+   304	              <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+   305	                <div>
+   306	                  <div className="label">Customer</div>
+   307	                  <div style={{ fontWeight: 950, color: "#0f172a" }}>{customer?.name || "—"}</div>
+   308	                  <div className="muted" style={{ fontWeight: 850, marginTop: 4 }}>{phoneToCopy || "—"}</div>
+   309	                  {customer?.address ? (
+   310	                    <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+   311	                      <strong>Address:</strong> {String(customer.address)}
+   312	                    </div>
+   313	                  ) : null}
+   314	                </div>
+   315	
+   316	                <div style={{ textAlign: "right" }}>
+   317	                  <div className="label">Appointment</div>
+   318	                  <div style={{ fontWeight: 950, color: "#0f172a" }}>{appt ? prettyDate(appt) : "—"}</div>
+   319	                </div>
+   320	              </div>
+   321	
+   322	              {customer?.notes ? (
+   323	                <div className="panel" style={{ padding: 12, borderRadius: 12, border: "1px solid rgba(2,6,23,0.12)" }}>
+   324	                  <div className="label">Notes</div>
+   325	                  <div className="muted" style={{ fontWeight: 850 }}>{String(customer.notes)}</div>
+   326	                </div>
+   327	              ) : null}
+   328	            </div>
+   329	          </div>
+   330	
+   331	          {/* Items + totals */}
+   332	          <div className="panel" style={{ ...softPanelTight }}>
+   333	            <div className="h3" style={{ margin: 0, color: "#0f172a" }}>Services Requested</div>
+   334	
+   335	            {detailed.length === 0 ? (
+   336	              <div className="muted" style={{ fontWeight: 850, marginTop: 10 }}>No items found on this request.</div>
+   337	            ) : (
+   338	              <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+   339	                {detailed.map((it, idx) => (
+   340	                  <div
+   341	                    key={`${it.serviceId}-${idx}`}
+   342	                    className="panel"
+   343	                    style={{
+   344	                      padding: 12,
+   345	                      borderRadius: 12,
+   346	                      border: "1px solid rgba(2,6,23,0.12)",
+   347	                      background: "rgba(255,255,255,0.85)",
+   348	                    }}
+   349	                  >
+   350	                    <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+   351	                      <div>
+   352	                        <div style={{ fontWeight: 950, color: "#0f172a" }}>{it.name}</div>
+   353	                        <div className="muted" style={{ fontWeight: 850, marginTop: 4 }}>
+   354	                          Qty: <strong>{it.qty}</strong>
+   355	                        </div>
+   356	                      </div>
+   357	
+   358	                      <div style={{ textAlign: "right" }}>
+   359	                        <div className="badge" style={{ justifyContent: "center" }}>{it.lineLabel || "—"}</div>
+   360	                      </div>
+   361	                    </div>
+   362	
+   363	                    {it.note ? (
+   364	                      <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
+   365	                        <strong>Note:</strong> {it.note}
+   366	                      </div>
+   367	                    ) : null}
+   368	                  </div>
+   369	                ))}
+   370	
+   371	                <div className="panel" style={{ padding: 12, borderRadius: 12, border: "1px solid rgba(2,6,23,0.12)", background: "rgba(255,255,255,0.85)" }}>
+   372	                  <div className="row" style={{ justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+   373	                    <div style={{ fontWeight: 950, color: "#0f172a" }}>Estimated Total (minimum)</div>
+   374	                    <div style={{ fontWeight: 950, color: "#0f172a" }}>{money(totals.minTotal)}</div>
+   375	                  </div>
+   376	                  <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+   377	                    Fixed: {money(totals.fixedSubtotal)} • Starting-at minimum: {money(totals.startingSubtotal)}
+   378	                  </div>
+   379	                  {totals.quoteNames.length > 0 ? (
+   380	                    <div className="muted" style={{ fontWeight: 850, marginTop: 8 }}>
+   381	                      <strong>Quote required:</strong> {totals.quoteNames.join(", ")}
+   382	                    </div>
+   383	                  ) : null}
+   384	                </div>
+   385	              </div>
+   386	            )}
+   387	          </div>
+   388	        </div>
+   389	
+   390	        {/* Photos */}
+   391	        <div className="panel" style={{ padding: 14, borderRadius: 14, width: "100%", maxWidth: 1100, marginTop: 6 }}>
+   392	          <div className="h3" style={{ margin: 0, color: "#0f172a" }}>Photos</div>
+   393	          {photos.length === 0 ? (
+   394	            <div className="muted" style={{ fontWeight: 850, marginTop: 10 }}>No photos were attached.</div>
+   395	          ) : (
+   396	            <div
+   397	              style={{
+   398	                marginTop: 10,
+   399	                display: "grid",
+   400	                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+   401	                gap: 10,
+   402	              }}
+   403	            >
+   404	              {photos.slice(0, 12).map((p: any, idx: number) => (
+   405	                <div
+   406	                  key={idx}
+   407	                  className="panel"
+   408	                  style={{
+   409	                    padding: 10,
+   410	                    borderRadius: 12,
+   411	                    border: "1px solid rgba(2,6,23,0.12)",
+   412	                    background: "rgba(255,255,255,0.85)",
+   413	                  }}
+   414	                >
+   415	                  {p?.dataUrl ? (
+   416	                    <img
+   417	                      src={String(p.dataUrl)}
+   418	                      alt={String(p?.name || `Photo ${idx + 1}`)}
+   419	                      style={{
+   420	                        width: "100%",
+   421	                        height: 130,
+   422	                        objectFit: "cover",
+   423	                        display: "block",
+   424	                        borderRadius: 10,
+   425	                        border: "1px solid rgba(2,6,23,0.12)",
+   426	                      }}
+   427	                    />
+   428	                  ) : (
+   429	                    <div className="muted" style={{ fontWeight: 850 }}>Missing image data</div>
+   430	                  )}
+   431	                  <div className="muted" style={{ fontWeight: 850, marginTop: 8, fontSize: 12 }}>
+   432	                    {String(p?.name || `Photo ${idx + 1}`)}
+   433	                  </div>
+   434	                </div>
+   435	              ))}
+   436	            </div>
+   437	          )}
+   438	        </div>
+   439	
+   440	        {/* Actions */}
+   441	        <div className="row" style={{ gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 14 }}>
+   442	          <Link className="btn btn-primary" to="/customer">Open Customer Portal</Link>
+   443	          <Link className="btn btn-ghost" to="/services">Browse Services</Link>
+   444	          <Link className="btn btn-ghost" to="/schedule">New Request</Link>
+   445	        </div>
+   446	      </section>
+   447	    </div>
+   448	  );
+   449	}
