@@ -1,6 +1,5 @@
 import { collection, doc, documentId, endAt, getDoc, getDocs, orderBy, query, setDoc, startAt } from "firebase/firestore";
 import { getDb } from "./firebase";
-
 /**
  * MVP Cloud Sync strategy:
  * - Best-effort write to Firestore as a backup + multi-device store.
