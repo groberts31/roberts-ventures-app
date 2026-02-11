@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import rvLogo from "../assets/roberts-ventures-logo.png";
 
@@ -64,9 +64,45 @@ function Pill({ children }: { children: React.ReactNode }) {
 export default function Navbar() {
   const navigate = useNavigate();
   const cart = useCart();
-  const count = (cart as any)?.count ?? 0;
+  const count = cart.count;
 
-  const [theme, setTheme] = React.useState(getActiveTheme());
+  const [cartOpen, setCartOpen] = useState(false);
+  const cartBtnRef = useRef<any>(null);
+  const cartPopRef = useRef<HTMLDivElement | null>(null);
+
+  const previewItems = useMemo(() => {
+    const items = Array.isArray(cart.items) ? cart.items : [];
+    return items
+      .map((it: any) => ({
+        id: String(it?.serviceId || ""),
+        qty: Number.isFinite(Number(it?.qty)) && Number(it?.qty) > 0 ? Number(it?.qty) : 1,
+      }))
+      .filter((x: any) => x.id);
+  }, [cart.items]);
+
+  useEffect(() => {
+    if (!cartOpen) return;
+
+    function onDocClick(e: any) {
+      const pop = cartPopRef.current;
+      const btn = cartBtnRef.current;
+      const t = e?.target as any;
+      if (!t) return;
+      if (pop && pop.contains(t)) return;
+      if (btn && btn.contains && btn.contains(t)) return;
+      setCartOpen(false);
+    }
+
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("touchstart", onDocClick, { passive: true } as any);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("touchstart", onDocClick as any);
+    };
+  }, [cartOpen]);
+
+
+  const [theme, setTheme] = useState(getActiveTheme());
 
   const onToggleTheme = () => {
     toggleTheme();
@@ -189,36 +225,150 @@ export default function Navbar() {
           >
             Schedule
           </NavLink>
-          <NavLink
-            to="/schedule"
-            style={({ isActive }) => ({
-              ...linkStyleBase,
-              ...(isActive ? linkStyleActive : linkStyleInactive),
-              gap: 6,
-              whiteSpace: "nowrap",
-            })}
-            aria-label={`Cart (${count})`}
-            title="View request cart"
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                width: 14,
-                height: 14,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                lineHeight: "14px",
-                overflow: "hidden",
-                flex: "0 0 auto",
-                transform: "translateY(-0.5px)",
-              }}
+          
+          <div style={{ position: "relative" }}>
+            <NavLink
+              ref={cartBtnRef}
+              to="/schedule"
+              onMouseEnter={() => setCartOpen(true)}
+              onMouseLeave={() => setCartOpen(false)}
+              onFocus={() => setCartOpen(true)}
+              onBlur={() => setCartOpen(false)}
+              style={({ isActive }) => ({
+                ...linkStyleBase,
+                ...(isActive ? linkStyleActive : linkStyleInactive),
+                gap: 6,
+                whiteSpace: "nowrap",
+              })}
+              aria-label={`Cart (${count})`}
+              title="View request cart"
             >
-              🛒
-            </span>
-            <Pill>{count}</Pill>
-          </NavLink>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 14,
+                  height: 14,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  lineHeight: "14px",
+                  overflow: "hidden",
+                  flex: "0 0 auto",
+                  transform: "translateY(-0.5px)",
+                }}
+              >
+                🛒
+              </span>
+              <Pill>{count}</Pill>
+            </NavLink>
+
+            {cartOpen ? (
+              <div
+                ref={cartPopRef}
+                onMouseEnter={() => setCartOpen(true)}
+                onMouseLeave={() => setCartOpen(false)}
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "calc(100% + 10px)",
+                  width: 320,
+                  maxWidth: "85vw",
+                  borderRadius: 14,
+                  padding: 12,
+                  background: "rgba(15,23,42,0.92)",
+                  border: "1px solid rgba(148,163,184,0.18)",
+                  boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
+                  backdropFilter: "blur(10px)",
+                  zIndex: 50,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontWeight: 950, fontSize: 13, letterSpacing: 0.2 }}>
+                    Request Cart
+                  </div>
+                  <div className="badge" style={{ justifyContent: "center" }}>
+                    {count}
+                  </div>
+                </div>
+
+                <div style={{ height: 1, background: "rgba(148,163,184,0.18)", margin: "10px 0" }} />
+
+                {previewItems.length === 0 ? (
+                  <div style={{ fontSize: 12, fontWeight: 850, opacity: 0.85, padding: "6px 2px" }}>
+                    No items yet — add services to start a request.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8, maxHeight: 240, overflow: "auto", paddingRight: 2 }}>
+                    {previewItems.map((it: any) => (
+                      <div
+                        key={it.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          alignItems: "flex-start",
+                          padding: 10,
+                          borderRadius: 12,
+                          border: "1px solid rgba(148,163,184,0.14)",
+                          background: "rgba(2,6,23,0.35)",
+                        }}
+                      >
+                        <div style={{ fontWeight: 900, fontSize: 12, lineHeight: 1.2 }}>
+                          {it.id}
+                        </div>
+                        <div className="badge" style={{ justifyContent: "center", whiteSpace: "nowrap" }}>
+                          × {it.qty}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+                  <NavLink
+                    to="/schedule"
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 999,
+                      fontWeight: 950,
+                      border: "1px solid rgba(59,130,246,0.35)",
+                      background: "rgba(59,130,246,0.18)",
+                      color: "#e5e7eb",
+                      textDecoration: "none",
+                      lineHeight: 1,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    Go to Schedule →
+                  </NavLink>
+
+                  <button
+                    type="button"
+                    onClick={() => cart.clear()}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 999,
+                      fontWeight: 950,
+                      border: "1px solid rgba(148,163,184,0.22)",
+                      background: "rgba(255,255,255,0.08)",
+                      color: "#e5e7eb",
+                      cursor: "pointer",
+                      lineHeight: 1,
+                    }}
+                    disabled={count === 0}
+                    title={count === 0 ? "Cart is already empty" : "Remove all items"}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
 
 
           <NavLink
