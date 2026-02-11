@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { SERVICES } from "../data/services";
+import { ADD_ONS } from "../data/addOns";
 import rvLogo from "../assets/roberts-ventures-logo.png";
 
 import { useCart } from "../data/requestCart";
@@ -64,6 +66,12 @@ function Pill({ children }: { children: React.ReactNode }) {
 export default function Navbar() {
   const navigate = useNavigate();
   const cart = useCart();
+
+  // Catalog lookup (core services + add-ons) for cart preview naming
+  const CATALOG = useMemo(() => [...SERVICES, ...ADD_ONS], []);
+  const nameFor = (serviceId: string) =>
+    CATALOG.find((x) => String((x as any)?.id) === String(serviceId))?.name ?? String(serviceId);
+
   const count = cart.count;
 
   const [cartOpen, setCartOpen] = useState(false);
@@ -302,7 +310,7 @@ export default function Navbar() {
                   <div style={{ display: "grid", gap: 8, maxHeight: 240, overflow: "auto", paddingRight: 2 }}>
                     {previewItems.map((it: any) => (
                       <div
-                        key={it.id}
+                        key={nameFor(it.id)}
                         style={{
                           display: "flex",
                           justifyContent: "space-between",
@@ -315,7 +323,7 @@ export default function Navbar() {
                         }}
                       >
                         <div style={{ fontWeight: 900, fontSize: 12, lineHeight: 1.2 }}>
-                          {it.id}
+                          {nameFor(it.id)}
                         </div>
                         <div className="badge" style={{ justifyContent: "center", whiteSpace: "nowrap" }}>
                           × {it.qty}
