@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { findRequestsByNameAndPhone, findRequestsByPhoneAndCode, type RVRequest } from "../lib/requestsStore";
+import { listRequestsFromCloud } from "../lib/cloudRequests";
 import { useCart } from "../data/requestCart";
 
 function normalizePhone(p: string) {
@@ -53,6 +54,10 @@ export default function CustomerPortal() {
   const [retrievePhone, setRetrievePhone] = useState("");
   const [code, setCode] = useState("");
 
+  const [cloudMatches, setCloudMatches] = useState<RVRequest[]>([]);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudError, setCloudError] = useState("");
+
   const retrieveMatches = useMemo(() => {
     const n = String(retrieveName || "").trim();
     const p = String(retrievePhone || "").trim();
@@ -68,7 +73,19 @@ export default function CustomerPortal() {
       .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
   }, [phone, code]);
 
-  return (
+  
+  const combinedMatches: RVRequest[] = useMemo(() => {
+    const byId = new Map<string, RVRequest>();
+    // Prefer local copy (it may include latest edits), then fill from cloud
+    for (const r of (matches || [])) byId.set(String((r as any)?.id || ""), r);
+    for (const r of (cloudMatches || [])) {
+      const id = String((r as any)?.id || "");
+      if (!id) continue;
+      if (!byId.has(id)) byId.set(id, r);
+    }
+    return Array.from(byId.values()).sort((a, b) => (String((b as any)?.createdAt || "")).localeCompare(String((a as any)?.createdAt || "")));
+  }, [matches, cloudMatches]);
+return (
     <div className="stack">
       <section className="panel card card-center" style={{ maxWidth: 900, margin: "0 auto" }}>
         <h2 className="h2" style={{ margin: 0 }}>Customer Portal</h2>
@@ -104,6 +121,32 @@ export default function CustomerPortal() {
             onClick={() => {
               cart.setCustomer({ phone, accessCode: code });
               setSearched(true);
+
+              // Cloud lookup (multi-device) – best effort
+              setCloudError("");
+              setCloudLoading(true);
+              (async () => {
+                try {
+                  const res = await listRequestsFromCloud({ phone, accessCode: code });
+                  if (res?.ok) {
+                    const arr = Array.isArray((res as any).requests) ? ((res as any).requests as any[]) : [];
+                    setCloudMatches(arr.filter(Boolean) as any);
+                    return;
+                  }
+                  const reason = String((res as any)?.reason || "");
+                  if (reason === "firebase_not_configured") {
+                    setCloudError("Cloud sync is not configured yet on this build.");
+                  } else if (reason === "missing_fields") {
+                    setCloudError("");
+                  } else {
+                    setCloudError("Couldn’t load cloud requests right now.");
+                  }
+                } catch {
+                  setCloudError("Couldn’t load cloud requests right now.");
+                } finally {
+                  setCloudLoading(false);
+                }
+              })();
             }}
             disabled={normalizePhone(phone).length < 10 || String(code).trim().length < 6}
           >
@@ -200,7 +243,7 @@ export default function CustomerPortal() {
 
       {searched && (
         <section className="stack" style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
-          {matches.length === 0 ? (
+          {combinedMatches.length === 0 ? (
             <div className="panel card card-center">
               <div className="h3" style={{ margin: 0 }}>No requests found</div>
               <div className="muted" style={{ fontWeight: 850, textAlign: "center", maxWidth: 700 }}>
@@ -214,13 +257,23 @@ export default function CustomerPortal() {
                 <div>
                   <div className="h3" style={{ margin: 0 }}>Your Requests</div>
                   <div className="muted" style={{ fontWeight: 850 }}>
-                    Found {matches.length} request{matches.length === 1 ? "" : "s"} for {phone}
+                    Found {combinedMatches.length} request{combinedMatches.length === 1 ? "" : "s"} for {phone}
                   </div>
+                  {cloudLoading ? (
+                    <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+                      Cloud: Loading…
+                    </div>
+                  ) : cloudError ? (
+                    <div className="muted" style={{ fontWeight: 850, marginTop: 6 }}>
+                      Cloud: {cloudError}
+                    </div>
+                  ) : null}
+
                 </div>
               </div>
 
               <div className="stack">
-                {matches.map((r) => (
+                {combinedMatches.map((r) => (
                   <article key={r.id} className="panel card" style={{ display: "grid", gap: 10 }}>
                     <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <div style={{ display: "grid", gap: 4 }}>

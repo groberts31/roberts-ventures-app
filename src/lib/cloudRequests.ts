@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, documentId, endAt, getDoc, getDocs, orderBy, query, setDoc, startAt } from "firebase/firestore";
 import { getDb } from "./firebase";
 
 /**
@@ -65,3 +65,37 @@ export async function loadRequestFromCloud(params: { phone: string; accessCode: 
     return { ok: false, reason: "error" as const, request: null };
   }
 }
+
+/**
+ * List requests from cloud for a given Phone + Access Code.
+ * Uses docId prefix search on:  rv_requests/{phoneDigits}_{accessCode}_{requestId}
+ */
+export async function listRequestsFromCloud(params: { phone: string; accessCode: string }) {
+  try {
+    const db = getDb();
+    if (!db) return { ok: false as const, reason: "firebase_not_configured" as const, requests: [] as any[] };
+
+    const phoneDigits = digitsOnly(params.phone);
+    const code = String(params.accessCode || "").trim();
+    if (!phoneDigits || !code) return { ok: false as const, reason: "missing_fields" as const, requests: [] as any[] };
+
+    const prefix = `${phoneDigits}_${code}_`;
+
+    // Prefix range: [prefix, prefix + "\uf8ff"]
+    const q = query(
+      collection(db, "rv_requests"),
+      orderBy(documentId()),
+      startAt(prefix),
+      endAt(prefix + "\uf8ff")
+    );
+
+    const snap = await getDocs(q);
+    const out: any[] = [];
+    snap.forEach((d) => out.push(d.data()));
+    return { ok: true as const, reason: "listed" as const, requests: out };
+  } catch (e) {
+    console.warn("Cloud list failed:", e);
+    return { ok: false as const, reason: "error" as const, requests: [] as any[] };
+  }
+}
+
