@@ -25,3 +25,4 @@ dist-ssr
 
 # local support dumps
 support_dump.txt
+.env.local
