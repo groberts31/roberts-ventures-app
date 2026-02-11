@@ -13,6 +13,8 @@ import {
 } from "../data/timeSlots";
 import EstimatePreview from "../components/EstimatePreview";
 
+import { saveRequestToCloud } from "../lib/cloudRequests";
+
 type PhotoAttachment = {
   name: string;
   type: string;
@@ -280,6 +282,14 @@ async function onAddPhotos(files: FileList | null) {
     }
 
     localStorage.setItem("rv_requests", JSON.stringify([request, ...existing]));
+
+    // Best-effort cloud sync (Firebase) — localStorage remains primary
+    try {
+      void saveRequestToCloud(request as any);
+    } catch {
+      // ignore sync errors (offline / blocked)
+    }
+
 
     // ✅ Clear cart + reset UI BEFORE redirect (redirect can short-circuit code after it)
     cart.clear();
