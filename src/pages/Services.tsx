@@ -25,6 +25,7 @@ export default function ServicesPage() {
 
   // Catalog = core services + add-ons (add-ons are also selectable from this page)
   const CATALOG = useMemo(() => [...SERVICES, ...ADD_ONS], []);
+    const isAddOn = (s: any) => Boolean(s && (s as any).isAddOn);
   // Scroll target: the catalog header card
   const headerRef = useRef<HTMLElement | null>(null);
 
@@ -134,9 +135,20 @@ export default function ServicesPage() {
               <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div style={{ display: "grid", gap: 6 }}>
                   <div className="h3">{s.name}</div>
+                  <div className="row" style={{ gap: 8, alignItems: "center" }}>
                   <div className="muted" style={{ fontWeight: 900, fontSize: 13 }}>
                     {s.category}
                   </div>
+                  {isAddOn(s) ? (
+                    <span
+                      className="badge"
+                      style={{ justifyContent: "center", fontWeight: 950, fontSize: 12 }}
+                      title="This item is an add-on"
+                    >
+                      Add-On
+                    </span>
+                  ) : null}
+                </div>
                 </div>
 
                 <div style={{ textAlign: "right" }}>
