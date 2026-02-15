@@ -1,16 +1,28 @@
-import { arrayUnion, doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  arrayUnion,
+  collection,
+  doc,
+  documentId,
+  endAt,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  setDoc,
+  startAt,
+} from "firebase/firestore";
 import { getDb } from "./firebase";
 
 /**
- * MVP Cloud Sync strategy (No Auth):
- * - Writes full request docs to: rv_requests/{phoneDigits}_{accessCode}_{requestId}
- * - Writes an index doc (for listing without collection queries):
- *     rv_requestIndex/{phoneDigits}_{accessCode}
- *   which stores: { ids: [<rv_requests docId>, ...] }
+ * MVP Cloud Sync strategy:
+ * - Best-effort write to Firestore as a backup + multi-device store.
+ * - No auth in this first pass (MVP). You SHOULD add rules later.
  *
- * This allows:
- * - CustomerPortal: GET index doc (not list), then GET each request doc (not list)
- * - Firestore rules can keep: "allow list: if false" on rv_requests
+ * Documents:
+ *   1) rv_requests/{phoneDigits}_{accessCode}_{requestId}
+ *   2) rv_requestIndex/{phoneDigits}_{accessCode}
+ *        - requestIds: array of requestId strings
+ *        - phoneDigits, accessCode (stored for validation + convenience)
  */
 
 function digitsOnly(s: string) {
@@ -30,20 +42,26 @@ function indexKey(params: { phone: string; accessCode: string }) {
   return `${phoneDigits}_${code}`;
 }
 
-async function upsertIndex(params: { phone: string; accessCode: string; docId: string }) {
+async function upsertRequestIndex(params: { phone: string; accessCode: string; id: string }) {
   const db = getDb();
   if (!db) return;
 
-  const idx = indexKey(params);
-  const idxRef = doc(db, "rv_requestIndex", idx);
+  const phoneDigits = digitsOnly(params.phone);
+  const code = String(params.accessCode || "").trim();
+  const id = String(params.id || "").trim();
+  if (!phoneDigits || !code || !id) return;
 
-  // Add docId to ids[] (idempotent)
+  const ikey = indexKey({ phone: phoneDigits, accessCode: code });
+  const ref = doc(db, "rv_requestIndex", ikey);
+
+  // Merge so we never wipe existing ids
   await setDoc(
-    idxRef,
+    ref,
     {
-      phoneDigits: digitsOnly(params.phone),
-      accessCode: String(params.accessCode || "").trim(),
-      ids: arrayUnion(String(params.docId)),
+      _indexKey: ikey,
+      phoneDigits,
+      accessCode: code,
+      requestIds: arrayUnion(id),
       _updatedAt: new Date().toISOString(),
     },
     { merge: true }
@@ -64,11 +82,11 @@ export async function saveRequestToCloud(request: any) {
     const key = cloudKey({ phone, accessCode, id });
     const ref = doc(db, "rv_requests", key);
 
-    // Write full request as stored record
+    // 1) Write the request doc
     await setDoc(ref, { ...request, _cloudKey: key, _syncedAt: new Date().toISOString() }, { merge: true });
 
-    // Update listing index (so CustomerPortal can fetch without LIST)
-    await upsertIndex({ phone, accessCode, docId: key });
+    // 2) Upsert index doc so we can list by Phone+Code later
+    await upsertRequestIndex({ phone, accessCode, id });
 
     return { ok: true as const, key };
   } catch (e) {
@@ -96,10 +114,8 @@ export async function loadRequestFromCloud(params: { phone: string; accessCode: 
 }
 
 /**
- * List requests from cloud for a given Phone + Access Code WITHOUT LIST queries.
- * Strategy:
- *  1) GET index doc: rv_requestIndex/{phoneDigits}_{accessCode}
- *  2) For each id in ids[], GET rv_requests/{id}
+ * List requests from cloud for a given Phone + Access Code.
+ * Uses docId prefix search on:  rv_requests/{phoneDigits}_{accessCode}_{requestId}
  */
 export async function listRequestsFromCloud(params: { phone: string; accessCode: string }) {
   try {
@@ -110,30 +126,20 @@ export async function listRequestsFromCloud(params: { phone: string; accessCode:
     const code = String(params.accessCode || "").trim();
     if (!phoneDigits || !code) return { ok: false as const, reason: "missing_fields" as const, requests: [] as any[] };
 
-    const idx = indexKey({ phone: phoneDigits, accessCode: code });
-    const idxRef = doc(db, "rv_requestIndex", idx);
-    const idxSnap = await getDoc(idxRef);
+    const prefix = `${phoneDigits}_${code}_`;
 
-    if (!idxSnap.exists()) return { ok: true as const, reason: "listed" as const, requests: [] as any[] };
-
-    const data: any = idxSnap.data() || {};
-    const ids: string[] = Array.isArray(data.ids) ? data.ids.map((x: any) => String(x)).filter(Boolean) : [];
-
-    if (ids.length === 0) return { ok: true as const, reason: "listed" as const, requests: [] as any[] };
-
-    const docs = await Promise.all(
-      ids.slice(0, 250).map(async (docId) => {
-        try {
-          const rref = doc(db, "rv_requests", docId);
-          const rsnap = await getDoc(rref);
-          return rsnap.exists() ? rsnap.data() : null;
-        } catch {
-          return null;
-        }
-      })
+    // Prefix range: [prefix, prefix + "\uf8ff"]
+    const q = query(
+      collection(db, "rv_requests"),
+      orderBy(documentId()),
+      startAt(prefix),
+      endAt(prefix + "\uf8ff")
     );
 
-    return { ok: true as const, reason: "listed" as const, requests: docs.filter(Boolean) as any[] };
+    const snap = await getDocs(q);
+    const out: any[] = [];
+    snap.forEach((d) => out.push(d.data()));
+    return { ok: true as const, reason: "listed" as const, requests: out };
   } catch (e) {
     console.warn("Cloud list failed:", e);
     return { ok: false as const, reason: "error" as const, requests: [] as any[] };
