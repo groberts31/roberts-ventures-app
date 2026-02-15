@@ -76,6 +76,31 @@ service cloud.firestore {
     }
 
     // Default deny everything else
+
+  // Index docs used for safe listing (NO collection LIST queries)
+  // DocId format: phoneDigits_accessCode  ->  7-15 digits + "_" + 6 digits
+  function isValidRvIndex(data, idxId) {
+    return
+      isString(idxId) &&
+      idxId.matches('^\\d{7,15}_\\d{6}$') &&
+      // Optional basic shape checks (keep permissive for MVP)
+      (!('phoneDigits' in data) || (data.phoneDigits is string)) &&
+      (!('accessCode' in data) || (data.accessCode is string)) &&
+      (!('ids' in data) || (data.ids is list));
+  }
+
+  match /rv_requestIndex/{idxId} {
+    // Allow direct doc reads only (no listing)
+    allow get: if isValidRvIndex(resource.data, idxId);
+    allow list: if false;
+
+    // Allow create/update to maintain the ids[] index
+    allow create, update: if isValidRvIndex(request.resource.data, idxId);
+
+    // Block deletes
+    allow delete: if false;
+  }
+
     match /{document=**} {
       allow read, write: if false;
     }
