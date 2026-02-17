@@ -48,8 +48,8 @@ export default function ToastHost() {
   const styles = useMemo(() => {
     const wrapper: React.CSSProperties = {
       position: "fixed",
-      top: 14,
-      right: 14,
+      bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
+      right: "calc(14px + env(safe-area-inset-right, 0px))",
       zIndex: 9999,
       display: "grid",
       gap: 10,
@@ -71,7 +71,7 @@ export default function ToastHost() {
       backdropFilter: "blur(12px)",
       WebkitBackdropFilter: "blur(12px)",
       overflow: "hidden",
-      transform: "translateY(-8px)",
+      transform: "translateY(8px)",
       opacity: 0,
       animation: "rvToastIn 220ms ease-out forwards",
       position: "relative",
@@ -156,7 +156,7 @@ export default function ToastHost() {
       if (!message) return;
 
       const variant = (e.detail?.variant ?? "info") as ToastVariant;
-      const durationMs = Number.isFinite(Number(e.detail?.durationMs)) ? Number(e.detail?.durationMs) : 3200;
+      const durationMs = Number.isFinite(Number(e.detail?.durationMs)) ? Number(e.detail?.durationMs) : 1800;
 
       const id = makeId();
       const createdAt = Date.now();
@@ -191,7 +191,7 @@ export default function ToastHost() {
     <>
       <style>{`
         @keyframes rvToastIn {
-          from { transform: translateY(-10px); opacity: 0; }
+          from { transform: translateY(10px); opacity: 0; }
           to   { transform: translateY(0px); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {

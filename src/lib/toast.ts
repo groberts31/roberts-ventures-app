@@ -15,7 +15,7 @@ export function toast(
   message: string,
   type: ToastType = "success",
   title?: string,
-  durationMs: number = 2400,
+  durationMs: number = 1800,
   actionLabel?: string,
   actionHref?: string
 ) {

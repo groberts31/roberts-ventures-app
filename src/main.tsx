@@ -25,5 +25,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 window.alert = (msg?: any) => {
   const message = String(msg ?? "").trim();
   if (!message) return;
-  emitToast({ message, variant: "info", durationMs: 3200 });
+  emitToast({ message, variant: "info", durationMs: 1800 });
 };
