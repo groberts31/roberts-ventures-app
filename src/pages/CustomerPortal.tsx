@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { findRequestsByNameAndPhone, findRequestsByPhoneAndCode, type RVRequest } from "../lib/requestsStore";
 import { listRequestsFromCloud } from "../lib/cloudRequests";
@@ -57,6 +57,48 @@ export default function CustomerPortal() {
   const [cloudMatches, setCloudMatches] = useState<RVRequest[]>([]);
   const [cloudLoading, setCloudLoading] = useState(false);
   const [cloudError, setCloudError] = useState("");
+
+  /**
+   * Portal Auto-Sync
+   * If cart already has phone + accessCode, auto-load cloud requests
+   */
+  useEffect(() => {
+    const phoneStored = String((cart as any)?.customer?.phone || "");
+    const codeStored = String((cart as any)?.customer?.accessCode || "");
+
+    if (!phoneStored || !codeStored) return;
+    if (normalizePhone(phoneStored).length < 10) return;
+    if (String(codeStored).trim().length < 6) return;
+
+    setPhone(phoneStored);
+    setCode(codeStored);
+    setSearched(true);
+
+    setCloudError("");
+    setCloudLoading(true);
+
+    (async () => {
+      try {
+        const res = await listRequestsFromCloud({ phone: phoneStored, accessCode: codeStored });
+        if ((res as any)?.ok) {
+          const arr = Array.isArray((res as any).requests) ? ((res as any).requests as any[]) : [];
+          setCloudMatches(arr.filter(Boolean) as any);
+          return;
+        }
+        const reason = String((res as any)?.reason || "");
+        if (reason === "firebase_not_configured") {
+          setCloudError("Cloud sync is not configured yet on this build.");
+        } else {
+          setCloudError("Couldn’t load cloud requests right now.");
+        }
+      } catch {
+        setCloudError("Couldn’t load cloud requests right now.");
+      } finally {
+        setCloudLoading(false);
+      }
+    })();
+  }, []);
+
 
   const retrieveMatches = useMemo(() => {
     const n = String(retrieveName || "").trim();
