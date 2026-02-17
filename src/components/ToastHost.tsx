@@ -14,13 +14,20 @@ function makeId() {
   return (crypto as any).randomUUID?.() ?? (Math.random().toString(16).slice(2) + Date.now().toString(16));
 }
 
+// NOTE: we accept BOTH shapes:
+// - { message, variant, durationMs }  (new)
+// - { message, type, durationMs }     (legacy from src/lib/toast.ts)
 export type ToastEventDetail = {
   message: string;
   variant?: ToastVariant;
   durationMs?: number;
+
+  // legacy field name used by src/lib/toast.ts
+  type?: ToastVariant;
 };
 
 const EVENT_NAME = "rv_toast";
+const DEFAULT_DURATION_MS = 1400;
 
 export function emitToast(detail: ToastEventDetail) {
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail }));
@@ -30,7 +37,7 @@ function iconFor(v: ToastVariant) {
   if (v === "success") return "✅";
   if (v === "warning") return "⚠️";
   if (v === "error") return "⛔";
-  return "✨"; // info: no "Info" text, just a vibe
+  return "✨";
 }
 
 // Dark neon accents
@@ -46,26 +53,28 @@ export default function ToastHost() {
   const rafRef = useRef<number | null>(null);
 
   const styles = useMemo(() => {
+    // ✅ Move confirmations to bottom-center (mobile-friendly, avoids right-side UI)
     const wrapper: React.CSSProperties = {
       position: "fixed",
+      left: "50%",
+      transform: "translateX(-50%)",
       bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
-      right: "calc(14px + env(safe-area-inset-right, 0px))",
       zIndex: 9999,
       display: "grid",
       gap: 10,
       pointerEvents: "none",
+      justifyItems: "center",
+      width: "min(520px, calc(100vw - 24px))",
     };
 
     const cardBase: React.CSSProperties = {
-      width: "min(520px, calc(100vw - 24px))",
+      width: "100%",
       borderRadius: 18,
       padding: "12px 12px",
       pointerEvents: "auto",
       cursor: "default",
       userSelect: "none",
-      // Dark glass background
-      background:
-        "linear-gradient(180deg, rgba(2,6,23,0.90) 0%, rgba(2,6,23,0.78) 100%)",
+      background: "linear-gradient(180deg, rgba(2,6,23,0.90) 0%, rgba(2,6,23,0.78) 100%)",
       border: "1px solid rgba(148,163,184,0.16)",
       boxShadow: "0 22px 55px rgba(0,0,0,0.55)",
       backdropFilter: "blur(12px)",
@@ -80,7 +89,7 @@ export default function ToastHost() {
     const headerRow: React.CSSProperties = {
       display: "flex",
       alignItems: "center",
-      justifyContent: "center", // center header contents
+      justifyContent: "center",
       gap: 10,
       position: "relative",
       paddingTop: 2,
@@ -120,15 +129,6 @@ export default function ToastHost() {
       color: "rgba(226,232,240,0.95)",
       lineHeight: 1.25,
       wordBreak: "break-word",
-      textAlign: "center", // center message
-    };
-
-    const sub: React.CSSProperties = {
-      marginTop: 2,
-      marginBottom: 2,
-      fontWeight: 850,
-      fontSize: 12,
-      color: "rgba(148,163,184,0.85)",
       textAlign: "center",
     };
 
@@ -146,22 +146,29 @@ export default function ToastHost() {
       transition: "transform 100ms linear",
     };
 
-    return { wrapper, cardBase, headerRow, iconBadge, closeBtn, msg, sub, progressWrap, progressBar };
+    return { wrapper, cardBase, headerRow, iconBadge, closeBtn, msg, progressWrap, progressBar };
   }, []);
 
   useEffect(() => {
     const onToast = (ev: Event) => {
-      const e = ev as CustomEvent<ToastEventDetail>;
-      const message = String(e.detail?.message ?? "").trim();
+      const e = ev as CustomEvent<any>;
+      const detail = (e.detail ?? {}) as ToastEventDetail & Record<string, any>;
+
+      const message = String(detail.message ?? "").trim();
       if (!message) return;
 
-      const variant = (e.detail?.variant ?? "info") as ToastVariant;
-      const durationMs = Number.isFinite(Number(e.detail?.durationMs)) ? Number(e.detail?.durationMs) : 1800;
+      // ✅ Accept both "variant" (new) and "type" (legacy)
+      const rawVariant = (detail.variant ?? detail.type ?? "info") as ToastVariant;
+
+      // ✅ Shorter default everywhere
+      const durationMs = Number.isFinite(Number(detail.durationMs))
+        ? Number(detail.durationMs)
+        : DEFAULT_DURATION_MS;
 
       const id = makeId();
       const createdAt = Date.now();
 
-      setToasts((prev) => [{ id, message, variant, createdAt, durationMs }, ...prev].slice(0, 4));
+      setToasts((prev) => [{ id, message, variant: rawVariant, createdAt, durationMs }, ...prev].slice(0, 4));
     };
 
     window.addEventListener(EVENT_NAME, onToast);
@@ -241,9 +248,7 @@ export default function ToastHost() {
               />
 
               <div style={styles.headerRow}>
-                <div style={styles.iconBadge}>
-                  {iconFor(t.variant)}
-                </div>
+                <div style={styles.iconBadge}>{iconFor(t.variant)}</div>
 
                 <button
                   type="button"
@@ -259,7 +264,6 @@ export default function ToastHost() {
                 </button>
               </div>
 
-              {/* No "Info" / "Success" text — just centered content */}
               <div style={styles.msg}>{t.message}</div>
 
               <div style={styles.progressWrap}>

@@ -2,7 +2,7 @@ export type ToastType = "success" | "info" | "warning" | "error";
 
 export type ToastPayload = {
   message: string;
-  type?: ToastType;
+  type?: ToastType;        // legacy field name (ToastHost supports it)
   title?: string;
   durationMs?: number;
 
@@ -11,11 +11,13 @@ export type ToastPayload = {
   actionHref?: string;
 };
 
+const DEFAULT_DURATION_MS = 1400;
+
 export function toast(
   message: string,
   type: ToastType = "success",
   title?: string,
-  durationMs: number = 1800,
+  durationMs: number = DEFAULT_DURATION_MS,
   actionLabel?: string,
   actionHref?: string
 ) {

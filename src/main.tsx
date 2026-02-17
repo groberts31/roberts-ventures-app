@@ -20,10 +20,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>
 );
 
-
 // RV_ALERT_TOAST_OVERRIDE: route all alert() calls through toast UI (non-blocking)
+const DEFAULT_ALERT_TOAST_MS = 1400;
+
 window.alert = (msg?: any) => {
   const message = String(msg ?? "").trim();
   if (!message) return;
-  emitToast({ message, variant: "info", durationMs: 1800 });
+  emitToast({ message, variant: "info", durationMs: DEFAULT_ALERT_TOAST_MS });
 };
