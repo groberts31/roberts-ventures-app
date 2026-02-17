@@ -1,15 +1,8 @@
 import {
   arrayUnion,
-  collection,
   doc,
-  documentId,
-  endAt,
   getDoc,
-  getDocs,
-  orderBy,
-  query,
   setDoc,
-  startAt,
 } from "firebase/firestore";
 import { getDb } from "./firebase";
 
@@ -126,22 +119,43 @@ export async function listRequestsFromCloud(params: { phone: string; accessCode:
     const code = String(params.accessCode || "").trim();
     if (!phoneDigits || !code) return { ok: false as const, reason: "missing_fields" as const, requests: [] as any[] };
 
-    const prefix = `${phoneDigits}_${code}_`;
+    // 1) Read the index doc (GET allowed; LIST blocked)
+    const idxId = `${phoneDigits}_${code}`;
+    const idxRef = doc(db, "rv_requestIndex", idxId);
+    const idxSnap = await getDoc(idxRef);
 
-    // Prefix range: [prefix, prefix + "\uf8ff"]
-    const q = query(
-      collection(db, "rv_requests"),
-      orderBy(documentId()),
-      startAt(prefix),
-      endAt(prefix + "\uf8ff")
-    );
+    if (!idxSnap.exists()) {
+      return { ok: true as const, reason: "listed" as const, requests: [] as any[] };
+    }
 
-    const snap = await getDocs(q);
+    const idxData: any = idxSnap.data() || {};
+
+    // Your code writes requestIds via arrayUnion(id)
+    const ids: string[] = Array.isArray(idxData.requestIds)
+      ? idxData.requestIds.map((x: any) => String(x))
+      : Array.isArray(idxData.ids) // backward compatible (if any old docs exist)
+      ? idxData.ids.map((x: any) => String(x))
+      : [];
+
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+
+    // 2) Fetch each request doc by exact doc id (GET allowed)
+    //    rv_requests/{phoneDigits}_{accessCode}_{requestId}
     const out: any[] = [];
-    snap.forEach((d) => out.push(d.data()));
+    for (const id of uniqueIds) {
+      const key = cloudKey({ phone: phoneDigits, accessCode: code, id });
+      const rref = doc(db, "rv_requests", key);
+      const rsnap = await getDoc(rref);
+      if (rsnap.exists()) out.push(rsnap.data());
+    }
+
+    // newest first
+    out.sort((a, b) => String(b?.createdAt || "").localeCompare(String(a?.createdAt || "")));
+
     return { ok: true as const, reason: "listed" as const, requests: out };
   } catch (e) {
     console.warn("Cloud list failed:", e);
     return { ok: false as const, reason: "error" as const, requests: [] as any[] };
   }
+
 }
