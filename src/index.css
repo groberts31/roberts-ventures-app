@@ -323,3 +323,61 @@ header nav[aria-label="Primary"] a:focus-visible {
 header nav[aria-label="Primary"] button {
   color: rgba(248, 250, 252, 0.92) !important;
 }
+
+
+/* RV: Schedule selected time-slot neon */
+/* Only affects the time-slot buttons on Schedule (not every .btn-primary) */
+.rvTimeSlotBtn{
+  position: relative;
+  border-width: 1px;
+  /* makes the neon pop on dark + light */
+  transform: translateZ(0);
+}
+
+/* Selected = neon “tube” glow */
+.rvTimeSlotBtn--selected{
+  border-color: rgba(34,211,238,0.55) !important;  /* cyan edge */
+  box-shadow:
+    0 0 0 1px rgba(34,211,238,0.18) inset,
+    0 10px 24px rgba(2,6,23,0.45),
+    0 0 18px rgba(34,211,238,0.55),
+    0 0 42px rgba(59,130,246,0.35);
+  filter: saturate(1.15) brightness(1.08);
+}
+
+/* Outer neon halo ring */
+.rvTimeSlotBtn--selected::before{
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgba(34,211,238,0.22) inset,
+    0 0 22px rgba(34,211,238,0.40),
+    0 0 64px rgba(59,130,246,0.22);
+  opacity: 0.9;
+}
+
+/* Subtle animated “electric” pulse (respects reduced motion) */
+@media (prefers-reduced-motion: no-preference){
+  .rvTimeSlotBtn--selected{
+    animation: rvNeonPulse 1.35s ease-in-out infinite;
+  }
+  @keyframes rvNeonPulse{
+    0%, 100%{
+      box-shadow:
+        0 0 0 1px rgba(34,211,238,0.18) inset,
+        0 10px 24px rgba(2,6,23,0.45),
+        0 0 18px rgba(34,211,238,0.55),
+        0 0 42px rgba(59,130,246,0.35);
+    }
+    50%{
+      box-shadow:
+        0 0 0 1px rgba(34,211,238,0.28) inset,
+        0 12px 28px rgba(2,6,23,0.50),
+        0 0 26px rgba(34,211,238,0.70),
+        0 0 60px rgba(59,130,246,0.42);
+    }
+  }
+}

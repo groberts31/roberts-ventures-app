@@ -571,7 +571,8 @@ async function onAddPhotos(files: FileList | null) {
                   <button
                     key={iso}
                     type="button"
-                    className={"btn " + (selected ? "btn-primary" : "btn-ghost")}
+                    aria-pressed={selected}
+                    className={"btn rvTimeSlotBtn " + (selected ? "btn-primary rvTimeSlotBtn--selected" : "btn-ghost")}
                     onClick={() => setSelectedSlotISO(iso)}
                     style={{ justifyContent: "center" }}
                   >

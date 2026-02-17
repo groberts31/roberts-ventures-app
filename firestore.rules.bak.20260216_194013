@@ -80,23 +80,14 @@ service cloud.firestore {
   // Index docs used for safe listing (NO collection LIST queries)
   // DocId format: phoneDigits_accessCode  ->  7-15 digits + "_" + 6 digits
   function isValidRvIndex(data, idxId) {
-      return
-        isString(idxId) &&
-        idxId.matches('^\\d{7,15}_\\d{6}$') &&
-
-        // Bind index doc id to stored _indexKey (if present)
-        (!('_indexKey' in data) || (data._indexKey is string && data._indexKey == idxId)) &&
-
-        // Optional stored fields (MVP permissive)
-        (!('phoneDigits' in data) || (data.phoneDigits is string)) &&
-        (!('accessCode' in data) || (data.accessCode is string)) &&
-
-        // Your code writes requestIds (arrayUnion)
-        (!('requestIds' in data) || (data.requestIds is list)) &&
-
-        // Backwards compat (if any older docs used ids)
-        (!('ids' in data) || (data.ids is list));
-    }
+    return
+      isString(idxId) &&
+      idxId.matches('^\\d{7,15}_\\d{6}$') &&
+      // Optional basic shape checks (keep permissive for MVP)
+      (!('phoneDigits' in data) || (data.phoneDigits is string)) &&
+      (!('accessCode' in data) || (data.accessCode is string)) &&
+      (!('ids' in data) || (data.ids is list));
+  }
 
   match /rv_requestIndex/{idxId} {
     // Allow direct doc reads only (no listing)
