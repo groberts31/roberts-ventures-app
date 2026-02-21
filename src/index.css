@@ -336,6 +336,7 @@ header nav[aria-label="Primary"] button {
 
 /* Selected = neon “tube” glow */
 .rvTimeSlotBtn--selected{
+  overflow: visible !important;
   border-color: rgba(34,211,238,0.55) !important;  /* cyan edge */
   box-shadow:
     0 0 0 1px rgba(34,211,238,0.18) inset,
@@ -344,6 +345,8 @@ header nav[aria-label="Primary"] button {
     0 0 42px rgba(59,130,246,0.35);
   filter: saturate(1.15) brightness(1.08);
 }
+
+.rvTimeSlotBtn--selected.btn-primary::after{ content: none !important; }
 
 /* Outer neon halo ring */
 .rvTimeSlotBtn--selected::before{
@@ -362,6 +365,7 @@ header nav[aria-label="Primary"] button {
 /* Subtle animated “electric” pulse (respects reduced motion) */
 @media (prefers-reduced-motion: no-preference){
   .rvTimeSlotBtn--selected{
+  overflow: visible !important;
     animation: rvNeonPulse 1.35s ease-in-out infinite;
   }
   @keyframes rvNeonPulse{
