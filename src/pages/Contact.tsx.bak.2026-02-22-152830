@@ -68,8 +68,8 @@ export default function Contact() {
         >
           <a className="btn btn-primary" href="/schedule">Schedule a Service</a>
           <a className="btn btn-ghost" href="/services">View Services</a>
-          {/* Customer Portal temporarily hidden */}
-</div>
+          <a className="btn btn-ghost" href="/customer">Customer Portal</a>
+        </div>
       </section>
     </div>
   );
