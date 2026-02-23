@@ -1,0 +1,181 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  DEFAULT_HOME_VIS,
+  readHomeVisibility,
+  writeHomeVisibility,
+  type HomeVisibility,
+} from "../../config/homeVisibility";
+
+function setAllBooleans(obj: any, value: boolean) {
+  const out: any = Array.isArray(obj) ? [...obj] : { ...obj };
+  for (const k of Object.keys(out)) {
+    if (typeof out[k] === "boolean") out[k] = value;
+    else if (out[k] && typeof out[k] === "object") out[k] = setAllBooleans(out[k], value);
+  }
+  return out;
+}
+
+export default function AdminHomeVisibility() {
+  const [vis, setVis] = useState<HomeVisibility>(() => {
+    try {
+      return readHomeVisibility();
+    } catch {
+      return DEFAULT_HOME_VIS;
+    }
+  });
+
+  useEffect(() => {
+    writeHomeVisibility(vis);
+  }, [vis]);
+
+  const groups = useMemo(
+    () => [
+      {
+        title: "Hero / Splash",
+        desc: "Top hero section on Home (logo, headline, lead, CTAs, and trust cards).",
+        keys: [
+          { path: ["hero"], label: "Hero section (entire block)" },
+        ],
+      },
+      {
+        title: "Hero Buttons (CTAs)",
+        desc: "Buttons inside the hero section.",
+        keys: [
+          { path: ["heroCtas", "browseServices"], label: "Browse Services →" },
+          { path: ["heroCtas", "scheduleRequest"], label: "Schedule / Request" },
+          { path: ["heroCtas", "customBuilds"], label: "Custom Builds" },
+          { path: ["heroCtas", "stayLit"], label: "Stay Lit Candle Co. ✨" },
+        ],
+      },
+      {
+        title: "Hero Cards (under CTAs)",
+        desc: "The 4 quick feature cards under the hero buttons.",
+        keys: [
+          { path: ["heroCards", "clearPricing"], label: "Clear pricing" },
+          { path: ["heroCards", "fastScheduling"], label: "Fast scheduling" },
+          { path: ["heroCards", "qualityWork"], label: "Quality work" },
+          { path: ["heroCards", "stayLitInside"], label: "Stay Lit inside" },
+        ],
+      },
+      {
+        title: "Two-Panel Splash",
+        desc: "The split section (Left: Services, Right: Stay Lit).",
+        keys: [
+          { path: ["twoPanelSplash"], label: "Two-panel section (entire block)" },
+        ],
+      },
+      {
+        title: "Two-Panel Left Buttons (Services side)",
+        desc: "Buttons on the left panel (Roberts Ventures).",
+        keys: [
+          { path: ["twoPanelLeftButtons", "viewCatalog"], label: "View Catalog" },
+          { path: ["twoPanelLeftButtons", "customBuilds"], label: "Custom Builds" },
+          { path: ["twoPanelLeftButtons", "goToSchedule"], label: "Go to Schedule" },
+          { path: ["twoPanelLeftButtons", "contact"], label: "Contact" },
+        ],
+      },
+      {
+        title: "Two-Panel Right Buttons (Stay Lit side)",
+        desc: "Buttons on the right panel (Stay Lit).",
+        keys: [
+          { path: ["twoPanelRightButtons", "enterStayLit"], label: "Enter Stay Lit" },
+          { path: ["twoPanelRightButtons", "backToServices"], label: "Back to Services" },
+          { path: ["twoPanelRightComingSoon"], label: "Coming soon panel" },
+        ],
+      },
+    ],
+    []
+  );
+
+  function getAtPath(path: (string)[]) {
+    let cur: any = vis;
+    for (const p of path) cur = cur?.[p];
+    return cur;
+  }
+
+  function togglePath(path: string[]) {
+    setVis((prev) => {
+      const next: any = structuredClone(prev);
+      let cur: any = next;
+      for (let i = 0; i < path.length - 1; i++) cur = cur[path[i]];
+      const last = path[path.length - 1];
+      cur[last] = !cur[last];
+      return next;
+    });
+  }
+
+  return (
+    <div className="stack page" style={{ gap: 14, maxWidth: 980, margin: "0 auto" }}>
+      <section className="panel card" style={{ display: "grid", gap: 10 }}>
+        <div className="h2" style={{ margin: 0 }}>Home Page Visibility</div>
+        <div className="muted" style={{ fontWeight: 850 }}>
+          Toggle Home sections/buttons/cards on/off. Re-enabled items automatically render back in their original spot.
+        </div>
+        <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ fontWeight: 950 }}
+            onClick={() => setVis((prev) => setAllBooleans(prev, false))}
+          >
+            Hide ALL Home UI
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ fontWeight: 950 }}
+            onClick={() => setVis(() => JSON.parse(JSON.stringify(DEFAULT_HOME_VIS)))}
+          >
+            Show ALL Home UI
+          </button>
+        </div>
+      </section>
+
+      {groups.map((g) => (
+        <section key={g.title} className="panel card" style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gap: 6 }}>
+            <div className="h3" style={{ margin: 0 }}>{g.title}</div>
+            <div className="muted" style={{ fontWeight: 850 }}>{g.desc}</div>
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {g.keys.map((it) => {
+              const enabled = Boolean(getAtPath(it.path as any));
+              return (
+                <div
+                  key={it.path.join(".")}
+                  className="panel"
+                  style={{
+                    padding: 12,
+                    borderRadius: 14,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ display: "grid", gap: 4 }}>
+                    <div style={{ fontWeight: 950, color: "#0f172a" }}>{it.label}</div>
+                    <div className="muted" style={{ fontWeight: 850 }}>
+                      Key: <code>{it.path.join(".")}</code>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={enabled ? "btn btn-primary" : "btn btn-ghost"}
+                    onClick={() => togglePath(it.path as any)}
+                    style={{ fontWeight: 950, minWidth: 120 }}
+                    title={enabled ? "Click to hide" : "Click to show"}
+                  >
+                    {enabled ? "Visible" : "Hidden"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}

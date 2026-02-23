@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import AdminBackToDashboard from "./AdminBackToDashboard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_VIS,
@@ -127,7 +126,6 @@ export default function AdminNavbar() {
 
   return (
     <div className="stack page" style={{ gap: 14, maxWidth: 980, margin: "0 auto" }}>
-      <AdminBackToDashboard />
       <div style={{ display: "flex", justifyContent: "flex-start" }}>
         <Link
           to="/admin"

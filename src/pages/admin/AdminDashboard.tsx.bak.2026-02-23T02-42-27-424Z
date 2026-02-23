@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "../../lib/toast";
 import { clearAdminAuthed } from "../../admin/adminAuth";
-import AdminBackToDashboard from "./AdminBackToDashboard";
 
 type CartItem = { serviceId: string; qty: number; note: string };
 
@@ -302,8 +301,6 @@ export default function AdminDashboard() {
   // ------------------------
   return (
     <div className="stack page">
-      <AdminBackToDashboard />
-
 
       {/* Quick Admin Controls */}
       <section className="panel card" style={{ display: "grid", gap: 10 }}>

@@ -4,7 +4,7 @@ import AdminGuard from "./admin/AdminGuard";
 import useThemeMode from "./hooks/useThemeMode";
 import SubNavbar from "./components/SubNavbar";
 
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ScrollToTop from "./components/ScrollToTop";
 import Footer from "./components/Footer";
@@ -126,9 +126,7 @@ export default function App() {
           <Route path="/builds/portal" element={<BuildPortal />} />
           <Route path="/builds/:id" element={<BuildPreview />} />
           <Route path="/builds/confirmed/:id" element={<BuildConfirmed />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
-
+<Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"
             element={
@@ -138,17 +136,16 @@ export default function App() {
             }
           />
 
-          {/* Canonical Navbar Toggles route */}
+          
+          
           <Route
-            path="/admin/navbar"
+            path="/admin/navbar-visibility"
             element={
               <AdminGuard>
                 <AdminNavbar />
               </AdminGuard>
             }
           />
-          {/* Back-compat redirect */}
-          <Route path="/admin/navbar-visibility" element={<Navigate to="/admin/navbar" replace />} />
 
           <Route
             path="/admin/home-visibility"
@@ -158,8 +155,7 @@ export default function App() {
               </AdminGuard>
             }
           />
-
-          <Route
+<Route
             path="/admin/builds"
             element={
               <AdminGuard>
@@ -167,7 +163,6 @@ export default function App() {
               </AdminGuard>
             }
           />
-
           <Route
             path="/admin/builds/:id"
             element={
@@ -176,20 +171,10 @@ export default function App() {
               </AdminGuard>
             }
           />
-
-          <Route
-            path="/admin/maintenance"
-            element={
-              <AdminGuard>
-                <AdminRoute>
-                  <MaintenanceDashboardPage />
-                </AdminRoute>
-              </AdminGuard>
-            }
-          />
-
 {/* IMPORTANT: keep this ABOVE the catch-all 404 route */}
           <Route path="/request-confirmed/:id" element={<RequestConfirmed />} />
+
+          <Route path="/admin/home-visibility" element={<AdminGuard><AdminRoute><AdminHomeVisibility /></AdminRoute></AdminGuard>} />
           <Route
             path="*"
             element={
@@ -206,6 +191,7 @@ export default function App() {
             }
           />
           <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>}  />
+  <Route path="/admin/navbar" element={<AdminNavbar />} />
 </Routes>
       </main>
 
