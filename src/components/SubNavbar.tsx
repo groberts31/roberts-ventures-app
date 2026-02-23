@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useNavVisibility } from "../config/navVisibility";
 
 const subLinkStyle = ({ isActive }: { isActive: boolean }) => ({
   textDecoration: "none",
@@ -12,6 +13,8 @@ const subLinkStyle = ({ isActive }: { isActive: boolean }) => ({
 });
 
 export default function SubNavbar() {
+  const navVis = useNavVisibility();
+
   return (
     <div
       className="staylit-subnav"
@@ -34,12 +37,13 @@ export default function SubNavbar() {
           flexWrap: "wrap",
         }}
       >
-        <NavLink to="/about" style={subLinkStyle}>About</NavLink>
-        <NavLink to="/portfolio" style={subLinkStyle}>Portfolio</NavLink>
-        <NavLink to="/reviews" style={subLinkStyle}>Reviews</NavLink>
-        <NavLink to="/faq" style={subLinkStyle}>FAQ</NavLink>
-        <NavLink to="/service-area" style={subLinkStyle}>Service Area</NavLink>
-        <NavLink to="/policies" style={subLinkStyle}>Policies</NavLink>
+        {navVis.sub.about && <NavLink to="/about" style={subLinkStyle}>About</NavLink>}
+        {navVis.sub.portfolio && <NavLink to="/portfolio" style={subLinkStyle}>Portfolio</NavLink>}
+        {navVis.sub.reviews && <NavLink to="/reviews" style={subLinkStyle}>Reviews</NavLink>}
+        {navVis.sub.faq && <NavLink to="/faq" style={subLinkStyle}>FAQ</NavLink>}
+        {navVis.sub.serviceArea && <NavLink to="/service-area" style={subLinkStyle}>Service Area</NavLink>}
+        {navVis.sub.policies && <NavLink to="/policies" style={subLinkStyle}>Policies</NavLink>}
+        {navVis.sub.profile && <NavLink to="/customer" style={subLinkStyle}>Profile</NavLink>}
       </div>
     </div>
   );
