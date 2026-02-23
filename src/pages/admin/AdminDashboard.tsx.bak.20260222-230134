@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "../../lib/toast";
 import { clearAdminAuthed } from "../../admin/adminAuth";
+import AdminBackToDashboard from "./AdminBackToDashboard";
+
 type CartItem = { serviceId: string; qty: number; note: string };
 
 type QuoteLine = {
@@ -300,7 +302,10 @@ export default function AdminDashboard() {
   // ------------------------
   return (
     <div className="stack page">
-{/* Quick Admin Controls */}
+      <AdminBackToDashboard />
+
+
+      {/* Quick Admin Controls */}
       <section className="panel card" style={{ display: "grid", gap: 10 }}>
         <div className="h3" style={{ margin: 0 }}>Site Visibility Controls</div>
         <div className="muted" style={{ fontWeight: 850 }}>
@@ -311,14 +316,8 @@ export default function AdminDashboard() {
             Navbar Toggles
           </Link>
           <Link className="btn btn-primary" to="/admin/home-visibility" style={{ fontWeight: 950 }}>
-              Home Page Toggles
-            </Link>
-
-            <Link className="btn btn-primary" to="/admin/catalog" style={{ fontWeight: 950 }}>
-              Catalog Manager
-            </Link>
-
-            
+            Home Page Toggles
+          </Link>
         </div>
       </section>
       <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto" }}>

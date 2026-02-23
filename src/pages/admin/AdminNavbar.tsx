@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-import AdminBackToDashboard from "./AdminBackToDashboard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_VIS,
@@ -127,16 +125,8 @@ export default function AdminNavbar() {
 
   return (
     <div className="stack page" style={{ gap: 14, maxWidth: 980, margin: "0 auto" }}>
-      <AdminBackToDashboard />
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
-        <Link
-          to="/admin"
-          className="btn btn-ghost"
-          style={{ fontWeight: 950, width: "fit-content" }}
-        >
-          ← Admin Dashboard
-        </Link>
-      </div>
+<div style={{ display: "flex", justifyContent: "flex-start" }}>
+</div>
 
       <section className="panel card" style={{ display: "grid", gap: 10 }}>
         <div className="h2" style={{ margin: 0 }}>Navbar Visibility</div>

@@ -5,7 +5,6 @@ import { buildsRemoteEnabled, subscribeBuildsRemote, bulkDeleteRemote, bulkStatu
 import { toast } from "../../lib/toast";
 import { syncBuildsFromRemote } from "../../lib/buildsSync";
 import { readSyncStatus, clearSyncStatus } from "../../lib/buildsSyncStatus";
-import AdminBackToDashboard from "./AdminBackToDashboard";
 function safe(s: any) {
   return String(s || "").toLowerCase();
 }
@@ -214,9 +213,7 @@ export default function AdminBuilds() {
 
   return (
     <div className="stack page" style={{ gap: 16 }}>
-      <AdminBackToDashboard />
-
-      <section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
+<section className="panel card card-center" style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "grid", gap: 6 }}>
             <div className="panel" style={{ marginTop: 10, padding: 12, borderRadius: 12 }}>

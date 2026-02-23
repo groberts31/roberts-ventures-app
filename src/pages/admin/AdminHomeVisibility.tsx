@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import AdminBackToDashboard from "./AdminBackToDashboard";
-
 /**
  * Admin Home Visibility Controls
  * - Uses the shared homeVisibility config (whatever it exports)
@@ -82,9 +80,7 @@ export default function AdminHomeVisibility() {
   return (
     <div className="stack page" style={{ gap: 14, maxWidth: 980, margin: "0 auto" }}>
       {/* Back button (requested on all admin pages) */}
-      <AdminBackToDashboard />
-
-      <section className="panel card" style={{ display: "grid", gap: 10 }}>
+<section className="panel card" style={{ display: "grid", gap: 10 }}>
         <div className="h2" style={{ margin: 0 }}>Home Page Visibility</div>
         <div className="muted" style={{ fontWeight: 850 }}>
           Toggle what shows on the Home page (splash/hero, CTA buttons, and sections/cards below).

@@ -4,7 +4,7 @@ import AdminGuard from "./admin/AdminGuard";
 import useThemeMode from "./hooks/useThemeMode";
 import SubNavbar from "./components/SubNavbar";
 
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ScrollToTop from "./components/ScrollToTop";
 import Footer from "./components/Footer";
@@ -45,6 +45,7 @@ import MaintenanceDashboardPage from "./pages/admin/MaintenanceDashboardPage";
 import AdminRoute from "./components/AdminRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminHomeVisibility from "./pages/admin/AdminHomeVisibility";
+import AdminCatalog from "./pages/admin/AdminCatalog";
 
 export default function App() {
   const location = useLocation();
@@ -99,113 +100,65 @@ export default function App() {
         }}
       >
         <Routes>
-          
-        <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
-<Route path="/" element={<Home />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/services/:id" element={<ServiceDetail />} />
-          <Route path="/schedule" element={<Schedule />} />
-          <Route path="/staylit/*" element={<StayLit />} />
-          <Route path="/contact" element={<Contact />} />
+  {/* Public / customer routes */}
+  <Route path="/" element={<Home />} />
+  <Route path="/services" element={<Services />} />
+  <Route path="/services/:id" element={<ServiceDetail />} />
+  <Route path="/schedule" element={<Schedule />} />
+  <Route path="/staylit/*" element={<StayLit />} />
+  <Route path="/contact" element={<Contact />} />
 
-          <Route path="/about" element={<About />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/reviews" element={<Reviews />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/service-area" element={<ServiceArea />} />
-          <Route path="/policies" element={<Policies />} />
-          <Route path="/requests" element={<Requests />} />
+  <Route path="/about" element={<About />} />
+  <Route path="/portfolio" element={<Portfolio />} />
+  <Route path="/reviews" element={<Reviews />} />
+  <Route path="/faq" element={<FAQ />} />
+  <Route path="/service-area" element={<ServiceArea />} />
+  <Route path="/policies" element={<Policies />} />
+  <Route path="/requests" element={<Requests />} />
 
-          <Route path="/customer" element={<CustomerPortal />} />
-          <Route path="/customer/requests/:id" element={<CustomerRequestDetail />} />
+  <Route path="/customer" element={<CustomerPortal />} />
+  <Route path="/customer/requests/:id" element={<CustomerRequestDetail />} />
 
-          
-          {/* Custom Builds (customer) */}
-          <Route path="/builds" element={<Builds />} />
-          <Route path="/builds/new" element={<BuildDesigner />} />
-          <Route path="/builds/portal" element={<BuildPortal />} />
-          <Route path="/builds/:id" element={<BuildPreview />} />
-          <Route path="/builds/confirmed/:id" element={<BuildConfirmed />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
+  {/* Custom Builds (customer) */}
+  <Route path="/builds" element={<Builds />} />
+  <Route path="/builds/new" element={<BuildDesigner />} />
+  <Route path="/builds/portal" element={<BuildPortal />} />
+  <Route path="/builds/:id" element={<BuildPreview />} />
+  <Route path="/builds/confirmed/:id" element={<BuildConfirmed />} />
 
-          <Route
-            path="/admin"
-            element={
-              <AdminGuard>
-                <AdminDashboard />
-              </AdminGuard>
-            }
-          />
+  {/* IMPORTANT: keep this ABOVE the catch-all 404 route */}
+  <Route path="/request-confirmed/:id" element={<RequestConfirmed />} />
 
-          {/* Canonical Navbar Toggles route */}
-          <Route
-            path="/admin/navbar"
-            element={
-              <AdminGuard>
-                <AdminNavbar />
-              </AdminGuard>
-            }
-          />
-          {/* Back-compat redirect */}
-          <Route path="/admin/navbar-visibility" element={<Navigate to="/admin/navbar" replace />} />
+  {/* Admin auth (ONLY public admin route) */}
+  <Route path="/admin/login" element={<AdminLogin />} />
 
-          <Route
-            path="/admin/home-visibility"
-            element={
-              <AdminGuard>
-                <AdminHomeVisibility />
-              </AdminGuard>
-            }
-          />
+  {/* Admin routes (GUARDED) */}
+  <Route path="/admin/logout" element={<AdminGuard><AdminLogout /></AdminGuard>} />
+  <Route path="/admin" element={<AdminGuard><AdminRoute><AdminDashboard /></AdminRoute></AdminGuard>} />
+  <Route path="/admin/navbar" element={<AdminGuard><AdminRoute><AdminNavbar /></AdminRoute></AdminGuard>} />
+  <Route path="/admin/navbar-visibility" element={<AdminGuard><Navigate to="/admin/navbar" replace /></AdminGuard>} />
+  <Route path="/admin/home-visibility" element={<AdminGuard><AdminRoute><AdminHomeVisibility /></AdminRoute></AdminGuard>} />
+  <Route path="/admin/catalog" element={<AdminGuard><AdminRoute><AdminCatalog /></AdminRoute></AdminGuard>} />
+  <Route path="/admin/builds" element={<AdminGuard><AdminRoute><AdminBuilds /></AdminRoute></AdminGuard>} />
+  <Route path="/admin/builds/:id" element={<AdminGuard><AdminRoute><AdminBuildDetail /></AdminRoute></AdminGuard>} />
+  <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>} />
 
-          <Route
-            path="/admin/builds"
-            element={
-              <AdminGuard>
-                <AdminBuilds />
-              </AdminGuard>
-            }
-          />
-
-          <Route
-            path="/admin/builds/:id"
-            element={
-              <AdminGuard>
-                <AdminBuildDetail />
-              </AdminGuard>
-            }
-          />
-
-          <Route
-            path="/admin/maintenance"
-            element={
-              <AdminGuard>
-                <AdminRoute>
-                  <MaintenanceDashboardPage />
-                </AdminRoute>
-              </AdminGuard>
-            }
-          />
-
-{/* IMPORTANT: keep this ABOVE the catch-all 404 route */}
-          <Route path="/request-confirmed/:id" element={<RequestConfirmed />} />
-          <Route
-            path="*"
-            element={
-              <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-                <h1 style={{ fontWeight: 950, margin: 0 }}>Page not found (404)</h1>
-                <p style={{ marginTop: 10, fontWeight: 800, opacity: 0.9 }}>
-                  If you expected Admin to load, this can mean the route is missing or the app is not wrapped in
-                  BrowserRouter.
-                </p>
-                <p style={{ marginTop: 10, fontWeight: 900 }}>
-                  Try: <code>/admin/login</code> then <code>/admin</code>
-                </p>
-              </div>
-            }
-          />
-          <Route path="/admin/maintenance" element={<AdminGuard><AdminRoute><MaintenanceDashboardPage /></AdminRoute></AdminGuard>}  />
+  {/* 404 */}
+  <Route
+    path="*"
+    element={
+      <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+        <h1 style={{ fontWeight: 950, margin: 0 }}>Page not found (404)</h1>
+        <p style={{ marginTop: 10, fontWeight: 800, opacity: 0.9 }}>
+          If you expected Admin to load, this can mean the route is missing or the app is not wrapped in
+          BrowserRouter.
+        </p>
+        <p style={{ marginTop: 10, fontWeight: 900 }}>
+          Try: <code>/admin/login</code> then <code>/admin</code>
+        </p>
+      </div>
+    }
+  />
 </Routes>
       </main>
 

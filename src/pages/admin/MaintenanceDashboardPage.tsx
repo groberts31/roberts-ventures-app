@@ -1,9 +1,6 @@
 import React from "react";
 import { readBackupEvents, clearBackupEvents } from "../../lib/backupStore";
 import { backupNow, restoreFromCloud, backupRemoteEnabled, exportLocalBuilds } from "../../lib/backupManager";
-import AdminBackToDashboard from "./AdminBackToDashboard";
-
-
 function fmt(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -207,9 +204,7 @@ export default function MaintenanceDashboardPage() {
 
   return (
     <div className="page" style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 16px" }}>
-      <AdminBackToDashboard />
-
-      <div className="stack">
+<div className="stack">
         <div className="panel card">
           <div className="stack">
             <div className="h2">Admin • Maintenance Dashboard</div>

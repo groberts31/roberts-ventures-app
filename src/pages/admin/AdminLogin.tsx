@@ -2,8 +2,6 @@ import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { adminSignIn } from "../../admin/adminAuth";
 import { toast } from "../../lib/toast";
-import AdminBackToDashboard from "./AdminBackToDashboard";
-
 type LocState = { from?: string };
 
 export default function AdminLogin() {
@@ -46,9 +44,7 @@ export default function AdminLogin() {
 
   return (
     <div className="panel card card-center" style={{ maxWidth: 720, margin: "0 auto", padding: 18 }}>
-      <AdminBackToDashboard />
-
-      <div className="stack" style={{ gap: 12 }}>
+<div className="stack" style={{ gap: 12 }}>
         <div className="h2" style={{ margin: 0 }}>Admin Login</div>
 
         <div className="muted" style={{ fontWeight: 850 }}>

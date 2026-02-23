@@ -5,8 +5,6 @@ import { syncBuildsFromRemote } from "../../lib/buildsSync";
 import { getBuild, upsertBuild, removeLastCustomerNote, compileNotes, type BuildSubmission } from "../../lib/buildsStore";
 import { estimateBuild } from "../../lib/buildPricing";
 import { toast } from "../../lib/toast";
-import AdminBackToDashboard from "./AdminBackToDashboard";
-
 function fmt(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -50,9 +48,7 @@ export default function AdminBuildDetail() {
   if (!build || !v) {
     return (
       <div className="panel card card-center" style={{ maxWidth: 980, margin: "0 auto" }}>
-      <AdminBackToDashboard />
-
-        <h3 className="h3">Build not found</h3>
+<h3 className="h3">Build not found</h3>
         <Link className="btn btn-primary" to="/admin/builds">Back</Link>
       </div>
     );
