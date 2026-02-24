@@ -117,9 +117,8 @@ export default function Home() {
             </p>
 
             {/* CTA buttons */}
-            {ctas && (
-              <div
-                className="row"
+            <div
+              className="row"
               style={{
                 gap: 10,
                 flexWrap: "wrap",
@@ -180,13 +179,11 @@ export default function Home() {
                   Stay Lit Candle Co. ✨
                 </Link>
               )}
-                          </div>
-            )}
+            </div>
 
             {/* Quick trust/feature cards */}
-            {quickCards && (
-              <div
-                style={{
+            <div
+              style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
                 gap: 10,
@@ -229,8 +226,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              </div>
-            )}
+            </div>
           </div>
         </section>
       )}

@@ -6,27 +6,6 @@ import { clearAdminAuthed } from "../../admin/adminAuth";
 type AdminDashUI = { showHomeTogglesBtn: boolean };
 
 const ADMIN_DASH_UI_KEY = "rv_admin_dashboard_ui_v1";
-
-function readAdminDashUI(): AdminDashUI {
-  try {
-    const raw = localStorage.getItem(ADMIN_DASH_UI_KEY);
-    if (!raw) return { showHomeTogglesBtn: true };
-    const v: any = JSON.parse(raw);
-    // default ON unless explicitly set to false
-    return { showHomeTogglesBtn: v?.showHomeTogglesBtn !== false };
-  } catch {
-    return { showHomeTogglesBtn: true };
-  }
-}
-
-function writeAdminDashUI(v: AdminDashUI) {
-  try {
-    localStorage.setItem(ADMIN_DASH_UI_KEY, JSON.stringify(v));
-  } catch {
-    // ignore storage errors
-  }
-}
-
 type CartItem = { serviceId: string; qty: number; note: string };
 
 type QuoteLine = {

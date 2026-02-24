@@ -10,10 +10,8 @@ const ADMIN_DASH_UI_KEY = "rv_admin_dashboard_ui_v1";
 function readAdminDashUI(): AdminDashUI {
   try {
     const raw = localStorage.getItem(ADMIN_DASH_UI_KEY);
-    if (!raw) return { showHomeTogglesBtn: true };
-    const v: any = JSON.parse(raw);
-    // default ON unless explicitly set to false
-    return { showHomeTogglesBtn: v?.showHomeTogglesBtn !== false };
+    const parsed = raw ? JSON.parse(raw) : null;
+    return { showHomeTogglesBtn: parsed?.showHomeTogglesBtn ?? true };
   } catch {
     return { showHomeTogglesBtn: true };
   }
@@ -23,9 +21,10 @@ function writeAdminDashUI(v: AdminDashUI) {
   try {
     localStorage.setItem(ADMIN_DASH_UI_KEY, JSON.stringify(v));
   } catch {
-    // ignore storage errors
+    // ignore
   }
 }
+
 
 type CartItem = { serviceId: string; qty: number; note: string };
 
@@ -104,13 +103,12 @@ function badgeStyle(status: string) {
 }
 
 export default function AdminDashboard() {
-
-  
   const [dashUI, setDashUI] = useState<AdminDashUI>(() => readAdminDashUI());
 
   useEffect(() => {
     writeAdminDashUI(dashUI);
   }, [dashUI]);
+
   const [reqs, setReqs] = useState<RequestRecord[]>([]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "new" | "in_progress" | "complete">("all");
@@ -342,26 +340,26 @@ export default function AdminDashboard() {
           <Link className="btn btn-primary" to="/admin/navbar" style={{ fontWeight: 950 }}>
             Navbar Toggles
           </Link>
-
+          
           {dashUI.showHomeTogglesBtn && (
             <Link className="btn btn-primary" to="/admin/home-visibility" style={{ fontWeight: 950 }}>
               Home Page Toggles
             </Link>
           )}
+{dashUI.showHomeTogglesBtn && (
+)}
+<button
+  type="button"
+  className={dashUI.showHomeTogglesBtn ? "btn btn-ghost" : "btn btn-primary"}
+  style={{ fontWeight: 950 }}
+  onClick={()=>setDashUI(p=>({...p,showHomeTogglesBtn:!p.showHomeTogglesBtn}))}
+>
+  {dashUI.showHomeTogglesBtn ? "Hide Home Toggles Button" : "Show Home Toggles Button"}
+</button>
 
-          <button
-            type="button"
-            className={dashUI.showHomeTogglesBtn ? "btn btn-ghost" : "btn btn-primary"}
-            onClick={() => setDashUI((p) => ({ ...p, showHomeTogglesBtn: !p.showHomeTogglesBtn }))}
-            style={{ fontWeight: 950 }}
-            title="Show/hide the Home Page Toggles button on this dashboard"
-          >
-            {dashUI.showHomeTogglesBtn ? "Hide Home Toggles Button" : "Show Home Toggles Button"}
-          </button>
-
-          <Link className="btn btn-primary" to="/admin/catalog" style={{ fontWeight: 950 }}>
-            Catalog Manager
-          </Link>
+            <Link className="btn btn-primary" to="/admin/catalog" style={{ fontWeight: 950 }}>
+              Catalog Manager
+            </Link>
 
             
         </div>

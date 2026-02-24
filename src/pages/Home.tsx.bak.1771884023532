@@ -7,8 +7,6 @@ export default function Home() {
 
   // Safe fallbacks (if the config doesn’t have these yet, default to visible)
   const splash = vis?.splash ?? true;
-  const ctas = vis?.ctas ?? true;
-  const quickCards = vis?.quickCards ?? true;
   const twoPanelSplash = vis?.twoPanelSplash ?? true;
 
   const heroCtas = vis?.heroCtas ?? {};
@@ -117,9 +115,8 @@ export default function Home() {
             </p>
 
             {/* CTA buttons */}
-            {ctas && (
-              <div
-                className="row"
+            <div
+              className="row"
               style={{
                 gap: 10,
                 flexWrap: "wrap",
@@ -180,13 +177,11 @@ export default function Home() {
                   Stay Lit Candle Co. ✨
                 </Link>
               )}
-                          </div>
-            )}
+            </div>
 
             {/* Quick trust/feature cards */}
-            {quickCards && (
-              <div
-                style={{
+            <div
+              style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
                 gap: 10,
@@ -229,8 +224,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              </div>
-            )}
+            </div>
           </div>
         </section>
       )}
