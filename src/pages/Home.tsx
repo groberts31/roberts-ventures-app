@@ -1,10 +1,41 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import rvLogo from "../assets/roberts-ventures-logo.png";
 import { useHomeVisibility } from "../config/homeVisibility";
 
 export default function Home() {
+  const ADMIN_DASH_UI_KEY = "rv_admin_dashboard_ui_v1";
   const vis: any = useHomeVisibility();
+  const [showHomeAdminLink, setShowHomeAdminLink] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(ADMIN_DASH_UI_KEY);
+      if (!raw) return false;
+      const v: any = JSON.parse(raw);
+      return v?.showHomeAdminLink === true;
+    } catch {
+      return false;
+    }
+  });
 
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const raw = localStorage.getItem(ADMIN_DASH_UI_KEY);
+        if (!raw) return setShowHomeAdminLink(false);
+        const v: any = JSON.parse(raw);
+        setShowHomeAdminLink(v?.showHomeAdminLink === true);
+      } catch {
+        setShowHomeAdminLink(false);
+      }
+    };
+
+    window.addEventListener("storage", sync);
+    window.addEventListener("rv_admin_dashboard_ui_changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("rv_admin_dashboard_ui_changed", sync);
+    };
+  }, []);
   // Safe fallbacks (if the config doesn’t have these yet, default to visible)
   const splash = vis?.splash ?? true;
   const ctas = vis?.ctas ?? true;
@@ -85,6 +116,23 @@ export default function Home() {
             <div className="badge" style={{ width: "fit-content" }}>
               Roberts Ventures LLC
             </div>
+
+            {showHomeAdminLink && (
+              <Link
+                to="/admin/login"
+                className="btn btn-ghost"
+                style={{
+                  padding: "8px 14px",
+                  fontWeight: 950,
+                  textDecoration: "none",
+                  border: "1px solid rgba(148,163,184,0.22)",
+                  background: "rgba(255,255,255,0.06)",
+                }}
+                title="Admin login"
+              >
+                Admin
+              </Link>
+            )}
 
             <h1
               className="h1"

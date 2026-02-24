@@ -3,26 +3,27 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "../../lib/toast";
 import { clearAdminAuthed } from "../../admin/adminAuth";
 /** Admin Dashboard UI Visibility (localStorage) */
-type AdminDashUI = { showHomeTogglesBtn: boolean };
+type AdminDashUI = { showHomeTogglesBtn: boolean; showHomeAdminLink: boolean };
 
 const ADMIN_DASH_UI_KEY = "rv_admin_dashboard_ui_v1";
 
 function readAdminDashUI(): AdminDashUI {
   try {
     const raw = localStorage.getItem(ADMIN_DASH_UI_KEY);
-    if (!raw) return { showHomeTogglesBtn: true };
+    if (!raw) return { showHomeTogglesBtn: true, showHomeAdminLink: false };
     const v: any = JSON.parse(raw);
     // default ON unless explicitly set to false
-    return { showHomeTogglesBtn: v?.showHomeTogglesBtn !== false };
+    return { showHomeTogglesBtn: v?.showHomeTogglesBtn !== false, showHomeAdminLink: v?.showHomeAdminLink === true };
   } catch {
-    return { showHomeTogglesBtn: true };
+    return { showHomeTogglesBtn: true, showHomeAdminLink: false };
   }
 }
 
 function writeAdminDashUI(v: AdminDashUI) {
   try {
     localStorage.setItem(ADMIN_DASH_UI_KEY, JSON.stringify(v));
-  } catch {
+    window.dispatchEvent(new Event("rv_admin_dashboard_ui_changed"));
+} catch {
     // ignore storage errors
   }
 }
