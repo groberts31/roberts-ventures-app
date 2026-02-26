@@ -2,10 +2,32 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "../../lib/toast";
 import { clearAdminAuthed } from "../../admin/adminAuth";
+import { listRequestsFromCloud } from "../../lib/cloudRequests";
 /** Admin Dashboard UI Visibility (localStorage) */
 type AdminDashUI = { showHomeTogglesBtn: boolean; showHomeAdminLink: boolean };
 
 const ADMIN_DASH_UI_KEY = "rv_admin_dashboard_ui_v1";
+
+type CloudLookup = { phone: string; accessCode: string };
+const CLOUD_LOOKUP_KEY = "rv_admin_cloud_lookup_v1";
+
+function readCloudLookup(): CloudLookup {
+  try {
+    const raw = localStorage.getItem(CLOUD_LOOKUP_KEY);
+    if (!raw) return { phone: "", accessCode: "" };
+    const v: any = JSON.parse(raw);
+    return { phone: String(v?.phone ?? ""), accessCode: String(v?.accessCode ?? "") };
+  } catch {
+    return { phone: "", accessCode: "" };
+  }
+}
+
+function writeCloudLookup(v: CloudLookup) {
+  try {
+    localStorage.setItem(CLOUD_LOOKUP_KEY, JSON.stringify(v));
+  } catch {}
+}
+
 
 function readAdminDashUI(): AdminDashUI {
   try {
@@ -109,9 +131,16 @@ export default function AdminDashboard() {
   
   const [dashUI, setDashUI] = useState<AdminDashUI>(() => readAdminDashUI());
 
+  const [cloudLookup, setCloudLookup] = useState<CloudLookup>(() => readCloudLookup());
+
+  const [cloudMode, setCloudMode] = useState(false);
+  const [cloudBusy, setCloudBusy] = useState(false);
+
+
   useEffect(() => {
     writeAdminDashUI(dashUI);
-  }, [dashUI]);
+    writeCloudLookup(cloudLookup);
+  }, [dashUI, cloudLookup]);
   const [reqs, setReqs] = useState<RequestRecord[]>([]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "new" | "in_progress" | "complete">("all");
@@ -119,9 +148,47 @@ export default function AdminDashboard() {
   // which request has the quote panel open
   const [openQuoteKey, setOpenQuoteKey] = useState<string | null>(null);
 
-  function refresh() {
-    setReqs(readRequests());
+  
+function refreshLocal() {
+  setReqs(readRequests());
+}
+
+async function refreshCloud() {
+  if (cloudBusy) return;
+
+  const phone = String(cloudLookup.phone || "").trim();
+  const accessCode = String(cloudLookup.accessCode || "").trim();
+
+  if (!phone || !accessCode) {
+    toast("Enter customer phone + access code.", "warning", "Cloud Requests", 2600);
+    return;
   }
+
+  setCloudBusy(true);
+  try {
+    const res = await listRequestsFromCloud({ phone, accessCode });
+    if (!res.ok) {
+      toast("Cloud load failed.", "warning", "Cloud Requests", 3000);
+      return;
+    }
+
+    const next = (res.requests || []).map((r: any) => ({ ...r, status: safeStatus(r?.status) }));
+    setReqs(next);
+    setCloudMode(true);
+    toast(`Loaded ${next.length} request(s).`, "success", "Cloud Requests", 2000);
+  } finally {
+    setCloudBusy(false);
+  }
+}
+
+function refresh() {
+  if (cloudMode) {
+    void refreshCloud();
+  } else {
+    refreshLocal();
+  }
+}
+
 
   useEffect(() => {
     refresh();
@@ -157,7 +224,7 @@ export default function AdminDashboard() {
     if (!next[index]) return;
     next[index] = updater(next[index]);
     setReqs(next);
-    writeRequests(next);
+    if (!cloudMode) writeRequests(next);
   }
 
   function setStatus(index: number, status: "new" | "in_progress" | "complete") {
@@ -166,6 +233,10 @@ export default function AdminDashboard() {
   }
 
   function clearAll() {
+    if (cloudMode) {
+      toast("Cloud mode is ON. Switch to Local to clear browser-stored requests.", "warning", "Cloud Requests", 2600);
+      return;
+    }
     if (!confirm("Delete ALL saved requests from this browser? This cannot be undone.")) return;
     localStorage.setItem(KEY, "[]");
     refresh();
@@ -333,9 +404,116 @@ export default function AdminDashboard() {
   // ------------------------
   return (
     <div className="stack page">
-{/* Quick Admin Controls */}
+{/* Quick Admin Controls
+        <div className="panel" style={{ padding: 12, borderRadius: 14, marginTop: 8, display: "grid", gap: 10 }}>
+          <div style={{ fontWeight: 950 }}>Cloud Requests (Firestore)</div>
+
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+            <input
+              className="field"
+              placeholder="Customer phone"
+              value={cloudLookup.phone}
+              onChange={(e) => setCloudLookup((p) => ({ ...p, phone: e.target.value }))}
+            />
+
+            <input
+              className="field"
+              placeholder="Access code"
+              value={cloudLookup.accessCode}
+              onChange={(e) => setCloudLookup((p) => ({ ...p, accessCode: e.target.value }))}
+            />
+
+            <button
+              className={cloudMode ? "btn btn-primary" : "btn btn-ghost"}
+              onClick={() => { setCloudMode(true); refreshCloud(); }}
+              disabled={cloudBusy}
+            >
+              {cloudBusy ? "Loading…" : "Load Cloud"}
+            </button>
+
+            <button
+              className={!cloudMode ? "btn btn-primary" : "btn btn-ghost"}
+              onClick={() => { setCloudMode(false); refreshLocal(); }}
+            >
+              Local
+            </button>
+          </div>
+        </div>
+ */}
       <section className="panel card" style={{ display: "grid", gap: 10 }}>
         <div className="h3" style={{ margin: 0 }}>Site Visibility Controls</div>
+        {/* Cloud Requests (Firestore) */}
+        <div className="panel" style={{ padding: 12, borderRadius: 14, display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "grid", gap: 4 }}>
+              <div style={{ fontWeight: 950, color: "#0f172a" }}>Cloud Requests</div>
+              <div className="muted" style={{ fontWeight: 850 }}>
+                Load customer requests from Firestore by Phone + Access Code.
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className={cloudMode ? "btn btn-primary" : "btn btn-ghost"}
+              onClick={() => setCloudMode((v) => !v)}
+              style={{ fontWeight: 950, minWidth: 140 }}
+              title="Toggle between local (this browser) and cloud (Firestore)"
+            >
+              {cloudMode ? "Cloud: ON" : "Cloud: OFF"}
+            </button>
+          </div>
+
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+            <label className="stack" style={{ gap: 6, minWidth: 240, flex: 1 }}>
+              <div style={{ fontWeight: 900 }}>Customer Phone</div>
+              <input
+                className="field"
+                value={cloudLookup.phone}
+                onChange={(e) => setCloudLookup((p) => ({ ...p, phone: e.target.value }))}
+                inputMode="tel"
+                placeholder="(704) 555-1234"
+              />
+            </label>
+
+            <label className="stack" style={{ gap: 6, minWidth: 240, flex: 1 }}>
+              <div style={{ fontWeight: 900 }}>Access Code</div>
+              <input
+                className="field"
+                value={cloudLookup.accessCode}
+                onChange={(e) => setCloudLookup((p) => ({ ...p, accessCode: e.target.value }))}
+                placeholder="e.g. 0625"
+              />
+            </label>
+
+            <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => void refreshCloud()}
+                disabled={cloudBusy}
+                style={{ fontWeight: 950, minWidth: 160 }}
+                title="Loads requests from Firestore for the phone + access code above"
+              >
+                {cloudBusy ? "Loading…" : "Load From Cloud"}
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={refresh}
+                style={{ fontWeight: 950, minWidth: 120 }}
+                title="Refreshes the currently selected mode (local/cloud)"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div className="muted" style={{ fontWeight: 850 }}>
+            Mode: <b>{cloudMode ? "Cloud" : "Local"}</b> · Showing: <b>{reqs.length}</b> request(s)
+          </div>
+        </div>
+
         <div className="muted" style={{ fontWeight: 850 }}>
           Toggle what customers see without redeploying.
         </div>

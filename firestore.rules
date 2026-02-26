@@ -2,114 +2,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isString(x) { return x is string && x.size() > 0; }
-    function isNum(x) { return x is int || x is float; }
-    function isBool(x) { return x is bool; }
-
-    // Minimum validation for an rv_request document.
-    // We "bind" docId to the record by requiring _cloudKey == docId.
-    function isValidRvRequest(data, docId) {
-      return
-        // Doc id + cloud key binding
-        isString(docId) &&
-        isString(data._cloudKey) &&
-        data._cloudKey == docId &&
-
-        // DocId pattern: phoneDigits_accessCode_requestId
-        // phoneDigits: 7-15 digits (covers US + some intl)
-        // accessCode: 6 digits
-        docId.matches('^\\d{7,15}_\\d{6}_.{3,}$') &&
-
-        // Core required fields
-        isString(data.id) &&
-        isString(data.createdAt) &&
-        isString(data.appointmentStart) &&
-
-        // Access code expected (stored in the doc)
-        isString(data.accessCode) &&
-        data.accessCode.matches('^\\d{6}$') &&
-
-        // Customer object
-        (data.customer is map) &&
-        isString(data.customer.name) &&
-        isString(data.customer.phone) &&
-        isString(data.customer.address) &&
-        // notes can be empty but should exist
-        (data.customer.notes is string) &&
-
-        // Items array
-        (data.items is list) &&
-        data.items.size() >= 1 &&
-        // Basic per-item shape checks (MVP)
-        // NOTE: Some Firestore Rules parsers don't support arrow lambdas (=>),
-        // so we validate the first item shape + rely on size caps below.
-        (data.items[0] is map) &&
-        isString(data.items[0].serviceId) &&
-        (data.items[0].qty is int) &&
-        data.items[0].qty >= 1 &&
-        (data.items[0].note is string) &&
-
-        // Photos array (optional but if present must be list)
-        (!('photos' in data) || (data.photos is list)) &&
-
-        // Status is optional but if present must be one of allowed
-        (!('status' in data) || (data.status in ['new','in_progress','complete'])) &&
-
-        // Anti-bloat: keep document size under control (roughly via string sizes)
-        // (Rules can't read byte size directly, so we keep it simple)
-        data.items.size() <= 50 &&
-        (!('photos' in data) || data.photos.size() <= 12);
+    // ---- Admin definition (Email/Password Auth -> token.email) ----
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == "groberts3104@gmail.com";
     }
 
+    // ---- Site config docs (readable by everyone, writable by admin) ----
+    // Navbar visibility cloud doc:
+    //   collection: rv_config
+    //   doc: navVisibility
+    match /rv_config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Home visibility cloud doc:
+    //   collection: rv_siteSettings
+    //   doc: homeVisibility
+    match /rv_siteSettings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Requests cloud backup (admin-only for now) ----
+    // These are sensitive because they contain customer info (name/phone/address/photos).
+    // Your app treats cloud saves as "best effort", so blocking writes won't break the app.
     match /rv_requests/{docId} {
-      // ✅ allow ONLY direct doc reads if the stored doc validates
-      allow get: if isValidRvRequest(resource.data, docId);
-
-      // ❌ block listing to prevent scraping
-      allow list: if false;
-
-      // ✅ allow create/update only if the incoming doc validates and binds to docId
-      allow create, update: if isValidRvRequest(request.resource.data, docId);
-
-      // ❌ block delete (prevents malicious wipes)
-      allow delete: if false;
+      allow read, write: if isAdmin();
     }
 
-    // Default deny everything else
-
-  // Index docs used for safe listing (NO collection LIST queries)
-  // DocId format: phoneDigits_accessCode  ->  7-15 digits + "_" + 6 digits
-  function isValidRvIndex(data, idxId) {
-      return
-        isString(idxId) &&
-        idxId.matches('^\\d{7,15}_\\d{6}$') &&
-
-        // Bind index doc id to stored _indexKey (if present)
-        (!('_indexKey' in data) || (data._indexKey is string && data._indexKey == idxId)) &&
-
-        // Optional stored fields (MVP permissive)
-        (!('phoneDigits' in data) || (data.phoneDigits is string)) &&
-        (!('accessCode' in data) || (data.accessCode is string)) &&
-
-        // Your code writes requestIds (arrayUnion)
-        (!('requestIds' in data) || (data.requestIds is list)) &&
-
-        // Backwards compat (if any older docs used ids)
-        (!('ids' in data) || (data.ids is list));
+    match /rv_requestIndex/{docId} {
+      allow read, write: if isAdmin();
     }
 
-  match /rv_requestIndex/{idxId} {
-    // Allow direct doc reads only (no listing)
-    allow get: if isValidRvIndex(resource.data, idxId);
-    allow list: if false;
-
-    // Allow create/update to maintain the ids[] index
-    allow create, update: if isValidRvIndex(request.resource.data, idxId);
-
-    // Block deletes
-    allow delete: if false;
-  }
-
+    // ---- Default deny (everything else) ----
     match /{document=**} {
       allow read, write: if false;
     }
