@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 /**
  * Admin Home Visibility Controls
  * - Uses the shared homeVisibility config (whatever it exports)
  * - We import it as a namespace so we DON'T break when exports evolve.
  */
 import * as HV from "../../config/homeVisibility";
+import {
+  loadHomeVisibilityFromCloud,
+  saveHomeVisibilityToCloud,
+  subscribeHomeVisibilityFromCloud,
+} from "../../config/homeVisibilityCloud";
 
 type AnyVis = any;
 
@@ -52,14 +57,78 @@ export default function AdminHomeVisibility() {
     }
   });
 
-  // persist on change
+  
+
+  // Prevent echo-loops when snapshot arrives right after we save
+  const lastCloudApplied = useRef<string>("");
+
+  // Load from cloud on mount + subscribe for live changes
+  useEffect(() => {
+    let unsub: null | (() => void) = null;
+
+    (async () => {
+      const res = await loadHomeVisibilityFromCloud();
+      if (res.ok && res.vis) {
+        const json = JSON.stringify(res.vis);
+        lastCloudApplied.current = json;
+
+        setVis(res.vis);
+        try {
+          write(res.vis);
+          notify();
+        } catch {}
+      }
+    })();
+
+    unsub = subscribeHomeVisibilityFromCloud((incoming) => {
+      const json = JSON.stringify(incoming);
+      if (json && json === lastCloudApplied.current) return;
+      lastCloudApplied.current = json;
+
+      setVis((prev: AnyVis) => {
+        try {
+          return JSON.stringify(prev) === json ? prev : incoming;
+        } catch {
+          return incoming;
+        }
+      });
+
+      try {
+        write(incoming);
+        notify();
+      } catch {}
+    });
+
+    return () => {
+      try {
+        unsub?.();
+      } catch {}
+    };
+  }, []);
+
+  // Persist on change + push to cloud (best-effort)
   useEffect(() => {
     try {
       write(vis);
       notify();
-    } catch {
-      // ignore
-    }
+    } catch {}
+
+    (async () => {
+      const res = await saveHomeVisibilityToCloud(vis as any);
+      if (res.ok) lastCloudApplied.current = JSON.stringify(vis);
+    })();
+  }, [vis]);
+// persist on change + cloud sync
+  useEffect(() => {
+    try {
+      write(vis);
+      notify();
+    } catch {}
+
+    (async () => {
+      const res = await saveHomeVisibilityToCloud(vis as any);
+      if (res.ok) lastCloudApplied.current = JSON.stringify(vis);
+    })();
   }, [vis]);
 
   const toggleKey = (key: string) => {
